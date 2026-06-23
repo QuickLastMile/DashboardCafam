@@ -731,7 +731,7 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
       <section class="view" id="inst-cross">
         <div class="card" style="margin-bottom:16px"><div class="card-body" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
           <div class="vhead-ic" style="background:linear-gradient(135deg,#06b6d4,#0e7490)"><i class="fa-solid fa-file-signature"></i></div>
-          <div><h3 style="font-family:var(--font-d);font-size:17px">Cafam Institucional · Pendiente Cross</h3><div class="sub">Recuperación de firmas de Cross Docking — legalizado vs pendiente</div></div>
+          <div><h3 style="font-family:var(--font-d);font-size:17px">Cafam Institucional · Pendiente Cross</h3><div class="sub">Recuperación de firmas de Cross Docking — legalizadas, no recuperadas y pendientes</div></div>
           <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="crx-stamp">--</span></span></div>
         </div></div>
         <div class="ins-bar">
@@ -743,11 +743,12 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
         <div class="seg-toggle sm" id="crx-seg">
           <button class="seg-btn active" data-est=""><i class="fa-solid fa-layer-group"></i> Todos</button>
           <button class="seg-btn" data-est="RECUPERADA"><i class="fa-solid fa-circle-check"></i> Legalizadas</button>
-          <button class="seg-btn" data-est="NO RECUPERADA"><i class="fa-solid fa-clock"></i> Pendientes</button>
+          <button class="seg-btn" data-est="NO RECUPERADA"><i class="fa-solid fa-circle-xmark"></i> No recuperadas</button>
+          <button class="seg-btn" data-est="PENDIENTE"><i class="fa-solid fa-clock"></i> Pendientes</button>
         </div>
         <div class="kpi-grid" id="crx-kpi"></div>
         <div class="grid-2">
-          <div class="card"><div class="card-h"><div><h3>Estado de recuperación</h3><div class="sub">Legalizadas vs pendientes</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="crx-estado"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Estado de recuperación</h3><div class="sub">Legalizadas · No recuperadas · Pendientes</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="crx-estado"></canvas></div></div></div>
           <div class="card"><div class="card-h"><div><h3>Recuperación por mes</h3><div class="sub">Legalizadas y pendientes por mes</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="crx-mes"></canvas></div></div></div>
         </div>
         <div class="card"><div class="card-h"><div><h3>Pendientes por tipo de carga</h3><div class="sub">Qué tipo concentra más firmas por recuperar</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="crx-tipo"></canvas></div></div></div>
@@ -2292,13 +2293,15 @@ function renderNacional(){
   mkChart('nac-hciu',{type:'bar',data:{labels:hcCities,datasets:[{data:hcCities.map(c=>hpc[c]!=null?+hpc[c].toFixed(3):0),backgroundColor:hcCities.map(c=>CITY_COLOR[c]||CO.gray),borderRadius:8,maxBarThickness:70}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:horaTip},scales:{x:BC.grid,y:horaY}}});
   mkChart('nac-hmes',{type:'bar',data:{labels:meses,datasets:hcCities.map(c=>({label:c,data:meses.map(m=>{const md=NAC.filter(r=>r.city===c&&r.mes===m&&r.horaH!=null);return md.length?+(md.reduce((a,r)=>a+r.horaH,0)/md.length).toFixed(3):null;}),backgroundColor:CITY_COLOR[c]||CO.gray,borderRadius:6,maxBarThickness:40}))},options:{...BC.base,plugins:{legend:legBase,tooltip:horaTip},scales:{x:BC.grid,y:horaY}}});
   const novD=NOVNAC.filter(r=>!city||r.city===city);
-  const tipos=uniq(novD.map(r=>r.novedad));
   const novmesMes=v('nac-novmes-mes')||mes;
   const mesesNov=['MAR','ABR','MAY','JUN'].filter(m=>!novmesMes||m===novmesMes);
+  const totNovmes=t=>novD.filter(r=>r.novedad===t&&mesesNov.indexOf(r.mes)>=0).reduce((a,r)=>a+r.count,0);
+  const tipos=uniq(novD.map(r=>r.novedad)).sort((a,b)=>totNovmes(b)-totNovmes(a));
   mkChart('nac-novmes',{type:'bar',data:{labels:tipos,datasets:mesesNov.map((m,i)=>({label:m,data:tipos.map(t=>novD.filter(r=>r.novedad===t&&r.mes===m).reduce((a,r)=>a+r.count,0)),backgroundColor:PAL[i],borderRadius:5}))},options:{...BC.base,indexAxis:'y',plugins:{legend:legBase},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
   const novciuCity=v('nac-novciu-city')||city;
   const citiesNov=novciuCity?[novciuCity]:uniq(NOVNAC.map(r=>r.city));
-  const tiposAll=uniq(NOVNAC.map(r=>r.novedad));
+  const totNovciu=t=>NOVNAC.filter(r=>r.novedad===t&&citiesNov.indexOf(r.city)>=0&&(!mes||r.mes===mes)).reduce((a,r)=>a+r.count,0);
+  const tiposAll=uniq(NOVNAC.map(r=>r.novedad)).sort((a,b)=>totNovciu(b)-totNovciu(a));
   mkChart('nac-novciu',{type:'bar',data:{labels:tiposAll,datasets:citiesNov.map(c=>({label:c,data:tiposAll.map(t=>NOVNAC.filter(r=>r.novedad===t&&r.city===c&&(!mes||r.mes===mes)).reduce((a,r)=>a+r.count,0)),backgroundColor:CITY_COLOR[c]||CO.gray,borderRadius:5}))},options:{...BC.base,indexAxis:'y',plugins:{legend:legBase},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
   renderTable('nac-table',['CIUDAD','FECHA','MES','EFECTIVO','NOVEDAD','TOTAL','% CUMPL'],
     [...D].sort((a,b)=>(b._d||0)-(a._d||0)).slice(0,600).map(r=>[r.city,r.fecha,r.mes,r.efectivo,r.novedad,r.total,cumplPill(r.total?+(r.efectivo/r.total*100).toFixed(0):0)]));
@@ -2453,39 +2456,41 @@ function renderCross(){
   document.querySelectorAll('#crx-seg .seg-btn').forEach(b=>b.classList.toggle('active',(b.dataset.est||'')===crxEst));
   const mes=v('crx-fMes'),est=v('crx-fEstado')||crxEst,tipo=v('crx-fTipo');
   const D=CROSS.filter(r=>(!mes||r.mes===mes)&&(!est||r.estado===est)&&(!tipo||r.tipo===tipo));
-  const total=D.length,recup=D.filter(r=>r.recup).length,pend=total-recup;
-  const pctR=total?recup/total*100:0;
+  const total=D.length;
+  const nRec=D.filter(r=>r.estado==='RECUPERADA').length;
+  const nNo=D.filter(r=>r.estado==='NO RECUPERADA').length;
+  const nPen=D.filter(r=>r.estado==='PENDIENTE').length;
+  const sinLeg=nNo+nPen;
+  const pctR=total?nRec/total*100:0;
   kpiCards('crx-kpi',[
     {l:'Servicios Cross',v:total,ic:'fa-file-signature',c:'blue'},
-    {l:'Legalizadas',v:recup,ic:'fa-circle-check',c:'green',t:'Firmas recuperadas',up:1},
-    {l:'Pendientes',v:pend,ic:'fa-clock',c:pend>0?'red':'green',t:'Por recuperar',up:pend>0?0:1},
+    {l:'Legalizadas',v:nRec,ic:'fa-circle-check',c:'green',t:'Recuperadas',up:1},
+    {l:'No recuperadas',v:nNo,ic:'fa-circle-xmark',c:nNo>0?'red':'green',t:'Gestión sin éxito',up:0},
+    {l:'Pendientes',v:nPen,ic:'fa-clock',c:nPen>0?'yellow':'green',t:'Por gestionar',up:0},
     {l:'% Recuperación',v:pctR,suf:'%',dec:1,ic:'fa-gauge-high',c:pctR>=80?'green':pctR>=50?'yellow':'red',t:pctR>=80?'Buen avance':'Acelerar',up:pctR>=80?1:0}
   ]);
-  mkChart('crx-estado',{type:'doughnut',data:{labels:['Legalizadas','Pendientes'],datasets:[{data:[recup,pend],backgroundColor:[CO.green,CO.red],borderWidth:0}]},options:{...BC.base,plugins:{legend:legBase}}});
+  const ESTADOS=[{k:'RECUPERADA',l:'Legalizadas',c:CO.green},{k:'NO RECUPERADA',l:'No recuperadas',c:CO.red},{k:'PENDIENTE',l:'Pendientes',c:CO.yellow}];
+  mkChart('crx-estado',{type:'doughnut',data:{labels:ESTADOS.map(e=>e.l),datasets:[{data:ESTADOS.map(e=>D.filter(r=>r.estado===e.k).length),backgroundColor:ESTADOS.map(e=>e.c),borderWidth:0}]},options:{...BC.base,plugins:{legend:legBase}}});
   const mesesAll=sortMes(uniq(CROSS.map(r=>r.mes)));
   const baseM=CROSS.filter(r=>(!tipo||r.tipo===tipo));
-  mkChart('crx-mes',{type:'bar',data:{labels:mesesAll,datasets:[
-    {label:'Legalizadas',data:mesesAll.map(m=>baseM.filter(r=>r.mes===m&&r.recup).length),backgroundColor:CO.green,borderRadius:6,stack:'s',maxBarThickness:60},
-    {label:'Pendientes',data:mesesAll.map(m=>baseM.filter(r=>r.mes===m&&!r.recup).length),backgroundColor:CO.red,borderRadius:6,stack:'s',maxBarThickness:60}
-  ]},options:{...BC.base,plugins:{legend:legBase},scales:{x:{...BC.grid,stacked:true},y:{...BC.grid,stacked:true}}}});
+  mkChart('crx-mes',{type:'bar',data:{labels:mesesAll,datasets:ESTADOS.map(e=>({label:e.l,data:mesesAll.map(m=>baseM.filter(r=>r.mes===m&&r.estado===e.k).length),backgroundColor:e.c,borderRadius:6,stack:'s',maxBarThickness:60}))},options:{...BC.base,plugins:{legend:legBase},scales:{x:{...BC.grid,stacked:true},y:{...BC.grid,stacked:true}}}});
   const tipos=Object.keys(sortObj(groupCount(D,r=>r.tipo)));
-  mkChart('crx-tipo',{type:'bar',data:{labels:tipos,datasets:[
-    {label:'Legalizadas',data:tipos.map(t=>D.filter(r=>r.tipo===t&&r.recup).length),backgroundColor:CO.green,borderRadius:6,stack:'s',maxBarThickness:70},
-    {label:'Pendientes',data:tipos.map(t=>D.filter(r=>r.tipo===t&&!r.recup).length),backgroundColor:CO.red,borderRadius:6,stack:'s',maxBarThickness:70}
-  ]},options:{...BC.base,plugins:{legend:legBase},scales:{x:BC.grid,y:BC.grid}}});
-  const estPill=r=>r.recup?'<span class="pill pill-g">Legalizada</span>':'<span class="pill pill-r">Pendiente</span>';
+  mkChart('crx-tipo',{type:'bar',data:{labels:tipos,datasets:ESTADOS.map(e=>({label:e.l,data:tipos.map(t=>D.filter(r=>r.tipo===t&&r.estado===e.k).length),backgroundColor:e.c,borderRadius:6,stack:'s',maxBarThickness:70}))},options:{...BC.base,indexAxis:'y',plugins:{legend:legBase},scales:{x:{...BC.grid,stacked:true},y:{...BC.grid,stacked:true,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
+  const PILL={'RECUPERADA':['pill-g','Legalizada'],'NO RECUPERADA':['pill-r','No recuperada'],'PENDIENTE':['pill-y','Pendiente']};
+  const estPill=r=>{const m=PILL[r.estado]||['pill-y',r.estado||'—'];return `<span class="pill ${m[0]}">${m[1]}</span>`;};
+  const ord={'PENDIENTE':0,'NO RECUPERADA':1,'RECUPERADA':2};
   renderTable('crx-table',['MES','ENTREGA','DOCUMENTO','CLIENTE','TIPO CARGA','ESTADO','FECHA RECUP.'],
-    [...D].sort((a,b)=>(a.recup===b.recup)?0:(a.recup?1:-1)).map(r=>[r.mes,r.entrega,r.documento,r.cliente,r.tipo,estPill(r),r.fechaRec||'—']));
+    [...D].sort((a,b)=>((ord[a.estado]==null?9:ord[a.estado])-(ord[b.estado]==null?9:ord[b.estado]))).map(r=>[r.mes,r.entrega,r.documento,r.cliente,r.tipo,estPill(r),r.fechaRec||'—']));
   const cEl=document.getElementById('crx-count');if(cEl)cEl.textContent=total.toLocaleString('es')+' servicios';
-  const topTipoPend=Object.entries(sortObj(groupCount(D.filter(r=>!r.recup),r=>r.tipo)))[0]||['—',0];
+  const topTipoPend=Object.entries(sortObj(groupCount(D.filter(r=>r.estado!=='RECUPERADA'),r=>r.tipo)))[0]||['—',0];
   const col=pctR>=80?'#4ade80':pctR>=50?'#facc15':'#f87171';
   setHTML('crx-ia-r',`<h4>Resumen ejecutivo · Pendiente Cross</h4>
-    <p>De <b>${total.toLocaleString('es')}</b> servicios de Cross Docking, <b style="color:#4ade80">${recup.toLocaleString('es')}</b> ya fueron <b>legalizados</b> (firma recuperada) y <b style="color:#f87171">${pend.toLocaleString('es')}</b> siguen <b>pendientes</b>, con un avance de recuperación del <b style="color:${col}">${pctR.toFixed(1)}%</b>. El tipo de carga con más firmas por recuperar es <b>${topTipoPend[0]}</b> (${topTipoPend[1]} casos).</p>`);
+    <p>De <b>${total.toLocaleString('es')}</b> servicios de Cross Docking: <b style="color:#4ade80">${nRec}</b> <b>legalizados</b> (firma recuperada), <b style="color:#f87171">${nNo}</b> <b>no recuperados</b> (gestión sin éxito) y <b style="color:#facc15">${nPen}</b> <b>pendientes</b> por gestionar. El avance de recuperación es del <b style="color:${col}">${pctR.toFixed(1)}%</b>. El tipo de carga con más firmas sin legalizar es <b>${topTipoPend[0]}</b> (${topTipoPend[1]} casos).</p>`);
   setHTML('crx-ia-s',`<ul>
-    <li>Priorizar la recuperación de <b>${pend}</b> firmas pendientes${mes?` del mes de ${mes}`:''}, comenzando por la carga <b>${topTipoPend[0]}</b>.</li>
-    <li>Registrar la <b>fecha de recuperación</b> de cada servicio para mantener la trazabilidad de la legalización.</li>
-    <li>${pctR>=80?'Avance sólido: sostener el ritmo para cerrar el pendiente.':'Reforzar el equipo de recuperación para subir el % de legalización.'}</li></ul>`);
-  setHTML('crx-ia-a',pend>0?`<ul><li><span class="pill ${pctR>=80?'pill-y':'pill-r'}">${pctR>=80?'Atención':'Crítico'}</span> ${pend} firmas de Cross Docking sin recuperar (${(100-pctR).toFixed(1)}% del total).</li></ul>`:'<ul><li><span class="pill pill-g">OK</span> Todas las firmas Cross fueron legalizadas.</li></ul>');
+    <li>Gestionar las <b>${nPen}</b> firmas <b>pendientes</b>${mes?` del mes de ${mes}`:''} antes de que escalen a no recuperadas.</li>
+    <li>Reintentar las <b>${nNo}</b> <b>no recuperadas</b> con nueva visita o contacto; priorizar la carga <b>${topTipoPend[0]}</b>.</li>
+    <li>Registrar la <b>fecha de recuperación</b> al legalizar para mantener la trazabilidad.</li></ul>`);
+  setHTML('crx-ia-a',sinLeg>0?`<ul><li><span class="pill ${pctR>=80?'pill-y':'pill-r'}">${pctR>=80?'Atención':'Crítico'}</span> ${sinLeg} firmas sin legalizar (${nPen} pendientes + ${nNo} no recuperadas) = ${(100-pctR).toFixed(1)}% del total.</li></ul>`:'<ul><li><span class="pill pill-g">OK</span> Todas las firmas Cross fueron legalizadas.</li></ul>');
   const sEl=document.getElementById('crx-stamp');if(sEl)sEl.textContent=stampNow();
 }
 
