@@ -224,6 +224,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 <div id="diagPanel" style="display:none;position:fixed;bottom:60px;right:16px;background:rgba(5,12,26,.97);border:1px solid rgba(37,99,235,.4);border-radius:10px;padding:14px 18px;font-size:10px;color:#94a3b8;z-index:8888;max-width:700px;max-height:300px;overflow-y:auto;line-height:1.7;"></div>
 <button onclick="var p=document.getElementById('diagPanel');p.style.display=p.style.display==='none'?'block':'none'" style="position:fixed;bottom:16px;right:16px;background:rgba(37,99,235,.3);border:1px solid rgba(37,99,235,.5);color:#60a5fa;font-size:10px;padding:5px 12px;border-radius:20px;cursor:pointer;z-index:8889;font-family:Inter,sans-serif;">🔍 Debug CSV</button>
 
+<!-- Overrides para incrustar dentro del shell QUICK (sin barra ni encabezado propios) -->
+<style id="embedOverrides">
+  #sb{display:none!important;}
+  #hdr{display:none!important;}
+  #main{margin-left:0!important;padding-top:14px!important;}
+  body{background:transparent!important;}
+  @media(max-width:768px){#main{margin-left:0!important;}}
+</style>
+
 <!-- SIDEBAR -->
 <nav id="sb">
   <div class="sb-logo">

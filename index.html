@@ -331,7 +331,13 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
     </div>
     <div class="nav-group" data-project="comercial">
     <div class="nav-section">Cafam Comercial</div>
-    <div class="nav-item active" data-view="com-real"><i class="fa-solid fa-store"></i><span class="nav-label">Dashboard Comercial</span></div>
+    <div class="nav-item active" data-com="resumen"><i class="fa-solid fa-chart-pie"></i><span class="nav-label">Resumen General</span></div>
+    <div class="nav-item" data-com="novedades"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label">Novedades Gestión</span></div>
+    <div class="nav-item" data-com="cantidad"><i class="fa-solid fa-box"></i><span class="nav-label">Cantidad Entregas</span></div>
+    <div class="nav-item" data-com="percapita"><i class="fa-solid fa-coins"></i><span class="nav-label">Per Cápita</span></div>
+    <div class="nav-item" data-com="tiempos"><i class="fa-solid fa-clock"></i><span class="nav-label">Tiempos</span></div>
+    <div class="nav-item" data-com="ventas"><i class="fa-solid fa-dollar-sign"></i><span class="nav-label">Ventas</span></div>
+    <div class="nav-item" data-com="novcancel"><i class="fa-solid fa-ban"></i><span class="nav-label">Nov. Cancelación</span></div>
     <!-- Motor demo anterior conservado oculto (compatibilidad de scripts) -->
     <div style="display:none" aria-hidden="true">
     <div class="nav-item" data-view="resumen"><i class="fa-solid fa-chart-line"></i><span class="nav-label">Resumen Ejecutivo</span></div>
@@ -1761,7 +1767,34 @@ function switchView(v){
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');
 }
-document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=>switchView(n.dataset.view)));
+/* ----- Navegación módulos Comercial (dashboard real embebido) ----- */
+function comFrameGo(mod){
+  const f=document.getElementById('comFrame');if(!f)return;
+  const call=()=>{try{f.contentWindow.go(mod);}catch(e){}};
+  if(f.contentWindow&&f.contentWindow.go)call();
+  else f.addEventListener('load',call,{once:true});
+}
+function showComModule(n){
+  if(typeof PROJECT!=='undefined')PROJECT='comercial';
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.toggle('active',x===n));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active',s.id==='com-real'));
+  const lbl=n.querySelector('.nav-label');
+  document.getElementById('pageTitle').textContent='Cafam Comercial';
+  document.getElementById('pageSub').textContent=lbl?lbl.textContent.trim():'Dashboard en vivo';
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+  comFrameGo(n.dataset.com);
+}
+window.showComModule=showComModule;
+function openComercialDefault(){
+  const first=document.querySelector('.nav-item[data-com]');
+  if(first)showComModule(first);
+}
+window.openComercialDefault=openComercialDefault;
+document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=>{
+  if(n.dataset.com)showComModule(n);
+  else if(n.dataset.view)switchView(n.dataset.view);
+}));
 document.getElementById('toggleSidebar').addEventListener('click',()=>{
   const sb=document.getElementById('sidebar');
   if(window.innerWidth<=820){sb.classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
@@ -2411,7 +2444,7 @@ function switchProject(p){
   PROJECT=p;
   document.querySelectorAll('.proj-btn').forEach(b=>b.classList.toggle('active',b.dataset.project===p));
   document.querySelectorAll('.nav-group').forEach(g=>{g.hidden=(g.dataset.project!==p);});
-  if(p==='comercial')switchView('com-real');
+  if(p==='comercial'){if(window.openComercialDefault)window.openComercialDefault();else switchView('com-real');}
   else{switchView('inst-nacional');ensureInst();}
 }
 window.switchProject=switchProject;
