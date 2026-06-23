@@ -626,9 +626,9 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
           <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="rec-stamp">--</span></span></div>
         </div></div>
         <div class="seg-toggle" id="rec-toggle">
-          <button class="seg-btn active" data-veh="MOTORIZADO"><i class="fa-solid fa-motorcycle"></i> Motorizado</button>
+          <button class="seg-btn active" data-veh=""><i class="fa-solid fa-layer-group"></i> Ambos</button>
+          <button class="seg-btn" data-veh="MOTORIZADO"><i class="fa-solid fa-motorcycle"></i> Motorizado</button>
           <button class="seg-btn" data-veh="CARRY"><i class="fa-solid fa-truck"></i> Carry</button>
-          <button class="seg-btn" data-veh=""><i class="fa-solid fa-layer-group"></i> Ambos</button>
         </div>
         <div class="ins-bar">
           <div class="fld"><label>Mes</label><select id="rec-fMes"><option value="">Todos</option></select></div>
@@ -2089,7 +2089,7 @@ const INST_CFG={
 /* ---------- Estado ---------- */
 let NAC=[],NOVNAC=[],RECI=[],NOVC=[],GMOT=[],GCAR=[],CROSS=[];
 let instCharts={},instLoaded=false,instLoading=false,PROJECT='comercial';
-let recVeh='MOTORIZADO', g51Mode='motos', crxEst='';
+let recVeh='', g51Mode='motos', crxEst='';
 
 /* Registrar títulos de las nuevas vistas en PAGES (usado por switchView) */
 try{Object.assign(PAGES,{
@@ -2317,14 +2317,15 @@ function renderRecibido(){
   const mes=v('rec-fMes'),tipo=v('rec-fTipo');
   const D=RECI.filter(r=>(!recVeh||r.vehiculo===recVeh)&&(!mes||r.mes===mes)&&(!tipo||r.tipo===tipo));
   const Bveh=RECI.filter(r=>(!recVeh||r.vehiculo===recVeh)&&(!tipo||r.tipo===tipo));
+  const Bmt=RECI.filter(r=>(!mes||r.mes===mes)&&(!tipo||r.tipo===tipo));
   const dias=uniq(D.map(r=>r.fecha)).length;
   kpiCards('rec-kpi',[
     {l:'Total guías',v:D.length,ic:'fa-barcode',c:'blue'},
     {l:'Tipos',v:uniq(D.map(r=>r.tipo)).length,ic:'fa-tags',c:'purple'},
     {l:'Días',v:dias,ic:'fa-calendar-day',c:'yellow'},
     {l:'Promedio/día',v:dias?D.length/dias:0,dec:1,ic:'fa-chart-simple',c:'green'},
-    {l:'Motorizado',v:RECI.filter(r=>r.vehiculo==='MOTORIZADO').length,ic:'fa-motorcycle',c:'blue'},
-    {l:'Carry',v:RECI.filter(r=>r.vehiculo==='CARRY').length,ic:'fa-truck',c:'green'}
+    {l:'Motorizado',v:Bmt.filter(r=>r.vehiculo==='MOTORIZADO').length,ic:'fa-motorcycle',c:'blue'},
+    {l:'Carry',v:Bmt.filter(r=>r.vehiculo==='CARRY').length,ic:'fa-truck',c:'green'}
   ]);
   const pm=groupCount(D,r=>r.mes);const meses=sortMes(Object.keys(pm));
   mkChart('rec-mes',{type:'bar',data:{labels:meses,datasets:[{data:meses.map(m=>pm[m]),backgroundColor:CO.blue,borderRadius:8,maxBarThickness:60}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
