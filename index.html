@@ -357,6 +357,7 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
       <div class="nav-item" data-view="inst-novc51"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label">Novedades Calle 51</span></div>
       <div class="nav-section">Operación</div>
       <div class="nav-item" data-view="inst-gestion51"><i class="fa-solid fa-list-check"></i><span class="nav-label">Gestión</span></div>
+      <div class="nav-item" data-view="inst-cross"><i class="fa-solid fa-file-signature"></i><span class="nav-label">Pendiente Cross</span></div>
       <div class="nav-item" data-view="inst-ia"><i class="fa-solid fa-brain"></i><span class="nav-label">Resumen IA</span></div>
     </div>
     <div class="nav-foot">
@@ -597,6 +598,12 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
           <div class="cf-bar"><select class="cf-sel" id="nac-dia-city"><option value="">Ciudad: todas</option></select><select class="cf-sel" id="nac-dia-mes"><option value="">Mes: todos</option></select></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="nac-dia"></canvas></div></div></div>
         <div class="card"><div class="card-h"><div><h3>Tendencia por día de la semana</h3><div class="sub">Volumen total acumulado por día (Lun–Dom)</div></div>
           <div class="cf-bar"><select class="cf-sel" id="nac-sem-city"><option value="">Ciudad: todas</option></select><select class="cf-sel" id="nac-sem-mes"><option value="">Mes: todos</option></select></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="nac-sem"></canvas></div></div></div>
+        <div class="card"><div class="card-h"><div><h3>Hora promedio de operación por día</h3><div class="sub">Hora promedio de entrega (HH:MM) — tendencia diaria</div></div>
+          <div class="cf-bar"><select class="cf-sel" id="nac-hdia-city"><option value="">Ciudad: todas</option></select><select class="cf-sel" id="nac-hdia-mes"><option value="">Mes: todos</option></select></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="nac-hdia"></canvas></div></div></div>
+        <div class="grid-2">
+          <div class="card"><div class="card-h"><div><h3>Hora promedio por ciudad</h3><div class="sub">Promedio del periodo (HH:MM)</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="nac-hciu"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Hora promedio por mes</h3><div class="sub">Comparativo mensual por ciudad (HH:MM)</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="nac-hmes"></canvas></div></div></div>
+        </div>
         <div class="card"><div class="card-h"><div><h3>Tipo de novedad por mes</h3><div class="sub">Barras horizontales para lectura clara del texto</div></div>
           <div class="cf-bar"><select class="cf-sel" id="nac-novmes-mes"><option value="">Mes: todos</option></select></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="nac-novmes"></canvas></div></div></div>
         <div class="card"><div class="card-h"><div><h3>Tipo de novedad por ciudad</h3><div class="sub">Barras horizontales</div></div>
@@ -716,6 +723,40 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
           <div class="grid-2" style="margin-top:16px">
             <div><h4 class="ia-sub"><i class="fa-solid fa-clipboard-check" style="color:var(--green)"></i> Sugerencias</h4><div class="ia-report" id="g51-ia-s">—</div></div>
             <div><h4 class="ia-sub"><i class="fa-solid fa-bell" style="color:var(--red)"></i> Alertas</h4><div class="ia-report" id="g51-ia-a">—</div></div>
+          </div>
+        </div></div>
+      </section>
+
+      <!-- ===== PENDIENTE CROSS (recuperación de firmas Cross Docking) ===== -->
+      <section class="view" id="inst-cross">
+        <div class="card" style="margin-bottom:16px"><div class="card-body" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div class="vhead-ic" style="background:linear-gradient(135deg,#06b6d4,#0e7490)"><i class="fa-solid fa-file-signature"></i></div>
+          <div><h3 style="font-family:var(--font-d);font-size:17px">Cafam Institucional · Pendiente Cross</h3><div class="sub">Recuperación de firmas de Cross Docking — legalizado vs pendiente</div></div>
+          <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="crx-stamp">--</span></span></div>
+        </div></div>
+        <div class="ins-bar">
+          <div class="fld"><label>Mes</label><select id="crx-fMes"><option value="">Todos</option></select></div>
+          <div class="fld"><label>Estado</label><select id="crx-fEstado"><option value="">Todos</option></select></div>
+          <div class="fld"><label>Tipo de carga</label><select id="crx-fTipo"><option value="">Todas</option></select></div>
+          <button class="ins-reset" id="crx-reset"><i class="fa-solid fa-rotate-left"></i> Limpiar</button>
+        </div>
+        <div class="seg-toggle sm" id="crx-seg">
+          <button class="seg-btn active" data-est=""><i class="fa-solid fa-layer-group"></i> Todos</button>
+          <button class="seg-btn" data-est="RECUPERADA"><i class="fa-solid fa-circle-check"></i> Legalizadas</button>
+          <button class="seg-btn" data-est="NO RECUPERADA"><i class="fa-solid fa-clock"></i> Pendientes</button>
+        </div>
+        <div class="kpi-grid" id="crx-kpi"></div>
+        <div class="grid-2">
+          <div class="card"><div class="card-h"><div><h3>Estado de recuperación</h3><div class="sub">Legalizadas vs pendientes</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="crx-estado"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Recuperación por mes</h3><div class="sub">Legalizadas y pendientes por mes</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="crx-mes"></canvas></div></div></div>
+        </div>
+        <div class="card"><div class="card-h"><div><h3>Pendientes por tipo de carga</h3><div class="sub">Qué tipo concentra más firmas por recuperar</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="crx-tipo"></canvas></div></div></div>
+        <div class="card"><div class="card-h"><div><h3>Detalle de servicios Cross</h3><div class="sub" id="crx-count">0 servicios</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="crx-table"></table></div></div></div>
+        <div class="card"><div class="card-h"><div><h3><i class="fa-solid fa-lightbulb" style="color:var(--yellow)"></i> Análisis final</h3><div class="sub">Resumen ejecutivo, sugerencias y alertas — Pendiente Cross</div></div></div><div class="card-body">
+          <div class="ia-report" id="crx-ia-r"></div>
+          <div class="grid-2" style="margin-top:16px">
+            <div><h4 class="ia-sub"><i class="fa-solid fa-clipboard-check" style="color:var(--green)"></i> Sugerencias</h4><div class="ia-report" id="crx-ia-s">—</div></div>
+            <div><h4 class="ia-sub"><i class="fa-solid fa-bell" style="color:var(--red)"></i> Alertas</h4><div class="ia-report" id="crx-ia-a">—</div></div>
           </div>
         </div></div>
       </section>
@@ -2046,9 +2087,9 @@ const INST_CFG={
 };
 
 /* ---------- Estado ---------- */
-let NAC=[],NOVNAC=[],RECI=[],NOVC=[],GMOT=[],GCAR=[];
+let NAC=[],NOVNAC=[],RECI=[],NOVC=[],GMOT=[],GCAR=[],CROSS=[];
 let instCharts={},instLoaded=false,instLoading=false,PROJECT='comercial';
-let recVeh='MOTORIZADO', g51Mode='motos';
+let recVeh='MOTORIZADO', g51Mode='motos', crxEst='';
 
 /* Registrar títulos de las nuevas vistas en PAGES (usado por switchView) */
 try{Object.assign(PAGES,{
@@ -2057,6 +2098,7 @@ try{Object.assign(PAGES,{
   'inst-recibido':['Recibido Calle 51','Guías recibidas — motorizado y carry'],
   'inst-novc51':['Novedades Calle 51','Análisis de novedades de Calle 51'],
   'inst-gestion51':['Gestión Calle 51','Cumplimiento diario — motos y carry'],
+  'inst-cross':['Pendiente Cross','Recuperación de firmas de Cross Docking — legalizado vs pendiente'],
   'inst-ia':['Resumen IA Institucional','Informes, análisis y sugerencias automáticas']
 });}catch(e){console.warn('No se pudo extender PAGES',e);}
 
@@ -2070,6 +2112,7 @@ const pct=(a,b)=>b?(a/b*100).toFixed(1):'0';
 const sortObj=o=>Object.fromEntries(Object.entries(o).sort((a,b)=>b[1]-a[1]));
 const groupCount=(arr,key)=>arr.reduce((a,r)=>{const k=key(r)||'—';a[k]=(a[k]||0)+1;return a;},{});
 const groupSum=(arr,key,val)=>arr.reduce((a,r)=>{const k=key(r)||'—';a[k]=(a[k]||0)+(val(r)||0);return a;},{});
+function groupAvg(arr,key,val){const s={},c={};arr.forEach(r=>{const vv=val(r);if(vv==null||isNaN(vv))return;const k=key(r)||'—';s[k]=(s[k]||0)+vv;c[k]=(c[k]||0)+1;});const o={};Object.keys(s).forEach(k=>{o[k]=s[k]/c[k];});return o;}
 const DOW=['DOMINGO','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO'];
 const DOW_LBL=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 const dowIdx=ts=>{if(!ts)return null;const g=new Date(+ts).getDay();return g===0?6:g-1;};
@@ -2103,16 +2146,19 @@ const legBase={labels:(BC.base.plugins&&BC.base.plugins.legend)?BC.base.plugins.
 
 /* ---------- Parsers ---------- */
 function fetchInst(sheet,header){return new Promise((res,rej)=>{Papa.parse(INST_CFG.url(sheet),{download:true,header:header,skipEmptyLines:true,complete:r=>res(r.data),error:rej});});}
+function parseHora(s){const m=String(s||'').trim().match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);if(!m)return null;const h=+m[1]+(+m[2])/60+(m[3]?(+m[3])/3600:0);return h>=0&&h<24?h:null;}
+function hhmm(h){if(h==null||isNaN(h))return '—';const hh=Math.floor(h),mm=Math.round((h-hh)*60);return (mm===60?(hh+1):hh)+':'+String(mm===60?0:mm).padStart(2,'0');}
 function parseNacional(rows){
-  const blocks=[{city:'Bucaramanga',off:0},{city:'Cúcuta',off:8},{city:'Santa Marta',off:16}];
+  const blocks=[{city:'Bucaramanga',off:0},{city:'Cúcuta',off:9},{city:'Santa Marta',off:18}];
   const out=[];
   for(let i=1;i<rows.length;i++){const r=rows[i];if(!r)continue;
     blocks.forEach(b=>{
       const fecha=String(r[b.off]||'').trim();
       if(!/\d{1,2}\/\d{1,2}\/\d{2,4}/.test(fecha))return;
       const ef=num(r[b.off+1]),nv=num(r[b.off+2]),tot=num(r[b.off+3])||(ef+nv);
-      const d=parseD(fecha);
+      const d=parseD(fecha);const horaStr=String(r[b.off+7]||'').trim();
       out.push({city:b.city,fecha,efectivo:ef,novedad:nv,total:tot,mes:String(r[b.off+4]||'').trim().toUpperCase(),
+        hora:horaStr,horaH:parseHora(horaStr),
         _d:+(d||0),dow:d?DOW[d.getDay()]:'',week:d?weekKey(d):''});
     });
   }
@@ -2152,23 +2198,33 @@ function parseGest51(rows){
   for(let i=1;i<rows.length;i++){const r=rows[i];if(!r)continue;push(r,0,motos);push(r,10,carry);}
   return {motos,carry};
 }
+function parseCross(raw){return raw.map(r=>{
+  const est=(r.ESTADO||'').trim().toUpperCase().replace(/\s+/g,' ');
+  let tipo=(r['TIPO CARGA']||'').trim().toUpperCase();
+  if(!tipo||tipo==='0'||tipo==='#N/D'||tipo==='N/D')tipo='SIN DATO';
+  const recup=est==='RECUPERADA';
+  return {mes:(r.MES||'').trim().toUpperCase()||'—',entrega:(r.ENTREGA||'').toString().trim(),
+    documento:(r.DOCUMENTO||'').toString().trim(),cliente:(r['NOMBRE CLIENTE']||'').trim(),
+    tipo,estado:est,recup,fechaRec:(r['FECHA RECUPERACIÓN']||'').toString().trim()};
+}).filter(r=>r.entrega||r.documento||r.cliente);}
 
 async function ensureInst(){
   if(instLoaded||instLoading)return;
   instLoading=true;
-  ['nac-count','rec-count','nvc-count','g51-count'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='Cargando datos de Google Sheets…';});
+  ['nac-count','rec-count','nvc-count','g51-count','crx-count'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='Cargando datos de Google Sheets…';});
   try{
-    const [cn,nn,rc,nc,g]=await Promise.all([
+    const [cn,nn,rc,nc,g,cx]=await Promise.all([
       fetchInst('CANT NACIONAL',false),
       fetchInst('NOVEDADES NACIONAL',false),
       fetchInst('RECIBIDO CALLE 51',true),
       fetchInst('NOVEDADES CALLE 51',true),
-      fetchInst('GESTIÓN',false)
+      fetchInst('GESTIÓN',false),
+      fetchInst('PENDIENTE CROSS',true)
     ]);
     NAC=parseNacional(cn);NOVNAC=parseNovNac(nn);RECI=parseRecibido(rc);NOVC=parseNovC51(nc);
-    const gg=parseGest51(g);GMOT=gg.motos;GCAR=gg.carry;
+    const gg=parseGest51(g);GMOT=gg.motos;GCAR=gg.carry;CROSS=parseCross(cx);
     instLoaded=true;
-    renderNacional();renderRecibido();renderNovC51();renderGest51();instReport('consolidado');
+    renderNacional();renderRecibido();renderNovC51();renderGest51();renderCross();instReport('consolidado');
     setTimeout(()=>Object.values(instCharts).forEach(ch=>{try{ch.resize();}catch(e){}}),160);
   }catch(e){console.warn('Institucional: fallo de carga',e);const el=document.getElementById('nac-count');if(el)el.textContent='Error al conectar con Google Sheets (verifica que la hoja sea pública: "Cualquiera con el enlace · Lector").';}
   instLoading=false;
@@ -2180,8 +2236,8 @@ function renderNacional(){
   const allCities=uniq(NAC.map(r=>r.city)),allMeses=sortMes(uniq(NAC.map(r=>r.mes)));
   fillSel('nac-fCity',allCities);
   fillSel('nac-fMes',allMeses);
-  ['nac-dia-city','nac-sem-city','nac-novciu-city'].forEach(id=>fillSel(id,allCities));
-  ['nac-dia-mes','nac-sem-mes','nac-novmes-mes'].forEach(id=>fillSel(id,allMeses));
+  ['nac-dia-city','nac-sem-city','nac-novciu-city','nac-hdia-city'].forEach(id=>fillSel(id,allCities));
+  ['nac-dia-mes','nac-sem-mes','nac-novmes-mes','nac-hdia-mes'].forEach(id=>fillSel(id,allMeses));
   const city=v('nac-fCity'),mes=v('nac-fMes');
   document.querySelectorAll('#nac-cityseg .seg-btn').forEach(b=>b.classList.toggle('active',(b.dataset.city||'')===city));
   const ciuRow=document.getElementById('nac-ciudad-row');if(ciuRow)ciuRow.style.display=city?'none':'';
@@ -2215,6 +2271,19 @@ function renderNacional(){
   const semCity=v('nac-sem-city')||city,semMes=v('nac-sem-mes')||mes;
   const Dsem=NAC.filter(r=>(!semCity||r.city===semCity)&&(!semMes||r.mes===semMes));
   mkChart('nac-sem',{type:'bar',data:{labels:DOW_LBL,datasets:[{label:'Total movido',data:byDow(Dsem,r=>r.total),backgroundColor:CO.purple,borderRadius:7,maxBarThickness:54}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  /* ----- Tiempos (HORA PROMEDIO) ----- */
+  const horaTip={callbacks:{label:c=>' '+hhmm(c.parsed.y!=null?c.parsed.y:c.parsed)}};
+  const horaY={...BC.grid,ticks:{...(BC.grid.ticks||{}),callback:v=>hhmm(v)}};
+  const hdiaCity=v('nac-hdia-city')||city,hdiaMes=v('nac-hdia-mes')||mes;
+  const Dh=NAC.filter(r=>r.horaH!=null&&(!hdiaCity||r.city===hdiaCity)&&(!hdiaMes||r.mes===hdiaMes));
+  const hfechas=uniq(Dh.map(r=>r.fecha)).sort((a,b)=>(parseD(a)||0)-(parseD(b)||0));
+  const hpd=groupAvg(Dh,r=>r.fecha,r=>r.horaH);
+  mkChart('nac-hdia',{type:'line',data:{labels:hfechas,datasets:[{label:'Hora promedio',data:hfechas.map(f=>hpd[f]!=null?+hpd[f].toFixed(3):null),borderColor:CO.yellow,backgroundColor:gradFill('#EAB308'),fill:true,tension:.35,borderWidth:2.4,pointRadius:2,spanGaps:true}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:horaTip},scales:{x:BC.grid,y:horaY}}});
+  const hcCities=city?[city]:uniq(NAC.map(r=>r.city));
+  const Dhc=NAC.filter(r=>r.horaH!=null&&(!mes||r.mes===mes));
+  const hpc=groupAvg(Dhc,r=>r.city,r=>r.horaH);
+  mkChart('nac-hciu',{type:'bar',data:{labels:hcCities,datasets:[{data:hcCities.map(c=>hpc[c]!=null?+hpc[c].toFixed(3):0),backgroundColor:hcCities.map(c=>CITY_COLOR[c]||CO.gray),borderRadius:8,maxBarThickness:70}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:horaTip},scales:{x:BC.grid,y:horaY}}});
+  mkChart('nac-hmes',{type:'bar',data:{labels:meses,datasets:hcCities.map(c=>({label:c,data:meses.map(m=>{const md=NAC.filter(r=>r.city===c&&r.mes===m&&r.horaH!=null);return md.length?+(md.reduce((a,r)=>a+r.horaH,0)/md.length).toFixed(3):null;}),backgroundColor:CITY_COLOR[c]||CO.gray,borderRadius:6,maxBarThickness:40}))},options:{...BC.base,plugins:{legend:legBase,tooltip:horaTip},scales:{x:BC.grid,y:horaY}}});
   const novD=NOVNAC.filter(r=>!city||r.city===city);
   const tipos=uniq(novD.map(r=>r.novedad));
   const novmesMes=v('nac-novmes-mes')||mes;
@@ -2366,6 +2435,52 @@ function renderGest51(){
   const sEl=document.getElementById('g51-stamp');if(sEl)sEl.textContent=stampNow();
 }
 
+/* ---------- PENDIENTE CROSS ---------- */
+function renderCross(){
+  const cEl0=document.getElementById('crx-count');
+  if(!CROSS.length){if(cEl0)cEl0.textContent='Sin datos';return;}
+  fillSel('crx-fMes',sortMes(uniq(CROSS.map(r=>r.mes))));
+  fillSel('crx-fEstado',uniq(CROSS.map(r=>r.estado)));
+  fillSel('crx-fTipo',uniq(CROSS.map(r=>r.tipo)));
+  document.querySelectorAll('#crx-seg .seg-btn').forEach(b=>b.classList.toggle('active',(b.dataset.est||'')===crxEst));
+  const mes=v('crx-fMes'),est=v('crx-fEstado')||crxEst,tipo=v('crx-fTipo');
+  const D=CROSS.filter(r=>(!mes||r.mes===mes)&&(!est||r.estado===est)&&(!tipo||r.tipo===tipo));
+  const total=D.length,recup=D.filter(r=>r.recup).length,pend=total-recup;
+  const pctR=total?recup/total*100:0;
+  kpiCards('crx-kpi',[
+    {l:'Servicios Cross',v:total,ic:'fa-file-signature',c:'blue'},
+    {l:'Legalizadas',v:recup,ic:'fa-circle-check',c:'green',t:'Firmas recuperadas',up:1},
+    {l:'Pendientes',v:pend,ic:'fa-clock',c:pend>0?'red':'green',t:'Por recuperar',up:pend>0?0:1},
+    {l:'% Recuperación',v:pctR,suf:'%',dec:1,ic:'fa-gauge-high',c:pctR>=80?'green':pctR>=50?'yellow':'red',t:pctR>=80?'Buen avance':'Acelerar',up:pctR>=80?1:0}
+  ]);
+  mkChart('crx-estado',{type:'doughnut',data:{labels:['Legalizadas','Pendientes'],datasets:[{data:[recup,pend],backgroundColor:[CO.green,CO.red],borderWidth:0}]},options:{...BC.base,plugins:{legend:legBase}}});
+  const mesesAll=sortMes(uniq(CROSS.map(r=>r.mes)));
+  const baseM=CROSS.filter(r=>(!tipo||r.tipo===tipo));
+  mkChart('crx-mes',{type:'bar',data:{labels:mesesAll,datasets:[
+    {label:'Legalizadas',data:mesesAll.map(m=>baseM.filter(r=>r.mes===m&&r.recup).length),backgroundColor:CO.green,borderRadius:6,stack:'s',maxBarThickness:60},
+    {label:'Pendientes',data:mesesAll.map(m=>baseM.filter(r=>r.mes===m&&!r.recup).length),backgroundColor:CO.red,borderRadius:6,stack:'s',maxBarThickness:60}
+  ]},options:{...BC.base,plugins:{legend:legBase},scales:{x:{...BC.grid,stacked:true},y:{...BC.grid,stacked:true}}}});
+  const tipos=Object.keys(sortObj(groupCount(D,r=>r.tipo)));
+  mkChart('crx-tipo',{type:'bar',data:{labels:tipos,datasets:[
+    {label:'Legalizadas',data:tipos.map(t=>D.filter(r=>r.tipo===t&&r.recup).length),backgroundColor:CO.green,borderRadius:6,stack:'s',maxBarThickness:70},
+    {label:'Pendientes',data:tipos.map(t=>D.filter(r=>r.tipo===t&&!r.recup).length),backgroundColor:CO.red,borderRadius:6,stack:'s',maxBarThickness:70}
+  ]},options:{...BC.base,plugins:{legend:legBase},scales:{x:BC.grid,y:BC.grid}}});
+  const estPill=r=>r.recup?'<span class="pill pill-g">Legalizada</span>':'<span class="pill pill-r">Pendiente</span>';
+  renderTable('crx-table',['MES','ENTREGA','DOCUMENTO','CLIENTE','TIPO CARGA','ESTADO','FECHA RECUP.'],
+    [...D].sort((a,b)=>(a.recup===b.recup)?0:(a.recup?1:-1)).map(r=>[r.mes,r.entrega,r.documento,r.cliente,r.tipo,estPill(r),r.fechaRec||'—']));
+  const cEl=document.getElementById('crx-count');if(cEl)cEl.textContent=total.toLocaleString('es')+' servicios';
+  const topTipoPend=Object.entries(sortObj(groupCount(D.filter(r=>!r.recup),r=>r.tipo)))[0]||['—',0];
+  const col=pctR>=80?'#4ade80':pctR>=50?'#facc15':'#f87171';
+  setHTML('crx-ia-r',`<h4>Resumen ejecutivo · Pendiente Cross</h4>
+    <p>De <b>${total.toLocaleString('es')}</b> servicios de Cross Docking, <b style="color:#4ade80">${recup.toLocaleString('es')}</b> ya fueron <b>legalizados</b> (firma recuperada) y <b style="color:#f87171">${pend.toLocaleString('es')}</b> siguen <b>pendientes</b>, con un avance de recuperación del <b style="color:${col}">${pctR.toFixed(1)}%</b>. El tipo de carga con más firmas por recuperar es <b>${topTipoPend[0]}</b> (${topTipoPend[1]} casos).</p>`);
+  setHTML('crx-ia-s',`<ul>
+    <li>Priorizar la recuperación de <b>${pend}</b> firmas pendientes${mes?` del mes de ${mes}`:''}, comenzando por la carga <b>${topTipoPend[0]}</b>.</li>
+    <li>Registrar la <b>fecha de recuperación</b> de cada servicio para mantener la trazabilidad de la legalización.</li>
+    <li>${pctR>=80?'Avance sólido: sostener el ritmo para cerrar el pendiente.':'Reforzar el equipo de recuperación para subir el % de legalización.'}</li></ul>`);
+  setHTML('crx-ia-a',pend>0?`<ul><li><span class="pill ${pctR>=80?'pill-y':'pill-r'}">${pctR>=80?'Atención':'Crítico'}</span> ${pend} firmas de Cross Docking sin recuperar (${(100-pctR).toFixed(1)}% del total).</li></ul>`:'<ul><li><span class="pill pill-g">OK</span> Todas las firmas Cross fueron legalizadas.</li></ul>');
+  const sEl=document.getElementById('crx-stamp');if(sEl)sEl.textContent=stampNow();
+}
+
 /* ---------- MOTOR IA ---------- */
 function trendWord(x,piso){return x>0.5?(piso?'una tendencia <b style="color:#facc15">creciente</b> (a vigilar)':'una <b style="color:#4ade80">mejora</b>'):x<-0.5?(piso?'una <b style="color:#4ade80">reducción</b>':'una <b style="color:#f87171">caída</b>'):'<b>estabilidad</b>';}
 function iaNacional(){
@@ -2451,7 +2566,7 @@ window.switchProject=switchProject;
 
 /* ---------- Wiring ---------- */
 document.querySelectorAll('.proj-btn').forEach(b=>b.addEventListener('click',()=>switchProject(b.dataset.project)));
-const INST_RENDER={'inst-nacional':renderNacional,'inst-recibido':renderRecibido,'inst-novc51':renderNovC51,'inst-gestion51':renderGest51};
+const INST_RENDER={'inst-nacional':renderNacional,'inst-recibido':renderRecibido,'inst-novc51':renderNovC51,'inst-gestion51':renderGest51,'inst-cross':renderCross};
 document.querySelectorAll('.nav-item[data-view^="inst-"]').forEach(n=>n.addEventListener('click',()=>{
   if(!instLoaded)return;
   const fn=INST_RENDER[n.dataset.view];
@@ -2459,8 +2574,8 @@ document.querySelectorAll('.nav-item[data-view^="inst-"]').forEach(n=>n.addEvent
   setTimeout(()=>Object.values(instCharts).forEach(c=>{try{c.resize();}catch(e){}}),60);
 }));
 // Nacional
-['nac-fCity','nac-fMes','nac-dia-city','nac-dia-mes','nac-sem-city','nac-sem-mes','nac-novmes-mes','nac-novciu-city'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('change',renderNacional);});
-const nacR=document.getElementById('nac-reset');if(nacR)nacR.addEventListener('click',()=>{['nac-fCity','nac-fMes','nac-dia-city','nac-dia-mes','nac-sem-city','nac-sem-mes','nac-novmes-mes','nac-novciu-city'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});renderNacional();});
+['nac-fCity','nac-fMes','nac-dia-city','nac-dia-mes','nac-sem-city','nac-sem-mes','nac-novmes-mes','nac-novciu-city','nac-hdia-city','nac-hdia-mes'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('change',renderNacional);});
+const nacR=document.getElementById('nac-reset');if(nacR)nacR.addEventListener('click',()=>{['nac-fCity','nac-fMes','nac-dia-city','nac-dia-mes','nac-sem-city','nac-sem-mes','nac-novmes-mes','nac-novciu-city','nac-hdia-city','nac-hdia-mes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});renderNacional();});
 document.querySelectorAll('#nac-cityseg .seg-btn').forEach(b=>b.addEventListener('click',()=>{const sel=document.getElementById('nac-fCity');if(sel)sel.value=b.dataset.city||'';renderNacional();}));
 // Recibido
 ['rec-fMes','rec-fTipo','rec-dia-mes','rec-sem-mes','rec-tipo-mes'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('change',renderRecibido);});
@@ -2473,6 +2588,10 @@ const nvcR=document.getElementById('nvc-reset');if(nvcR)nvcR.addEventListener('c
 ['g51-fMes','g51-flujo-mes','g51-total-mes','g51-cumpl-mes'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('change',renderGest51);});
 const g51R=document.getElementById('g51-reset');if(g51R)g51R.addEventListener('click',()=>{['g51-fMes','g51-flujo-mes','g51-total-mes','g51-cumpl-mes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});renderGest51();});
 document.querySelectorAll('#g51-toggle .seg-btn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#g51-toggle .seg-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');g51Mode=b.dataset.mode;renderGest51();}));
+// Pendiente Cross
+['crx-fMes','crx-fEstado','crx-fTipo'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('change',renderCross);});
+const crxR=document.getElementById('crx-reset');if(crxR)crxR.addEventListener('click',()=>{crxEst='';['crx-fMes','crx-fEstado','crx-fTipo'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});renderCross();});
+document.querySelectorAll('#crx-seg .seg-btn').forEach(b=>b.addEventListener('click',()=>{crxEst=b.dataset.est||'';const sel=document.getElementById('crx-fEstado');if(sel)sel.value='';renderCross();}));
 })();
 </script>
 </body>
