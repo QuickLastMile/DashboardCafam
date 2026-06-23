@@ -1,0 +1,2047 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAFAM DOMICILIOS — Centro Analítico Corporativo</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#050c1a;--bg2:#071224;--card:rgba(10,25,55,0.9);--cardhov:rgba(14,35,75,0.97);
+  --b1:#1a4fd6;--b2:#2563eb;--b3:#3b82f6;--b4:#60a5fa;
+  --cy:#06b6d4;--cy2:#22d3ee;--teal:#0d9488;
+  --green:#10b981;--amber:#f59e0b;--red:#ef4444;--purple:#8b5cf6;
+  --t1:#f0f6ff;--t2:#94a3b8;--t3:#475569;
+  --brd:rgba(59,130,246,.15);--brdhi:rgba(59,130,246,.4);
+  --glow:0 0 20px rgba(37,99,235,.3);--glows:0 0 40px rgba(37,99,235,.5);
+  --sdw:0 8px 32px rgba(0,0,0,.4),0 0 0 1px rgba(59,130,246,.1);
+  --sw:260px;--hh:66px;--r:14px;--rsm:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;overflow-x:hidden;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--b1);border-radius:3px;}
+
+/* LOADING */
+#loadWrap{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .5s;}
+#loadWrap img{height:56px;animation:float 2.5s ease-in-out infinite;}
+.lbar-wrap{width:280px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;}
+.lbar{height:100%;width:0;background:linear-gradient(90deg,var(--b1),var(--cy));border-radius:2px;transition:width .5s ease;}
+@keyframes lprog{to{width:100%}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.ltext{font-size:11px;color:var(--t3);letter-spacing:2px;text-transform:uppercase;}
+
+/* SIDEBAR */
+#sb{position:fixed;top:0;left:0;width:var(--sw);height:100vh;background:linear-gradient(180deg,#071220,#050c1a);border-right:1px solid var(--brd);z-index:1000;display:flex;flex-direction:column;overflow-y:auto;transition:transform .3s;}
+.sb-logo{padding:18px 18px 14px;border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:10px;}
+.sb-logo img{height:38px;filter:brightness(1.1);}
+.sb-brand{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--cy2);line-height:1.3;}
+.sb-brand span{display:block;color:var(--t2);font-weight:400;font-size:10px;}
+.sb-lbl{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t3);padding:14px 18px 5px;}
+.nav-it{display:flex;align-items:center;gap:11px;padding:10px 18px;margin:2px 8px;border-radius:var(--rsm);cursor:pointer;transition:all .2s;font-size:12.5px;font-weight:500;color:var(--t2);position:relative;border:none;background:none;width:calc(100% - 16px);text-align:left;}
+.nav-it i{width:17px;text-align:center;font-size:13px;}
+.nav-it:hover{background:rgba(37,99,235,.15);color:var(--t1);box-shadow:inset 3px 0 0 var(--b2);}
+.nav-it.active{background:linear-gradient(135deg,rgba(37,99,235,.25),rgba(6,182,212,.1));color:var(--cy2);box-shadow:inset 3px 0 0 var(--cy),var(--glow);}
+.sb-ft{margin-top:auto;padding:14px 18px;border-top:1px solid var(--brd);font-size:10px;color:var(--t3);display:flex;align-items:center;gap:8px;}
+.sb-ft img{height:20px;opacity:.6;border-radius:3px;}
+
+/* HEADER */
+#hdr{position:fixed;top:0;left:var(--sw);right:0;height:var(--hh);background:rgba(5,12,26,.93);backdrop-filter:blur(20px);border-bottom:1px solid var(--brd);z-index:999;display:flex;align-items:center;padding:0 24px;gap:14px;}
+.hdr-title{font-size:16px;font-weight:800;color:var(--t1);}
+.hdr-title span{color:var(--cy2);}
+.hdr-search{flex:1;max-width:340px;margin:0 18px;position:relative;}
+.hdr-search input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--brd);border-radius:22px;padding:8px 14px 8px 36px;color:var(--t1);font-size:12px;font-family:'Inter',sans-serif;transition:all .2s;}
+.hdr-search input:focus{outline:none;border-color:var(--b2);background:rgba(37,99,235,.08);}
+.hdr-search i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:12px;}
+.hdr-r{display:flex;align-items:center;gap:12px;margin-left:auto;}
+.online-dot{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--green);background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);padding:4px 10px;border-radius:20px;}
+.online-dot::before{content:'';width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse-g 2s infinite;}
+@keyframes pulse-g{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+.hdr-dt{font-size:11px;color:var(--t2);text-align:right;line-height:1.4;}
+.hdr-dt .d{font-weight:700;color:var(--t1);}
+.ic-btn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2);transition:all .2s;font-size:13px;}
+.ic-btn:hover{background:rgba(37,99,235,.2);color:var(--t1);}
+.ava{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--b1),var(--cy));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;cursor:pointer;border:2px solid var(--brdhi);}
+
+/* MAIN */
+#main{margin-left:var(--sw);padding-top:var(--hh);min-height:100vh;}
+.ca{padding:20px 24px;}
+
+/* SECTION */
+.sec{display:none;animation:fiu .3s ease;}
+.sec.active{display:block;}
+@keyframes fiu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* FILTER BAR */
+.fbar{background:var(--card);border:1px solid var(--brd);border-radius:var(--r);padding:16px 20px;margin-bottom:18px;backdrop-filter:blur(10px);}
+.fbar-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;}
+.fg{display:flex;flex-direction:column;gap:4px;min-width:130px;}
+.flbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);}
+.fc{background:rgba(255,255,255,.04);border:1px solid var(--brd);border-radius:var(--rsm);padding:7px 10px;color:var(--t1);font-size:11.5px;font-family:'Inter',sans-serif;transition:all .2s;-webkit-appearance:none;}
+.fc:focus{outline:none;border-color:var(--b2);background:rgba(37,99,235,.08);}
+.fc option{background:#0a1628;}
+.fbtn{padding:7px 16px;border-radius:var(--rsm);font-size:11.5px;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+.fbtn-p{background:linear-gradient(135deg,var(--b1),var(--b2));color:#fff;}
+.fbtn-p:hover{transform:translateY(-1px);box-shadow:var(--glow);}
+.fbtn-s{background:rgba(255,255,255,.06);color:var(--t2);border:1px solid var(--brd);}
+.fbtn-s:hover{background:rgba(255,255,255,.1);color:var(--t1);}
+.fbtn-exp{background:linear-gradient(135deg,#0d9488,#0891b2);color:#fff;}
+.fbtn-pdf{background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;}
+
+/* KPI GRID */
+.kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px;}
+.kc{background:var(--card);border:1px solid var(--brd);border-radius:var(--r);padding:14px 16px;position:relative;overflow:hidden;transition:all .3s;cursor:default;backdrop-filter:blur(10px);min-width:0;}
+.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--b1),var(--cy));opacity:0;transition:opacity .3s;}
+.kc:hover{border-color:var(--brdhi);transform:translateY(-2px);box-shadow:var(--sdw),var(--glow);}
+.kc:hover::before{opacity:1;}
+.kc-ico{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;margin-bottom:10px;}
+.kc-val{font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--t1),var(--b4));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.1;word-break:break-all;}
+.kc-lbl{font-size:10px;color:var(--t2);margin-top:3px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;}
+.kc-tr{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:600;margin-top:8px;}
+.kc-tr.up{color:var(--green);}
+.kc-tr.dn{color:var(--red);}
+.kc-tr.ne{color:var(--t3);}
+.kc-bg{position:absolute;right:-8px;bottom:-8px;font-size:56px;opacity:.04;}
+
+/* CHART CARD */
+.cc{background:var(--card);border:1px solid var(--brd);border-radius:var(--r);padding:16px 18px;backdrop-filter:blur(10px);transition:border-color .3s;height:100%;}
+.cc:hover{border-color:var(--brdhi);}
+.cc-ttl{font-size:13px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:7px;}
+.cc-ttl i{color:var(--cy2);}
+.cc-sub{font-size:10px;color:var(--t3);margin-bottom:16px;}
+
+/* GRID LAYOUTS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;}
+.g12{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px;}
+.g21{display:grid;grid-template-columns:1fr 2fr;gap:16px;margin-bottom:16px;}
+.gfull{margin-bottom:16px;}
+@media(max-width:1100px){.g3{grid-template-columns:1fr 1fr;}.g12,.g21{grid-template-columns:1fr;}}
+@media(max-width:768px){.g2,.g3,.g12,.g21{grid-template-columns:1fr;}#main{margin-left:0;}#hdr{left:0;}:root{--sw:0px;}}
+
+/* ANALYSIS CARD */
+.ac{background:linear-gradient(135deg,rgba(10,22,55,.97),rgba(7,18,42,.97));border:1px solid rgba(59,130,246,.3);border-radius:var(--r);padding:22px;position:relative;overflow:hidden;margin-bottom:16px;}
+.ac::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--b2),var(--cy),transparent);}
+.ac-ttl{font-size:13px;font-weight:700;color:var(--cy2);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.ac-body{font-size:12.5px;line-height:1.8;color:var(--t2);}
+.ac-body strong{color:var(--t1);}
+.ac-body .hi{color:var(--cy2);font-weight:600;}
+.ac-body .warn{color:var(--amber);font-weight:600;}
+.ac-body .ok{color:var(--green);font-weight:600;}
+.ac-body .bad{color:var(--red);font-weight:600;}
+
+/* TOP TABLE */
+.top-table{width:100%;border-collapse:collapse;font-size:11.5px;}
+.top-table th{padding:8px 12px;background:rgba(37,99,235,.12);color:var(--t3);font-weight:700;text-transform:uppercase;font-size:9px;letter-spacing:1px;text-align:left;border-bottom:1px solid var(--brd);}
+.top-table td{padding:9px 12px;color:var(--t2);border-bottom:1px solid var(--brd);}
+.top-table td:first-child{color:var(--t1);font-weight:600;}
+.top-table tr:hover td{background:rgba(37,99,235,.08);}
+.rank-badge{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;}
+.r1{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;}
+.r2{background:rgba(148,163,184,.2);color:var(--t2);}
+.r3{background:rgba(180,130,80,.2);color:#c97d4a;}
+.rn{background:rgba(37,99,235,.15);color:var(--b4);}
+
+/* SECTION HEADER */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.sh-left h2{font-size:18px;font-weight:800;}
+.sh-left h2 span{color:var(--cy2);}
+.sh-left p{font-size:11px;color:var(--t2);margin-top:2px;}
+.sh-right{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* BADGE */
+.bdg{padding:2px 9px;border-radius:20px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.bdg-ok{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);}
+.bdg-warn{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.3);}
+.bdg-bad{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+.bdg-info{background:rgba(59,130,246,.15);color:var(--b4);border:1px solid rgba(59,130,246,.3);}
+
+/* ACTIVE FILTER TAGS */
+.active-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.atag{background:rgba(37,99,235,.2);border:1px solid rgba(37,99,235,.45);color:#60a5fa;
+  font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;display:flex;align-items:center;gap:5px;}
+.atag-x{cursor:pointer;opacity:.7;transition:opacity .2s;}
+.atag-x:hover{opacity:1;}
+
+/* PLAN DE ACCION */
+.plan{background:rgba(8,20,50,.9);border:1px solid rgba(6,182,212,.25);border-radius:var(--r);padding:20px;}
+.plan-ttl{font-size:12px;font-weight:700;color:var(--cy2);margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.plan-item{display:flex;gap:12px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--brd);}
+.plan-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.plan-num{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--b1),var(--cy));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}
+.plan-content{flex:1;}
+.plan-title{font-size:12px;font-weight:700;color:var(--t1);margin-bottom:3px;}
+.plan-desc{font-size:11.5px;color:var(--t2);line-height:1.6;}
+
+/* PROGRESS */
+.pbar{height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-top:4px;}
+.pfill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--b2),var(--cy));transition:width 1s ease;}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:9998;display:flex;flex-direction:column;gap:6px;}
+.toast{background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:10px 16px;font-size:12.5px;display:flex;align-items:center;gap:8px;min-width:260px;backdrop-filter:blur(20px);box-shadow:var(--sdw);animation:slideR .3s ease;}
+@keyframes slideR{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* DIVIDER */
+.divd{height:1px;background:linear-gradient(90deg,transparent,var(--brdhi),transparent);margin:20px 0;}
+
+/* SPIN */
+.spin{animation:spinning 1s linear infinite;}
+@keyframes spinning{to{transform:rotate(360deg)}}
+
+/* SUMMARY TOP TABLE */
+.sum-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:18px;}
+.sum-item{background:var(--card);border:1px solid var(--brd);border-radius:var(--rsm);padding:14px 16px;}
+.sum-item .si-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);font-weight:700;margin-bottom:4px;}
+.sum-item .si-val{font-size:18px;font-weight:800;color:var(--b4);}
+.sum-item .si-sub{font-size:10px;color:var(--t2);margin-top:2px;}
+
+.mb0{margin-bottom:0;} .mb8{margin-bottom:8px;} .mt12{margin-top:12px;} .mt16{margin-top:16px;}
+.w100{width:100%;}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loadWrap">
+  <img src="https://i.ibb.co/PGVzcVdL/download-removebg-preview.png" alt="Cafam">
+  <div class="lbar-wrap"><div class="lbar" id="loadBar"></div></div>
+  <div class="ltext" id="loadTxt">Conectando con Google Sheets...</div>
+  <div id="loadDetail" style="font-size:10px;color:#475569;margin-top:4px;letter-spacing:1px;text-align:center;max-width:320px;">Iniciando carga de datos...</div>
+  <div id="loadSkip" style="margin-top:16px;display:none;">
+    <button onclick="forceSkip()" style="background:rgba(37,99,235,.2);border:1px solid rgba(37,99,235,.4);color:#60a5fa;padding:8px 20px;border-radius:20px;font-size:11px;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:1px;">
+      SALTAR CARGA Y CONTINUAR
+    </button>
+  </div>
+</div>
+
+<!-- DIAGNOSTIC PANEL -->
+<div id="diagPanel" style="display:none;position:fixed;bottom:60px;right:16px;background:rgba(5,12,26,.97);border:1px solid rgba(37,99,235,.4);border-radius:10px;padding:14px 18px;font-size:10px;color:#94a3b8;z-index:8888;max-width:700px;max-height:300px;overflow-y:auto;line-height:1.7;"></div>
+<button onclick="var p=document.getElementById('diagPanel');p.style.display=p.style.display==='none'?'block':'none'" style="position:fixed;bottom:16px;right:16px;background:rgba(37,99,235,.3);border:1px solid rgba(37,99,235,.5);color:#60a5fa;font-size:10px;padding:5px 12px;border-radius:20px;cursor:pointer;z-index:8889;font-family:Inter,sans-serif;">🔍 Debug CSV</button>
+
+<!-- SIDEBAR -->
+<nav id="sb">
+  <div class="sb-logo">
+    <img src="https://i.ibb.co/PGVzcVdL/download-removebg-preview.png" alt="Cafam">
+    <div class="sb-brand">CAFAM<span>DOMICILIOS</span></div>
+  </div>
+  <div class="sb-lbl">Módulos</div>
+  <button class="nav-it active" onclick="go('resumen',this)"><i class="fas fa-chart-pie"></i>Resumen General</button>
+  <button class="nav-it" onclick="go('novedades',this)"><i class="fas fa-triangle-exclamation"></i>Novedades Gestión</button>
+  <button class="nav-it" onclick="go('cantidad',this)"><i class="fas fa-box"></i>Cantidad Entregas</button>
+  <button class="nav-it" onclick="go('percapita',this)"><i class="fas fa-coins"></i>Per Cápita</button>
+  <button class="nav-it" onclick="go('tiempos',this)"><i class="fas fa-clock"></i>Tiempos</button>
+  <button class="nav-it" onclick="go('ventas',this)"><i class="fas fa-dollar-sign"></i>Ventas</button>
+  <button class="nav-it" onclick="go('novcancel',this)"><i class="fas fa-ban"></i>Nov. Cancelación</button>
+  <div class="sb-ft">
+    <img src="https://i.ibb.co/KjmjjvNZ/Captura-de-pantalla-2025-09-15-161315.jpg" alt="Quick" onerror="this.style.display='none'">
+    <span>Powered by Quick Analytics</span>
+  </div>
+</nav>
+
+<!-- HEADER -->
+<header id="hdr">
+  <div class="hdr-title">CAFAM <span>DOMICILIOS</span></div>
+  <div class="hdr-search">
+    <i class="fas fa-search"></i>
+    <input type="text" id="gSearch" placeholder="Buscar drogería, ciudad, mes...">
+  </div>
+  <div class="hdr-r">
+    <div class="online-dot">EN VIVO</div>
+    <div class="hdr-dt"><div class="d" id="cDate">—</div><div id="cTime" style="color:var(--cy2);font-weight:700">—</div></div>
+    <div class="ic-btn" onclick="refreshAll()" title="Actualizar"><i class="fas fa-rotate"></i></div>
+    <div class="ic-btn"><i class="fas fa-bell"></i></div>
+    <div class="ava">CF</div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main id="main">
+<div class="ca">
+
+<!-- ══════════════════════════════════════════
+     RESUMEN GENERAL
+══════════════════════════════════════════ -->
+<div class="sec active" id="sec-resumen">
+  <div class="sh">
+    <div class="sh-left"><h2>Resumen <span>General de Operación</span></h2><p id="resumenUpdate">Cargando...</p></div>
+    <div class="sh-right">
+      <select class="fc" id="rfCiudad" onchange="renderResumen()" style="min-width:130px"><option value="">Todas las ciudades</option></select>
+      <select class="fc" id="rfDrog" onchange="renderResumen()" style="min-width:160px"><option value="">Todas las droguerías</option></select>
+      <button class="fbtn fbtn-pdf" onclick="exportPDF('resumen')"><i class="fas fa-file-pdf"></i> PDF</button>
+    </div>
+  </div>
+  <div class="kgrid" id="resKPIs"></div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-trophy"></i> Top Droguerías — Entregas</div><div class="cc-sub">Puntos con mayor rendimiento operativo</div><canvas id="cTopDrog" height="160"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-map-marker-alt"></i> Rendimiento por Ciudad</div><div class="cc-sub">Distribución de indicadores clave</div><canvas id="cCiudadRes" height="160"></canvas></div>
+  </div>
+  <div id="resAnalysis"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     NOVEDADES GESTIÓN
+══════════════════════════════════════════ -->
+<div class="sec" id="sec-novedades">
+  <div class="sh">
+    <div class="sh-left"><h2>Novedades <span>Gestión</span></h2><p>Análisis de incidencias operativas por período</p></div>
+    <div class="sh-right">
+      <button class="fbtn fbtn-exp" onclick="exportCSVSheet('novedades')"><i class="fas fa-file-csv"></i> CSV</button>
+      <button class="fbtn fbtn-pdf" onclick="exportPDF('novedades')"><i class="fas fa-file-pdf"></i> PDF</button>
+    </div>
+  </div>
+  <div class="fbar">
+    <div class="fbar-row">
+      <div class="fg"><label class="flbl">Mes</label><select class="fc" id="nfMes" onchange="renderNovedades()"><option value="">Todos</option></select></div>
+      <div class="fg"><label class="flbl">Ciudad</label><select class="fc" id="nfCiudad" onchange="renderNovedades()"><option value="">Todas</option></select></div>
+      <div class="fg"><label class="flbl">Drogería</label><select class="fc" id="nfDrog" onchange="renderNovedades()"><option value="">Todas</option></select></div>
+      <div class="fg"><label class="flbl">Tipo Novedad</label><select class="fc" id="nfTipo" onchange="renderNovedades()"><option value="">Todos</option></select></div>
+      <button class="fbtn fbtn-s" style="align-self:flex-end" onclick="clearF(['nfMes','nfCiudad','nfDrog','nfTipo'],renderNovedades)"><i class="fas fa-xmark"></i> Limpiar</button>
+    </div>
+  </div>
+  <div class="kgrid" id="novKPIs"></div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-chart-bar"></i> Novedades por Tipo</div><div class="cc-sub">Clasificación y cantidad total</div><canvas id="cNovTipo" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-chart-line"></i> Tendencia — Día de la Semana</div><div class="cc-sub">¿Qué día ocurren más novedades?</div><canvas id="cNovDia" height="180"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-hospital"></i> Novedades por Drogería</div><div class="cc-sub">Top 10 puntos con más incidencias</div><canvas id="cNovDrog" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-calendar"></i> Novedades por Mes</div><div class="cc-sub">Evolución mensual</div><canvas id="cNovMes" height="180"></canvas></div>
+  </div>
+  <div id="novAnalysis"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     CANTIDAD ENTREGAS
+══════════════════════════════════════════ -->
+<div class="sec" id="sec-cantidad">
+  <div class="sh">
+    <div class="sh-left"><h2>Cantidad de <span>Entregas</span></h2><p>Análisis operativo de domicilios y transferencias</p></div>
+    <div class="sh-right">
+      <button class="fbtn fbtn-exp" onclick="exportCSVSheet('cantidad')"><i class="fas fa-file-csv"></i> CSV</button>
+      <button class="fbtn fbtn-pdf" onclick="exportPDF('cantidad')"><i class="fas fa-file-pdf"></i> PDF</button>
+    </div>
+  </div>
+  <div class="fbar">
+    <div class="fbar-row">
+      <div class="fg"><label class="flbl">Mes</label><select class="fc" id="cfMes" onchange="renderCantidad()"><option value="">Todos</option></select></div>
+      <div class="fg"><label class="flbl">Ciudad</label><select class="fc" id="cfCiudad" onchange="renderCantidad()"><option value="">Todas</option></select></div>
+      <div class="fg"><label class="flbl">Drogería</label><select class="fc" id="cfDrog" onchange="renderCantidad()"><option value="">Todas</option></select></div>
+      <div class="fg"><label class="flbl">Tipo Gestión</label><select class="fc" id="cfTipo" onchange="renderCantidad()"><option value="">Todos</option></select></div>
+      <div class="fg"><label class="flbl">Tipo Mensajero</label><select class="fc" id="cfTipoM" onchange="renderCantidad()"><option value="">Todos</option></select></div>
+      <button class="fbtn fbtn-s" style="align-self:flex-end" onclick="clearF(['cfMes','cfCiudad','cfDrog','cfTipo','cfTipoM'],renderCantidad)"><i class="fas fa-xmark"></i> Limpiar</button>
+    </div>
+  </div>
+  <div class="kgrid" id="canKPIs"></div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-chart-bar"></i> Entregas por Mes</div><div class="cc-sub">Efectivas vs Canceladas</div><canvas id="cCanMes" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-chart-line"></i> Día de Semana con más Entregas</div><div class="cc-sub">Tendencia semanal</div><canvas id="cCanDia" height="180"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-hospital"></i> Top Droguerías — Entregas</div><div class="cc-sub">Mayor vs menor volumen</div><canvas id="cCanDrog" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-motorcycle"></i> Domicilios vs Transferencias</div><div class="cc-sub">Por tipo de gestión</div><canvas id="cCanTipo" height="180"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-map-marker-alt"></i> Entregas por Ciudad</div><div class="cc-sub">Distribución geográfica</div><canvas id="cCanCiud" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-users"></i> Por Tipo de Mensajero</div><div class="cc-sub">Planta fija vs Colaborativo</div><canvas id="cCanMensT" height="180"></canvas></div>
+  </div>
+  <div id="canAnalysis"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PER CÁPITA
+══════════════════════════════════════════ -->
+<div class="sec" id="sec-percapita">
+  <div class="sh">
+    <div class="sh-left"><h2>Per <span>Cápita</span></h2><p>Análisis de costo operativo por entrega</p></div>
+    <div class="sh-right">
+      <button class="fbtn fbtn-exp" onclick="exportCSVSheet('percapita')"><i class="fas fa-file-csv"></i> CSV</button>
+      <button class="fbtn fbtn-pdf" onclick="exportPDF('percapita')"><i class="fas fa-file-pdf"></i> PDF</button>
+    </div>
+  </div>
+  <div class="fbar">
+    <div class="fbar-row">
+      <div class="fg"><label class="flbl">Mes</label><select class="fc" id="pfMes" onchange="renderPercapita()"><option value="">Todos</option></select></div>
+      <div class="fg"><label class="flbl">Ciudad</label><select class="fc" id="pfCiudad" onchange="renderPercapita()"><option value="">Todas</option></select></div>
+      <div class="fg"><label class="flbl">Drogería</label><select class="fc" id="pfDrog" onchange="renderPercapita()"><option value="">Todas</option></select></div>
+      <button class="fbtn fbtn-s" style="align-self:flex-end" onclick="clearF(['pfMes','pfCiudad','pfDrog'],renderPercapita)"><i class="fas fa-xmark"></i> Limpiar</button>
+    </div>
+    <div class="active-tags" id="pfActiveTags"></div>
+  </div>
+  <div class="kgrid" id="pcKPIs"></div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-chart-bar"></i> Per Cápita por Mes</div><div class="cc-sub">Evolución del costo por entrega</div><canvas id="cPcMes" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-trophy"></i> Top 5 Puntos — Per Cápita Más Alto</div><div class="cc-sub">Puntos con mayor costo operativo</div><canvas id="cPcTop" height="180"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-hospital"></i> Per Cápita por Drogería</div><div class="cc-sub">Ranking de puntos por costo promedio</div><canvas id="cPcDrog" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-map-marker-alt"></i> Costo Total por Ciudad</div><div class="cc-sub">Distribución del costo operativo</div><canvas id="cPcCiudad" height="180"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-users"></i> Planta Fija vs Colaborativo</div><div class="cc-sub">Per cápita y costo por tipo de mensajero</div><canvas id="cPcTipoM" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-chart-line"></i> Entregas por Tipo de Gestión</div><div class="cc-sub">Domicilios vs Transferencias</div><canvas id="cPcGestion" height="180"></canvas></div>
+  </div>
+  <div id="pcAnalysis"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TIEMPOS
+══════════════════════════════════════════ -->
+<div class="sec" id="sec-tiempos">
+  <div class="sh">
+    <div class="sh-left"><h2>Análisis de <span>Tiempos</span></h2><p>Tiempo promedio de entrega por punto, ciudad y tipo</p></div>
+    <div class="sh-right">
+      <button class="fbtn fbtn-exp" onclick="exportCSVSheet('tiempos')"><i class="fas fa-file-csv"></i> CSV</button>
+      <button class="fbtn fbtn-pdf" onclick="exportPDF('tiempos')"><i class="fas fa-file-pdf"></i> PDF</button>
+    </div>
+  </div>
+  <div class="fbar">
+    <div class="fbar-row">
+      <div class="fg"><label class="flbl">Mes</label><select class="fc" id="tfMes" onchange="renderTiempos()"><option value="">Todos</option></select></div>
+      <div class="fg"><label class="flbl">Ciudad</label><select class="fc" id="tfCiudad" onchange="renderTiempos()"><option value="">Todas</option></select></div>
+      <div class="fg"><label class="flbl">Drogería</label><select class="fc" id="tfDrog" onchange="renderTiempos()"><option value="">Todas</option></select></div>
+      <div class="fg"><label class="flbl">Tipo Mensajero</label><select class="fc" id="tfTipoM" onchange="renderTiempos()"><option value="">Todos</option></select></div>
+      <button class="fbtn fbtn-s" style="align-self:flex-end" onclick="clearF(['tfMes','tfCiudad','tfDrog','tfTipoM'],renderTiempos)"><i class="fas fa-xmark"></i> Limpiar</button>
+    </div>
+    <div class="active-tags" id="tfActiveTags"></div>
+  </div>
+  <div class="kgrid" id="tiKPIs"></div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-chart-bar"></i> Tiempo Promedio por Mes</div><div class="cc-sub">Solo domicilios (excl. transferencias)</div><canvas id="cTiMes" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-trophy"></i> Top 5 — Mayor Tiempo Promedio</div><div class="cc-sub">Puntos críticos de demora</div><canvas id="cTiTop" height="180"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-hospital"></i> Tiempo por Drogería</div><div class="cc-sub">Ranking general de puntos</div><canvas id="cTiDrog" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-users"></i> Planta Fija vs Colaborativo</div><div class="cc-sub">Comparativa tiempos por tipo mensajero</div><canvas id="cTiTipoM" height="180"></canvas></div>
+  </div>
+  <div id="tiAnalysis"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     VENTAS
+══════════════════════════════════════════ -->
+<div class="sec" id="sec-ventas">
+  <div class="sh">
+    <div class="sh-left"><h2>Análisis de <span>Ventas</span></h2><p>Valor de venta efectiva, perdida y por tipo de gestión</p></div>
+    <div class="sh-right">
+      <button class="fbtn fbtn-exp" onclick="exportCSVSheet('ventas')"><i class="fas fa-file-csv"></i> CSV</button>
+      <button class="fbtn fbtn-pdf" onclick="exportPDF('ventas')"><i class="fas fa-file-pdf"></i> PDF</button>
+    </div>
+  </div>
+  <div class="fbar">
+    <div class="fbar-row">
+      <div class="fg"><label class="flbl">Mes</label><select class="fc" id="vfMes" onchange="renderVentas()"><option value="">Todos</option></select></div>
+      <div class="fg"><label class="flbl">Ciudad</label><select class="fc" id="vfCiudad" onchange="renderVentas()"><option value="">Todas</option></select></div>
+      <div class="fg"><label class="flbl">Drogería</label><select class="fc" id="vfDrog" onchange="renderVentas()"><option value="">Todas</option></select></div>
+      <button class="fbtn fbtn-s" style="align-self:flex-end" onclick="clearF(['vfMes','vfCiudad','vfDrog'],renderVentas)"><i class="fas fa-xmark"></i> Limpiar</button>
+    </div>
+    <div class="active-tags" id="vfActiveTags"></div>
+  </div>
+  <div class="kgrid" id="venKPIs"></div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-chart-line"></i> Valor de Venta por Mes</div><div class="cc-sub">Efectivos vs Perdidos</div><canvas id="cVenMes" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-chart-bar"></i> Día de Semana con más Ventas</div><div class="cc-sub">Tendencia semanal</div><canvas id="cVenDia" height="180"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-hospital"></i> Venta por Drogería</div><div class="cc-sub">Top puntos por valor</div><canvas id="cVenDrog" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-motorcycle"></i> Domicilios vs Transferencias</div><div class="cc-sub">Valor por tipo de gestión</div><canvas id="cVenTipo" height="180"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-map-marker-alt"></i> Venta por Ciudad</div><div class="cc-sub">Distribución geográfica del valor</div><canvas id="cVenCiud" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-exclamation-triangle"></i> Pérdidas por Drogería</div><div class="cc-sub">Puntos con mayor valor cancelado</div><canvas id="cVenPerd" height="180"></canvas></div>
+  </div>
+  <div id="venAnalysis"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     NOVEDADES CANCELACIÓN
+══════════════════════════════════════════ -->
+<div class="sec" id="sec-novcancel">
+  <div class="sh">
+    <div class="sh-left"><h2>Novedades de <span>Cancelación</span></h2><p>Análisis de cancelaciones operativas por responsabilidad</p></div>
+    <div class="sh-right">
+      <button class="fbtn fbtn-exp" onclick="exportCSVSheet('novcancel')"><i class="fas fa-file-csv"></i> CSV</button>
+      <button class="fbtn fbtn-pdf" onclick="exportPDF('novcancel')"><i class="fas fa-file-pdf"></i> PDF</button>
+    </div>
+  </div>
+  <div class="fbar">
+    <div class="fbar-row">
+      <div class="fg"><label class="flbl">Mes</label><select class="fc" id="ncfMes" onchange="renderNovCancel()"><option value="">Todos</option></select></div>
+      <div class="fg"><label class="flbl">Ciudad</label><select class="fc" id="ncfCiudad" onchange="renderNovCancel()"><option value="">Todas</option></select></div>
+      <div class="fg"><label class="flbl">Drogería</label><select class="fc" id="ncfDrog" onchange="renderNovCancel()"><option value="">Todas</option></select></div>
+      <button class="fbtn fbtn-s" style="align-self:flex-end" onclick="clearF(['ncfMes','ncfCiudad','ncfDrog'],renderNovCancel)"><i class="fas fa-xmark"></i> Limpiar</button>
+    </div>
+  </div>
+  <div class="kgrid" id="ncKPIs"></div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-chart-bar"></i> Novedades por Tipo</div><div class="cc-sub">Todos los tipos registrados</div><canvas id="cNcTipo" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-users"></i> Planta Fija vs Colaborativo</div><div class="cc-sub">Cantidad por tipo de mensajero</div><canvas id="cNcTipoM" height="180"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-calendar"></i> Novedades por Mes</div><div class="cc-sub">Evolución mensual</div><canvas id="cNcMes" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-hospital"></i> Por Drogería</div><div class="cc-sub">Puntos con mayor incidencia</div><canvas id="cNcDrog" height="180"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-pie-chart"></i> Responsabilidad Quick vs Cafam</div><div class="cc-sub">% de responsabilidad por novedad</div><canvas id="cNcResp" height="180"></canvas></div>
+    <div class="cc"><div class="cc-ttl"><i class="fas fa-map-marker-alt"></i> Por Ciudad</div><div class="cc-sub">Distribución geográfica</div><canvas id="cNcCiud" height="180"></canvas></div>
+  </div>
+  <div id="ncAnalysis"></div>
+</div>
+
+</div><!-- /ca -->
+</main>
+
+<div class="toast-wrap" id="tw"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// GLOBAL DATA STORE
+// ═══════════════════════════════════════════════
+const CSV={
+  base:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQNfxBykrkeBy4J4jvi2-nDNkMfDMbm-jbwgmBz9FjNUIBQGk257yuU1PH_QmXi0rV0AervZoNyJ9XO/pub?gid=1510401293&single=true&output=csv',
+  novedades:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQNfxBykrkeBy4J4jvi2-nDNkMfDMbm-jbwgmBz9FjNUIBQGk257yuU1PH_QmXi0rV0AervZoNyJ9XO/pub?gid=1091468477&single=true&output=csv',
+  cantidad:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQNfxBykrkeBy4J4jvi2-nDNkMfDMbm-jbwgmBz9FjNUIBQGk257yuU1PH_QmXi0rV0AervZoNyJ9XO/pub?gid=0&single=true&output=csv',
+  percapita:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQNfxBykrkeBy4J4jvi2-nDNkMfDMbm-jbwgmBz9FjNUIBQGk257yuU1PH_QmXi0rV0AervZoNyJ9XO/pub?gid=276501764&single=true&output=csv',
+  tiempos:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQNfxBykrkeBy4J4jvi2-nDNkMfDMbm-jbwgmBz9FjNUIBQGk257yuU1PH_QmXi0rV0AervZoNyJ9XO/pub?gid=1183579745&single=true&output=csv',
+  ventas:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQNfxBykrkeBy4J4jvi2-nDNkMfDMbm-jbwgmBz9FjNUIBQGk257yuU1PH_QmXi0rV0AervZoNyJ9XO/pub?gid=41915920&single=true&output=csv',
+  novcancel:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQNfxBykrkeBy4J4jvi2-nDNkMfDMbm-jbwgmBz9FjNUIBQGk257yuU1PH_QmXi0rV0AervZoNyJ9XO/pub?gid=1615312577&single=true&output=csv'
+};
+let D={base:[],novedades:[],cantidad:[],percapita:[],tiempos:[],ventas:[],novcancel:[]};
+let CHARTS={};
+const DIAS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const COLS=['#2563eb','#06b6d4','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899','#14b8a6','#f97316','#a855f7','#84cc16','#0ea5e9'];
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+function gv(id){const e=document.getElementById(id);return e?e.value.trim().toLowerCase():'';}
+function num(v){if(v===null || v===undefined) return 0;return Number(String(v).replace(/\$/g,'').replace(/\s/g,'').replace(/\./g,'').replace(/,/g,'.')) || 0;}
+function cop(v){
+  var n=v||0;
+  if(isNaN(n)) return '$0';
+  try{
+    return new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0}).format(n);
+  }catch(e){
+    return '$'+Math.round(n).toLocaleString('es-CO');
+  }
+}
+function pct(a,b){return b?((a/b)*100).toFixed(1)+'%':'—';}
+function fld(row){var keys=Array.prototype.slice.call(arguments,1);for(var ki=0;ki<keys.length;ki++){var k=keys[ki];var v=row[k];if(v!==undefined&&v!==null&&String(v).trim()!=='')return String(v).trim();}return '';}
+function sum(arr,fn){if(!arr||!arr.length)return 0;return arr.reduce(function(s,r){return s+(fn(r)||0);},0);}
+function groupBy(arr,fn){const m={};arr.forEach(r=>{const k=fn(r)||'N/D';m[k]=(m[k]||[]); m[k].push(r);});return m;}
+function sumGroup(arr,keyFn,valFn){var m={};if(!arr||!arr.length)return m;arr.forEach(function(r){var k=keyFn(r)||'N/D';m[k]=(m[k]||0)+(valFn(r)||0);});return m;}
+function sortObj(obj,desc){if(desc===undefined)desc=true;return Object.entries(obj).sort(function(a,b){return desc?b[1]-a[1]:a[1]-b[1];});}
+function topN(obj,n,desc){if(desc===undefined)desc=true;return sortObj(obj,desc).slice(0,n);}
+function parseDate(s){if(!s)return null;const p=String(s).split(/[\/\-]/);if(p.length===3){const[a,b,c]=p;const yr=a.length===4?parseInt(a):parseInt(c),mo=a.length===4?parseInt(b)-1:parseInt(b)-1,dy=a.length===4?parseInt(c):parseInt(a);const d=new Date(yr,mo,dy);return isNaN(d)?null:d;}return null;}
+function clearF(ids,fn){ids.forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});fn();}
+function toast(msg,type='info'){const c={'info':'#3b82f6','success':'#10b981','error':'#ef4444','warn':'#f59e0b'};const ico={'info':'circle-info','success':'circle-check','error':'circle-xmark','warn':'triangle-exclamation'};const el=document.createElement('div');el.className='toast';el.innerHTML=`<i class="fas fa-${ico[type]}" style="color:${c[type]}"></i><span>${msg}</span>`;document.getElementById('tw').appendChild(el);setTimeout(()=>el.remove(),3500);}
+function kpiCard(ico,lbl,val,trend,dir,color){return`<div class="kc"><div class="kc-bg"><i class="${ico}"></i></div><div class="kc-ico" style="background:${color}22;color:${color}"><i class="${ico}"></i></div><div class="kc-val">${val}</div><div class="kc-lbl">${lbl}</div><div class="kc-tr ${dir}"><i class="fas fa-${dir==='up'?'arrow-trend-up':dir==='dn'?'arrow-trend-down':'minus'}"></i>${trend}</div></div>`;}
+function destroyC(id){if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}}
+function grad(ctx,c1,c2){const g=ctx.createLinearGradient(0,0,0,400);g.addColorStop(0,c1);g.addColorStop(1,c2);return g;}
+function makeChart(id,type,labels,datasets,opts){
+  destroyC(id);
+  var canvas=document.getElementById(id);
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var isPie=(type==='pie'||type==='doughnut');
+  var scales=isPie?{}:{
+    x:{ticks:{color:'#64748b',font:{size:9},maxRotation:35},grid:{color:'rgba(255,255,255,.04)'}},
+    y:{ticks:{color:'#64748b',font:{size:9}},grid:{color:'rgba(255,255,255,.04)'}}
+  };
+  var config={
+    type:type,
+    data:{labels:labels,datasets:datasets},
+    options:{
+      responsive:true,
+      maintainAspectRatio:true,
+      plugins:{
+        legend:{display:true,labels:{color:'#94a3b8',font:{size:10},boxWidth:10}},
+        tooltip:{mode:'index'}
+      },
+      scales:scales
+    }
+  };
+  if(isPie){
+    config.options.layout={padding:10};
+    canvas.style.maxHeight='220px';
+  }
+  CHARTS[id]=new Chart(ctx,config);
+  return CHARTS[id];
+}
+function barDS(label,data,color,stack){var ds={label:label,data:data,backgroundColor:color+'bb',borderColor:color,borderWidth:1.5,borderRadius:4};if(stack)ds.stack=stack;return ds;}
+function lineDS(label,data,color,fill){var f=(fill===undefined)?false:fill;return{label:label,data:data,borderColor:color,backgroundColor:color+'22',borderWidth:2.5,fill:f,tension:.4,pointBackgroundColor:color,pointRadius:3};}
+
+function fillSelect(id,values,currentVal){
+  var el=document.getElementById(id);
+  if(!el) return;
+  var cur=currentVal||el.value||'';
+  var seen={};
+  var sorted=values.filter(function(v){
+    if(!v||seen[v]) return false;
+    seen[v]=true; return true;
+  }).sort();
+  var first=el.options[0];
+  el.innerHTML='';
+  el.appendChild(first);
+  sorted.forEach(function(v){
+    var o=document.createElement('option');
+    o.value=v; o.textContent=v;
+    el.appendChild(o);
+  });
+  if(cur) el.value=cur;
+}
+
+// ═══════════════════════════════════════════════
+// MONTH SORT — Ordena meses en orden calendario
+// ═══════════════════════════════════════════════
+var MES_ORDER=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC',
+               'ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE',
+               'JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+function mesIdx(m){
+  if(!m) return 99;
+  var u=String(m).toUpperCase().trim();
+  // Try 3-letter prefix match first
+  for(var i=0;i<12;i++){
+    if(u===MES_ORDER[i]||u===MES_ORDER[i+12]||u.indexOf(MES_ORDER[i])===0) return i;
+  }
+  // Fallback: numeric if month is like "01","02"...
+  var n=parseInt(u);
+  if(!isNaN(n)&&n>=1&&n<=12) return n-1;
+  return 99;
+}
+function sortMeses(keys){
+  return keys.slice().sort(function(a,b){return mesIdx(a)-mesIdx(b);});
+}
+
+// ═══════════════════════════════════════════════
+// ACTIVE FILTER TAGS — Muestra filtros activos
+// ═══════════════════════════════════════════════
+function showActiveTags(containerId, filterIds, filterLabels){
+  var el=document.getElementById(containerId);
+  if(!el) return;
+  var html='';
+  filterIds.forEach(function(id,i){
+    var val=gv(id);
+    if(val){
+      html+='<span class="atag">'+filterLabels[i]+': '+val+
+        '<span class="atag-x" onclick="document.getElementById(\''+id+'\').value=\'\';this.closest(\'.sec.active\').querySelector(\'[onclick*=render]\') && eval(this.closest(\'.sec.active\').id.replace(\'sec-\',\'render\')+\'()\')"> ✕</span></span>';
+    }
+  });
+  el.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════════════
+function clock(){const n=new Date();document.getElementById('cDate').textContent=n.toLocaleDateString('es-CO',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).toUpperCase();document.getElementById('cTime').textContent=n.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});}
+setInterval(clock,1000);clock();
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+function go(name,btn){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-it').forEach(b=>b.classList.remove('active'));
+  const s=document.getElementById('sec-'+name);if(s)s.classList.add('active');
+  if(btn)btn.classList.add('active');
+  const renders={resumen:renderResumen,novedades:renderNovedades,cantidad:renderCantidad,percapita:renderPercapita,tiempos:renderTiempos,ventas:renderVentas,novcancel:renderNovCancel};
+  if(renders[name])renders[name]();
+}
+
+// ═══════════════════════════════════════════════
+// CSV FETCH
+// ═══════════════════════════════════════════════
+function fetchCSV(url, key) {
+  return new Promise(function(resolve) {
+    var done = false;
+    var timer = setTimeout(function() {
+      if (!done) { done = true; console.warn('[CAFAM] TIMEOUT:', key); D[key] = []; resolve([]); }
+    }, 12000);
+
+    function finish(data) {
+      if (!done) {
+        done = true; clearTimeout(timer);
+        D[key] = data || [];
+        console.log('[CAFAM] Loaded "' + key + '": ' + D[key].length + ' rows');
+        if (D[key].length > 0) console.log('[CAFAM] Cols "' + key + '":', Object.keys(D[key][0]));
+        resolve(D[key]);
+      }
+    }
+
+    function parseCSV(text) {
+      text = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      var firstLine = text.split('\n')[0] || '';
+      var delim = (firstLine.indexOf('\t') !== -1) ? '\t' : ',';
+      var result = Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        delimiter: delim,
+        transformHeader: function(h) {
+          // Keep original AND normalized version as key
+          return h.trim();
+        },
+        transform: function(v) { return (v||'').trim(); }
+      });
+      var data = result.data || [];
+      // Add _idx map: normalized header (no accents, uppercase) -> original key
+      // This allows fuzzy column lookup
+      if(data.length>0){
+        var origKeys = Object.keys(data[0]);
+        data._colMap = {};
+        origKeys.forEach(function(k){
+          // Normalize: uppercase, remove accents
+          var norm = k.toUpperCase()
+            .replace(/[ÁÀÂÄ]/g,'A').replace(/[ÉÈÊË]/g,'E')
+            .replace(/[ÍÌÎÏ]/g,'I').replace(/[ÓÒÔÖ]/g,'O')
+            .replace(/[ÚÙÛÜ]/g,'U').replace(/[Ñ]/g,'N')
+            .replace(/\s+/g,' ').trim();
+          data._colMap[norm] = k;
+        });
+        // Store colMap on each row for access
+        data.forEach(function(r){ r.__colMap = data._colMap; });
+      }
+      return data;
+    }
+    
+
+    // getField and getNum are defined globally
+
+
+    function tryDirect() {
+      fetch(url, { method: 'GET', mode: 'cors', credentials: 'omit' })
+        .then(function(r) { return r.text(); })
+        .then(function(t) { var d = parseCSV(t); if (d.length > 0) finish(d); else tryProxy1(); })
+        .catch(function() { tryProxy1(); });
+    }
+
+    function tryProxy1() {
+      fetch('https://corsproxy.io/?' + encodeURIComponent(url), { credentials: 'omit' })
+        .then(function(r) { return r.text(); })
+        .then(function(t) { var d = parseCSV(t); if (d.length > 0) finish(d); else tryProxy2(); })
+        .catch(function() { tryProxy2(); });
+    }
+
+    function tryProxy2() {
+      fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url), { credentials: 'omit' })
+        .then(function(r) { return r.text(); })
+        .then(function(t) { var d = parseCSV(t); if (d.length > 0) finish(d); else tryProxy3(); })
+        .catch(function() { tryProxy3(); });
+    }
+
+    function tryProxy3() {
+      fetch('https://thingproxy.freeboard.io/fetch/' + url, { credentials: 'omit' })
+        .then(function(r) { return r.text(); })
+        .then(function(t) { var d = parseCSV(t); finish(d); })
+        .catch(function() {
+          Papa.parse(url, {
+            download: true, header: true, skipEmptyLines: true,
+            delimiter: '',
+            transformHeader: function(h) { return h.trim(); },
+            transform: function(v) { return v.trim(); },
+            complete: function(r) { finish(r.data || []); },
+            error: function() { finish([]); }
+          });
+        });
+    }
+
+    tryDirect();
+  });
+}
+
+// ═══════════════════════════════════════════════
+// FIELD DETECTION — Auto-detects column names
+// ═══════════════════════════════════════════════
+function detect(rows){var candidates=Array.prototype.slice.call(arguments,1);if(!rows||!rows.length)return '';var keys=Object.keys(rows[0]);for(var ci=0;ci<candidates.length;ci++){var c=candidates[ci];var m=keys.find(function(k){return k.toLowerCase().indexOf(c.toLowerCase())!==-1;});if(m)return m;}return '';}
+function dFld(rows){var cands=Array.prototype.slice.call(arguments,1);var k=detect.apply(null,[rows].concat(cands));return function(r){return k?fld(r,k):'';}}
+
+// Key field accessors built after data loads
+let A={};
+// ── GLOBAL FUZZY COLUMN HELPERS ────────────────────────────
+function getField(r, normalizedName) {
+  if(!r) return '';
+  // 1. Direct access
+  var v = r[normalizedName];
+  if(v!==undefined&&v!==null) return String(v).trim();
+  // 2. Via stored colMap (set during parseCSV)
+  if(r.__colMap && r.__colMap[normalizedName]) {
+    v = r[r.__colMap[normalizedName]];
+    if(v!==undefined&&v!==null) return String(v).trim();
+  }
+  // 3. Fuzzy: normalize both sides and compare
+  var normInput = normalizedName.toUpperCase()
+    .replace(/[Áá]/g,'A').replace(/[Éé]/g,'E')
+    .replace(/[Íí]/g,'I').replace(/[Óó]/g,'O')
+    .replace(/[Úú]/g,'U').replace(/[Ññ]/g,'N')
+    .trim();
+  var keys = Object.keys(r).filter(function(k){return k!=='__colMap';});
+  var found = null;
+  for(var ki=0;ki<keys.length;ki++){
+    var key=keys[ki];
+    var kn=key.toUpperCase()
+      .replace(/[Áá]/g,'A').replace(/[Éé]/g,'E')
+      .replace(/[Íí]/g,'I').replace(/[Óó]/g,'O')
+      .replace(/[Úú]/g,'U').replace(/[Ññ]/g,'N')
+      .trim();
+    if(kn===normInput){found=key;break;}
+  }
+  if(!found){
+    // Partial match: normInput is contained in key or vice versa
+    for(var ki2=0;ki2<keys.length;ki2++){
+      var key2=keys[ki2];
+      var kn2=key2.toUpperCase()
+        .replace(/[Áá]/g,'A').replace(/[Éé]/g,'E')
+        .replace(/[Íí]/g,'I').replace(/[Óó]/g,'O')
+        .replace(/[Úú]/g,'U').replace(/[Ññ]/g,'N')
+        .trim();
+      if(kn2.indexOf(normInput)!==-1||normInput.indexOf(kn2)!==-1){found=key2;break;}
+    }
+  }
+  return found ? String(r[found]||'').trim() : '';
+}
+
+function getNum(r, normalizedName) {
+  var v = getField(r, normalizedName);
+  return parseColNum(v);
+}
+function parseColNum(v) {
+  if(!v||v==='') return 0;
+  var s = String(v).trim();
+  // Skip time format HH:MM:SS
+  if(/^\d{1,2}:\d{2}(:\d{2})?$/.test(s)) return 0;
+  // Remove currency symbols
+  s = s.replace(/[$]/g,'').trim();
+  if(s===''||s==='-') return 0;
+
+  var dotCount   = (s.match(/\./g)||[]).length;
+  var commaCount = (s.match(/,/g)||[]).length;
+  var n;
+
+  if(dotCount > 1) {
+    // 11.404.924 → dots are thousands separators (Colombian)
+    s = s.replace(/\./g,''); // remove all dots
+    s = s.replace(',','.');   // comma → decimal (if any)
+    n = parseFloat(s);
+
+  } else if(commaCount > 1) {
+    // 1,400,000.00 → commas are thousands separators (US)
+    s = s.replace(/,/g,'');
+    n = parseFloat(s);
+
+  } else if(dotCount === 1 && commaCount === 1) {
+    // Need to detect which is which:
+    var dotPos   = s.indexOf('.');
+    var commaPos = s.indexOf(',');
+    if(commaPos < dotPos) {
+      // 150,400.00 → comma=thousands, dot=decimal (US format)
+      s = s.replace(/,/g,'');
+      n = parseFloat(s);
+    } else {
+      // 1.234,56 → dot=thousands, comma=decimal (European/Colombian)
+      s = s.replace(/\./g,'').replace(',','.');
+      n = parseFloat(s);
+    }
+
+  } else if(dotCount === 0 && commaCount === 1) {
+    // 1234,56 → comma=decimal
+    s = s.replace(',','.');
+    n = parseFloat(s);
+
+  } else if(dotCount === 1 && commaCount === 0) {
+    // 19.200 (3 digits after dot) → thousands separator
+    var afterDot = s.split('.')[1]||'';
+    if(afterDot.length === 3) {
+      s = s.replace('.',''); // 19.200 → 19200
+    }
+    n = parseFloat(s);
+
+  } else {
+    n = parseFloat(s);
+  }
+  return isNaN(n) ? 0 : n;
+}
+
+function buildAccessors(){
+
+  // ── NOVEDADES GESTIÓN ──────────────────────────────────
+  A.nov={
+    mes:    function(r){return getField(r,'MES');},
+    ciudad: function(r){return getField(r,'CIUDAD');},
+    drog:   function(r){return getField(r,'DROGUERIA NOMBRE CORTO')||getField(r,'DROGUERIA');},
+    tipo:   function(r){return getField(r,'TIPO');},
+    modelo: function(r){return getField(r,'MODELO');},
+    fecha:  function(r){return getField(r,'fecha_cierre')||getField(r,'FECHA');},
+    horas:  function(r){return getNum(r,'HORAS DESCONTAR')||getNum(r,'HORAS');},
+    valor:  function(r){return getNum(r,'TOTAL A DESCONTAR')||getNum(r,'VALOR')||getNum(r,'TOTAL');}
+  };
+
+  // ── CANTIDAD ───────────────────────────────────────────
+  A.can={
+    mes:       function(r){return getField(r,'MES');},
+    ciudad:    function(r){return getField(r,'CIUDAD');},
+    drog:      function(r){return getField(r,'DROGUERIA NOMBRE CORTO')||getField(r,'DROGUERIA');},
+    tipo:      function(r){return getField(r,'TIPO GESTION')||getField(r,'TIPO GESTIÓN');},
+    tipoM:     function(r){return getField(r,'TIPO MENSAJERO');},
+    fecha:     function(r){return getField(r,'fecha_cierre')||getField(r,'FECHA');},
+    diaSemana: function(r){return getField(r,'SEMANA')||getField(r,'DIA')||getField(r,'DÍA');},
+    efectiva:  function(r){return getNum(r,'ENTREGADO');},
+    cancelada: function(r){return getNum(r,'CANCELACION')+getNum(r,'CONGELADO')+getNum(r,'REPROGRAMADO');},
+    total:     function(r){var t=getNum(r,'TOTAL');return t>0?t:A.can.efectiva(r)+A.can.cancelada(r);},
+    mensajeros:function(r){return getNum(r,'CANT MENSAJERO')||getNum(r,'MENSAJEROS');}
+  };
+
+  // ── PER CAPITA ─────────────────────────────────────────
+  // Cols exactas: TIPO|CIUDAD|MES|DROUERIA|GESTIÓN|CANT ENTREGAS|COSTO|PER CAPITA|DROGUERIA NOMBRE CORTO
+  // COSTO y PER CAPITA vienen como $19,200 → hay que limpiar $ y .
+  A.pc={
+    tipoM:    function(r){return getField(r,'TIPO');},
+    ciudad:   function(r){return getField(r,'CIUDAD');},
+    mes:      function(r){return getField(r,'MES');},
+    drog:     function(r){
+      // Prefer DROGUERIA NOMBRE CORTO (col I), fallback to DROUERIA (col D, typo)
+      return getField(r,'DROGUERIA NOMBRE CORTO')||getField(r,'DROUERIA')||getField(r,'DROGUERIA');
+    },
+    tipo:     function(r){return getField(r,'GESTION')||getField(r,'GESTIÓN');},
+    entregas: function(r){return getNum(r,'CANT ENTREGAS');},
+    costo:    function(r){ return parseColNum(getField(r,'COSTO')); },
+    percapita:function(r){
+      var pc=parseColNum(getField(r,'PER CAPITA'));
+      if(pc>0) return pc;
+      var co=A.pc.costo(r); var en=A.pc.entregas(r);
+      return (co>0&&en>0)?Math.round(co/en):0;
+    }
+  };
+
+  // ── TIEMPOS ────────────────────────────────────────────
+  // Cols exactas: fecha_cierre|MES|DÍA|SEMANA|CIUDAD|TIPO MENSJAERO|
+  //   DROGUERIA NOMBRE CORTO (col G)|TIPO GESTIÓN|CREACIÓN|LLEGADA|CIERRE|
+  //   TIEMPO RUTA|TIEMPO ENTREGA|TIEMPO TOTAL|DROGUERIA
+  A.ti={
+    mes:    function(r){return getField(r,'MES');},
+    ciudad: function(r){return getField(r,'CIUDAD');},
+    drog:   function(r){return getField(r,'DROGUERIA NOMBRE CORTO')||getField(r,'DROGUERIA');},
+    tipoM:  function(r){
+      // typo in sheet: MENSJAERO not MENSAJERO
+      return getField(r,'TIPO MENSJAERO')||getField(r,'TIPO MENSAJERO');
+    },
+    tipoG:  function(r){return getField(r,'TIPO GESTION')||getField(r,'TIPO GESTIÓN');},
+    semana: function(r){return getField(r,'SEMANA');},
+    fecha:  function(r){return getField(r,'fecha_cierre');},
+    // Parse HH:MM:SS → minutes (float)
+    _toMin: function(v){
+      if(!v||String(v).trim()==='')return 0;
+      var s=String(v).trim();
+      if(s.indexOf(':')!==-1){
+        var p=s.split(':');
+        return (parseInt(p[0])||0)*60+(parseInt(p[1])||0)+(parseInt(p[2]||0))/60;
+      }
+      var n=parseFloat(s.replace(/[^0-9.]/g,''));
+      return isNaN(n)?0:n;
+    },
+    // Format minutes → HH:MM (hora militar)
+    _minToHHMM:function(mins){
+      if(!mins||mins<=0)return '00:00';
+      var h=Math.floor(mins/60),m=Math.round(mins%60);
+      return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;
+    },
+    tiempoRuta:    function(r){return this._toMin(getField(r,'TIEMPO RUTA'));},
+    tiempoEntrega: function(r){return this._toMin(getField(r,'TIEMPO ENTREGA'));},
+    tiempoTotal:   function(r){
+      var v=getField(r,'TIEMPO TOTAL');
+      if(v&&v!=='')return this._toMin(v);
+      return this.tiempoRuta(r)+this.tiempoEntrega(r);
+    }
+  };
+
+  // ── VENTAS ─────────────────────────────────────────────
+  // Cols exactas: fecha_cierre|MES|DÍA|SEMANA|CIUDAD|DROGUERIA NOMBRE CORTO|
+  //   ESTADO|TIPO GESTIÓN|TOTAL VENTA|DROGUERIA
+  // Col G = ESTADO: "ENTREGADO" o "CANCELACION"
+  // Col I = TOTAL VENTA: $150,400.00 → limpiar $ y .
+  A.ven={
+    mes:    function(r){return getField(r,'MES');},
+    ciudad: function(r){return getField(r,'CIUDAD');},
+    drog:   function(r){return getField(r,'DROGUERIA NOMBRE CORTO')||getField(r,'DROGUERIA');},
+    tipo:   function(r){return getField(r,'TIPO GESTION')||getField(r,'TIPO GESTIÓN');},
+    semana: function(r){return getField(r,'SEMANA');},
+    fecha:  function(r){return getField(r,'fecha_cierre')||getField(r,'FECHA');},
+    // ESTADO = col G
+    estado: function(r){
+      var v=getField(r,'ESTADO');
+      if(v) return v;
+      // fallback by index: col G = index 6
+      var vals=Object.keys(r).filter(function(k){return k!=='__colMap';});
+      return String(r[vals[6]]||'').trim();
+    },
+    // TOTAL VENTA = col I — format: $150,400.00 (comma=thousands, dot=decimal)
+    valor: function(r){
+      var v=getField(r,'TOTAL VENTA');
+      if(v){
+        // $150,400.00 → remove $ → 150,400.00 → remove commas → 150400.00
+        var s=String(v).replace(/\$/g,'').replace(/,/g,'').trim();
+        var n=parseFloat(s);
+        if(!isNaN(n)&&n>0) return n;
+      }
+      // fallback: scan for $ column
+      var keys=Object.keys(r).filter(function(k){return k!=='__colMap';});
+      for(var i=0;i<keys.length;i++){
+        var raw=String(r[keys[i]]||'');
+        if(raw.indexOf('$')!==-1){
+          var n2=parseFloat(raw.replace(/\$/g,'').replace(/,/g,''));
+          if(!isNaN(n2)&&n2>=100) return n2;
+        }
+      }
+      return 0;
+    },
+    isEntregado: function(r){
+      var e=A.ven.estado(r).toUpperCase();
+      return e==='ENTREGADO'||e.indexOf('ENTREGAD')!==-1;
+    },
+    isCancelado: function(r){
+      var e=A.ven.estado(r).toUpperCase();
+      return e==='CANCELACION'||e.indexOf('CANCEL')!==-1;
+    },
+    efectivo:  function(r){return A.ven.isEntregado(r)?A.ven.valor(r):0;},
+    cancelado: function(r){return A.ven.isCancelado(r)?A.ven.valor(r):0;},
+    total:     function(r){return A.ven.valor(r);}
+  };
+
+  // ── NOVEDADES CANCELACIÓN ──────────────────────────────
+  var NC_TIPOS=[
+    'CANCELACION POR GUIA DUPLICADA','CANCELACION POR GUIA SIN COBERTURA',
+    'CANCELACION POR ZONA ROJA','CLIENTE CANCELA POR DEMORA EN LA ENTREGA',
+    'CLIENTE COMPRO POR OTRO CANAL','CLIENTE COMPRO PRODUCTO EN OTRA CADENA',
+    'CLIENTE NO CONTESTA','CLIENTE NO LO PUEDE ESPERAR',
+    'CLIENTE NO LO REQUIERE POR CAMBIO DE FORMULA MEDICA',
+    'CLIENTE NO TIENE DINERO PARA PAGAR','CLIENTE YA NO DESEA EL DOMICILIO',
+    'ERROR ASESOR','ERROR DE SISTEMAS','ERROR DEL CLIENTE EN SOLICITUD DE PRODUCTO',
+    'MEDICAMENTOS NO DISPONIBLES','NO SE ENCUENTRA EL USUARIO'
+  ];
+  var NC_QUICK=['CANCELACION POR GUIA DUPLICADA','CANCELACION POR GUIA SIN COBERTURA',
+    'CANCELACION POR ZONA ROJA','CLIENTE NO CONTESTA','NO SE ENCUENTRA EL USUARIO',
+    'ERROR ASESOR','ERROR DE SISTEMAS'];
+  A.nc={
+    mes:    function(r){return getField(r,'MES');},
+    semana: function(r){return getField(r,'SEMANA');},
+    ciudad: function(r){return getField(r,'CIUDAD');},
+    tipoM:  function(r){return getField(r,'TIPO MENSAJERO');},
+    drog:   function(r){return getField(r,'DROGUERIA NOMBRE CORTO')||getField(r,'DROGUERIA');},
+    tipo:   function(r){return getField(r,'TIPO GESTION')||getField(r,'TIPO GESTIÓN');},
+    TIPOS:  NC_TIPOS, QUICK_TIPOS: NC_QUICK,
+    tipoVal:function(r,tipo){return getNum(r,tipo);},
+    total:  function(r){
+      var t=getNum(r,'TOTAL'); if(t>0) return t;
+      var s=0; NC_TIPOS.forEach(function(t2){s+=getNum(r,t2);}); return s;
+    },
+    quick:  function(r){var s=0;NC_QUICK.forEach(function(t){s+=getNum(r,t);});return s;},
+    cafam:  function(r){return Math.max(0,A.nc.total(r)-A.nc.quick(r));}
+  };
+}
+
+// ═══════════════════════════════════════════════
+// FILTER HELPERS
+// ═══════════════════════════════════════════════
+function applyRowFilter(rows,acc,filters){
+  if(!rows||!rows.length) return [];
+  return rows.filter(function(r){
+    var keys=Object.keys(filters);
+    for(var i=0;i<keys.length;i++){
+      var key=keys[i];
+      var val=filters[key];
+      if(!val) continue;
+      var rv='';
+      try{ rv=acc[key]?String(acc[key](r)||'').toLowerCase():''; }catch(e){ rv=''; }
+      if(rv.indexOf(val.toLowerCase())===-1) return false;
+    }
+    return true;
+  });
+}
+
+// ═══════════════════════════════════════════════
+// POPULATE SELECT FILTERS
+// ═══════════════════════════════════════════════
+function popFilters(rows,acc,defs){
+  defs.forEach(([id,fn])=>{
+    const vals=rows.map(r=>fn(r)).filter(Boolean);
+    fillSelect(id,vals);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// RENDER NOVEDADES
+// ═══════════════════════════════════════════════
+function renderNovedades(){
+  const rows=applyRowFilter(D.novedades,A.nov,{mes:gv('nfMes'),ciudad:gv('nfCiudad'),drog:gv('nfDrog'),tipo:gv('nfTipo')});
+  popFilters(D.novedades,A.nov,[['nfMes',A.nov.mes],['nfCiudad',A.nov.ciudad],['nfDrog',A.nov.drog],['nfTipo',A.nov.tipo]]);
+
+  const totalHoras=sum(rows,r=>A.nov.horas(r));
+  const totalValor=sum(rows,r=>A.nov.valor(r));
+  const byDrog=sumGroup(rows,r=>A.nov.drog(r),r=>1);
+  const byDrogVal=sumGroup(rows,r=>A.nov.drog(r),r=>A.nov.valor(r));
+  const topD=sortObj(byDrog);const botD=sortObj(byDrog,false);
+  const byCiudad=sumGroup(rows,r=>A.nov.ciudad(r),r=>1);
+  const topC=sortObj(byCiudad);
+
+  // KPIs
+  document.getElementById('novKPIs').innerHTML=[
+    kpiCard('fas fa-triangle-exclamation','Total Novedades',rows.length.toLocaleString('es-CO'),'registradas','ne','#ef4444'),
+    kpiCard('fas fa-clock','Horas Descontadas',totalHoras.toLocaleString('es-CO'),'horas totales','dn','#f59e0b'),
+    kpiCard('fas fa-dollar-sign','Valor Descontado',cop(totalValor),'total período','dn','#ef4444'),
+    kpiCard('fas fa-hospital','Drog. Más Novedades',topD[0]?topD[0][0]:'—',topD[0]?topD[0][1]+' eventos':'—','dn','#8b5cf6'),
+    kpiCard('fas fa-map-marker-alt','Ciudad Más Novedades',topC[0]?topC[0][0]:'—',topC[0]?topC[0][1]+' eventos':'—','ne','#3b82f6'),
+    kpiCard('fas fa-check-circle','Drog. Menos Nov.',botD[0]?botD[0][0]:'—',botD[0]?botD[0][1]+' eventos':'ok','up','#10b981'),
+  ].join('');
+
+  // Gráfica por tipo
+  const byTipo=sumGroup(rows,r=>A.nov.tipo(r),r=>1);
+  const tipoE=sortObj(byTipo);
+  makeChart('cNovTipo','bar',tipoE.map(e=>e[0].slice(0,22)),[barDS('Cantidad',tipoE.map(e=>e[1]),'#ef4444')]);
+
+  // Tendencia día de la semana
+  const diasCount=Array(7).fill(0);
+  rows.forEach(r=>{const d=parseDate(A.nov.fecha(r));if(d)diasCount[d.getDay()]++;});
+  makeChart('cNovDia','line',DIAS,[lineDS('Novedades por día',diasCount,'#f59e0b',true)]);
+
+  // Por drogería top10
+  const topDrogArr=topN(byDrog,10);
+  makeChart('cNovDrog','bar',topDrogArr.map(e=>e[0].slice(0,18)),[barDS('Novedades',topDrogArr.map(e=>e[1]),'#8b5cf6')]);
+
+  // Por mes
+  const byMes=sumGroup(rows,r=>A.nov.mes(r),r=>1);
+  const mesArr=sortMeses(Object.keys(byMes));
+  makeChart('cNovMes','line',mesArr,[lineDS('Novedades',mesArr.map(e=>byMes[e]||0),'#ef4444',true)]);
+
+  // Análisis de modelos / tipos
+  const byModelo=sumGroup(rows,r=>A.nov.modelo(r)||A.nov.tipo(r),r=>1);
+  const top4=topN(byTipo,4);
+  const fijo=sum(rows,r=>(A.nov.modelo(r)||A.nov.tipo(r)).toLowerCase().indexOf('planta')!==-1||(A.nov.modelo(r)||A.nov.tipo(r)).toLowerCase().indexOf('fija')!==-1?1:0);
+  const colabo=sum(rows,r=>(A.nov.modelo(r)||A.nov.tipo(r)).toLowerCase().indexOf('cola')!==-1?1:0);
+
+
+  // Analysis
+  document.getElementById('novAnalysis').innerHTML=`
+    <div class="ac"><div class="ac-ttl"><i class="fas fa-brain"></i> Análisis Inteligente — Novedades de Gestión</div><div class="ac-body">
+      <strong>Total de novedades registradas:</strong> <span class="hi">${rows.length}</span> eventos en el período seleccionado, con <span class="bad">${totalHoras.toLocaleString('es-CO')} horas descontadas</span> y un valor total de <span class="bad">${cop(totalValor)}</span>.<br><br>
+      <strong>🔴 Droguerías con más novedades:</strong> <span class="bad">${topD.slice(0,3).map(e=>`${e[0]} (${e[1]})`).join(', ')}</span>. Estos puntos requieren intervención prioritaria.<br>
+      <strong>🟢 Droguerías con menos novedades:</strong> <span class="ok">${botD.slice(0,3).map(e=>`${e[0]} (${e[1]})`).join(', ')}</span>. Modelos a replicar.<br><br>
+      <strong>Top 4 tipos de novedad más frecuentes:</strong> ${top4.map((e,i)=>`<span class="${i<2?'bad':'warn'}">${e[0]}: ${e[1]}</span>`).join(' · ')}<br><br>
+      <strong>Por modelo:</strong> Planta fija: <span class="hi">${fijo}</span> eventos · Colaborativo: <span class="hi">${colabo}</span> eventos.
+    </div></div>`;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER CANTIDAD
+// ═══════════════════════════════════════════════
+function renderCantidad(){
+  const rows=applyRowFilter(D.cantidad,A.can,{mes:gv('cfMes'),ciudad:gv('cfCiudad'),drog:gv('cfDrog'),tipo:gv('cfTipo'),tipoM:gv('cfTipoM')});
+  popFilters(D.cantidad,A.can,[['cfMes',A.can.mes],['cfCiudad',A.can.ciudad],['cfDrog',A.can.drog],['cfTipo',A.can.tipo],['cfTipoM',A.can.tipoM]]);
+
+  // totEf = suma de columna ENTREGADO (col I)
+  const totEf=sum(rows,function(r){return A.can.efectiva(r);});
+  const totCan=sum(rows,r=>A.can.cancelada(r));
+  // totTot = total real de servicios = entregados + cancelados
+  const totTot=sum(rows,function(r){return A.can.total(r);});
+  // Si total no tiene datos, sumar ef + can
+  const totTotReal=(totTot>0?totTot:(totEf+totCan))||1;
+  const cumpl=totTotReal?((totEf/totTotReal)*100).toFixed(1):0;
+
+  // Agrupar por ENTREGADO (col I) = entregas efectivas reales
+  const byDrog=sumGroup(rows,function(r){return A.can.drog(r);},function(r){return A.can.efectiva(r);});
+  const byDrogTotal=sumGroup(rows,function(r){return A.can.drog(r);},function(r){return A.can.total(r);});
+  const topD=sortObj(byDrog);const botD=sortObj(byDrog,false);
+  const byCiudad=sumGroup(rows,function(r){return A.can.ciudad(r);},function(r){return A.can.efectiva(r);});
+  const byMes=sumGroup(rows,function(r){return A.can.mes(r);},function(r){return A.can.efectiva(r);});
+  const byTipo=sumGroup(rows,function(r){return A.can.tipo(r);},function(r){return A.can.efectiva(r);});
+  const byTipoM=sumGroup(rows,function(r){return A.can.tipoM(r);},function(r){return A.can.efectiva(r);});
+
+  // Análisis mensajeros por punto
+  const mensMap=sumGroup(rows,r=>A.can.drog(r),r=>A.can.mensajeros(r));
+  const entPMens={};Object.keys(byDrog).forEach(k=>{const m=mensMap[k]||1;entPMens[k]=byDrog[k]/m;});
+  const sobrecost=sortObj(entPMens,false).filter(e=>e[1]<30);
+  const subserv=sortObj(entPMens).filter(e=>e[1]>80);
+
+  document.getElementById('canKPIs').innerHTML=[
+    kpiCard('fas fa-layer-group','Total Servicios',totTotReal.toLocaleString('es-CO'),'total período','ne','#2563eb'),
+    kpiCard('fas fa-check-circle','Entregados (Efectivos)',totEf.toLocaleString('es-CO'),cumpl+'% cumpl.','up','#10b981'),
+    kpiCard('fas fa-times-circle','Cancelados',totCan.toLocaleString('es-CO'),((totTotReal>0?(totCan/totTotReal)*100:0).toFixed(1))+'% del total','dn','#ef4444'),
+    kpiCard('fas fa-percent','Cumplimiento',cumpl+'%','meta 95%',parseFloat(cumpl)>=95?'up':'dn','#8b5cf6'),
+    kpiCard('fas fa-hospital','Mayor Volumen',topD[0]?topD[0][0]:'—',topD[0]?topD[0][1].toLocaleString('es-CO')+' entregas':'—','up','#06b6d4'),
+    kpiCard('fas fa-arrow-down','Menor Volumen',botD[0]?botD[0][0]:'—',botD[0]?botD[0][1].toLocaleString('es-CO')+' entregas':'—','ne','#f59e0b'),
+  ].join('');
+
+  // Por mes
+  const byMesEf=sumGroup(rows,function(r){return A.can.mes(r);},function(r){return A.can.efectiva(r);});
+  const byMesCan=sumGroup(rows,function(r){return A.can.mes(r);},function(r){return A.can.cancelada(r);});
+  const mesArrSorted=sortMeses([...new Set([...Object.keys(byMesEf),...Object.keys(byMesCan)])]);
+  makeChart('cCanMes','bar',mesArrSorted,[barDS('Efectivas',mesArrSorted.map(m=>byMesEf[m]||0),'#10b981','s'),barDS('Canceladas',mesArrSorted.map(m=>byMesCan[m]||0),'#ef4444','s')],{extra:{plugins:{legend:{display:true}}}});
+
+  // Día de semana
+  // Tendencia por día de semana — usa columna SEMANA (texto) si existe, si no parsea fecha
+  var diasCnt = Array(7).fill(0);
+  rows.forEach(function(r) {
+    var ds = A.can.diaSemana(r).toLowerCase();
+    var idx = -1;
+    if (ds.indexOf('lun') !== -1) idx = 1;
+    else if (ds.indexOf('mar') !== -1) idx = 2;
+    else if (ds.indexOf('mié') !== -1 || ds.indexOf('mie') !== -1 || ds.indexOf('miér') !== -1) idx = 3;
+    else if (ds.indexOf('jue') !== -1) idx = 4;
+    else if (ds.indexOf('vie') !== -1) idx = 5;
+    else if (ds.indexOf('sáb') !== -1 || ds.indexOf('sab') !== -1) idx = 6;
+    else if (ds.indexOf('dom') !== -1) idx = 0;
+    if (idx >= 0) { diasCnt[idx] += A.can.efectiva(r); }
+    else {
+      var d = parseDate(A.can.fecha(r));
+      if (d) diasCnt[d.getDay()] += A.can.efectiva(r);
+    }
+  });
+  makeChart('cCanDia','line',DIAS,[lineDS('Entregas',diasCnt,'#2563eb',true)]);
+
+  // Top droguería
+  const topDArr=topN(byDrog,10);
+  makeChart('cCanDrog','bar',topDArr.map(e=>e[0].slice(0,18)),[barDS('Entregas',topDArr.map(e=>e[1]),'#2563eb')]);
+
+  // Tipo (dom vs trans)
+  const tipoArr=sortObj(byTipo);
+  makeChart('cCanTipo','doughnut',tipoArr.map(e=>e[0]),[{data:tipoArr.map(e=>e[1]),backgroundColor:COLS,borderColor:COLS.map(c=>c+'cc'),borderWidth:1.5,hoverOffset:5}]);
+
+  // Por ciudad
+  const ciudArr=sortObj(byCiudad);
+  makeChart('cCanCiud','bar',ciudArr.map(e=>e[0]),[barDS('Entregas',ciudArr.map(e=>e[1]),'#06b6d4')]);
+
+  // Por tipo mensajero
+  const tipoMArr=sortObj(byTipoM);
+  makeChart('cCanMensT','doughnut',tipoMArr.map(e=>e[0]),[{data:tipoMArr.map(e=>e[1]),backgroundColor:['#2563eb','#06b6d4','#8b5cf6'],borderColor:['#3b82f6bb','#22d3eebb','#a855f7bb'],borderWidth:1.5,hoverOffset:5}]);
+
+  document.getElementById('canAnalysis').innerHTML=`
+    <div class="g2">
+      <div class="ac"><div class="ac-ttl"><i class="fas fa-brain"></i> Análisis Operativo — Entregas</div><div class="ac-body">
+        <strong>Total servicios:</strong> <span class="hi">${totTotReal.toLocaleString('es-CO')}</span> · <strong>Entregados:</strong> <span class="ok">${totEf.toLocaleString('es-CO')}</span> · <strong>Cancelados:</strong> <span class="bad">${totCan.toLocaleString('es-CO')}</span><br>
+        <strong>Cumplimiento general: <span class="${parseFloat(cumpl)>=95?'ok':'bad'}">${cumpl}%</span></strong> (Meta: 95%).<br><br>
+        <strong>Droguerías con más entregas efectivas:</strong> <span class="ok">${topD.slice(0,3).map(e=>`${e[0]} (${e[1].toLocaleString('es-CO')})`).join(' · ')}</span><br>
+        <strong>Droguerías de menor volumen efectivo:</strong> <span class="warn">${botD.slice(0,3).map(e=>`${e[0]} (${e[1].toLocaleString('es-CO')})`).join(' · ')}</span><br><br>
+        <strong>Cancelados totales:</strong> <span class="bad">${totCan.toLocaleString('es-CO')}</span> representan el <span class="bad">${totTotReal>0?((totCan/totTotReal)*100).toFixed(1):0}%</span> de la operación total.
+      </div></div>
+      <div class="ac"><div class="ac-ttl"><i class="fas fa-users"></i> Análisis de Mensajeros por Punto</div><div class="ac-body">
+        <strong>Puntos con posible sobre-costo</strong> (menos de 30 entregas/mensajero):<br><span class="warn">${sobrecost.slice(0,4).map(e=>`${e[0]} (${e[1].toFixed(0)} ent/mens)`).join('<br>')|| 'Sin datos suficientes'}</span><br><br>
+        <strong>Puntos que pueden necesitar más mensajeros</strong> (más de 80 ent/mens):<br><span class="bad">${subserv.slice(0,4).map(e=>`${e[0]} (${e[1].toFixed(0)} ent/mens)`).join('<br>')||'Sin datos suficientes'}</span>
+      </div></div>
+    </div>
+    <div class="plan"><div class="plan-ttl"><i class="fas fa-clipboard-list"></i> Plan de Acción — Cantidad</div>
+      ${[['Revisar puntos con cancelaciones elevadas','Analizar causas raíz y aplicar protocolos de recuperación de entrega.'],
+         ['Fortalecer puntos sub-servidos','Asignar mensajero adicional en puntos con más de 80 entregas por mensajero.'],
+         ['Evaluar sobre-costo en puntos de bajo volumen','Revisar viabilidad de puntos con menos de 30 entregas por mensajero.'],
+         ['Concentrar esfuerzos en días pico','Garantizar disponibilidad máxima en el día de mayor demanda semanal.']].map((p,i)=>
+        `<div class="plan-item"><div class="plan-num">${i+1}</div><div class="plan-content"><div class="plan-title">${p[0]}</div><div class="plan-desc">${p[1]}</div></div></div>`).join('')}
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER PER CÁPITA
+// ═══════════════════════════════════════════════
+function renderPercapita(){
+  var rows=applyRowFilter(D.percapita,A.pc,{mes:gv('pfMes'),ciudad:gv('pfCiudad'),drog:gv('pfDrog')});
+  popFilters(D.percapita,A.pc,[['pfMes',A.pc.mes],['pfCiudad',A.pc.ciudad],['pfDrog',A.pc.drog]]);
+  showActiveTags('pfActiveTags',['pfMes','pfCiudad','pfDrog'],['Mes','Ciudad','Drogería']);
+
+  if(!rows.length){
+    document.getElementById('pcKPIs').innerHTML='<div style="color:#f59e0b;font-size:12px;padding:10px">Sin datos para los filtros seleccionados</div>';
+    return;
+  }
+
+  // ── Agrupar PC por drogería (promedio) ──────────────────
+  var pcByDrog={};
+  rows.forEach(function(r){
+    var d=A.pc.drog(r)||'N/D';
+    var pc=A.pc.percapita(r);
+    if(!pcByDrog[d]) pcByDrog[d]=[];
+    if(pc>0) pcByDrog[d].push(pc);
+  });
+  var avgPcByDrog={};
+  Object.keys(pcByDrog).forEach(function(k){
+    var arr=pcByDrog[k];
+    avgPcByDrog[k]=arr.length?arr.reduce(function(s,v){return s+v;},0)/arr.length:0;
+  });
+  var topPC=sortObj(avgPcByDrog);       // mayor primero
+  var botPC=sortObj(avgPcByDrog,false); // menor primero
+
+  // ── PC por mes (promedio) ───────────────────────────────
+  var pcByMes={};
+  rows.forEach(function(r){
+    var m=A.pc.mes(r)||'N/D';
+    var pc=A.pc.percapita(r);
+    if(!pcByMes[m]) pcByMes[m]=[];
+    if(pc>0) pcByMes[m].push(pc);
+  });
+  var avgPcByMes={};
+  Object.keys(pcByMes).forEach(function(k){
+    var arr=pcByMes[k];
+    avgPcByMes[k]=arr.length?arr.reduce(function(s,v){return s+v;},0)/arr.length:0;
+  });
+
+  // ── Costo y entregas por ciudad ─────────────────────────
+  var costoByCity={};var entByCity={};
+  rows.forEach(function(r){
+    var c=A.pc.ciudad(r)||'N/D';
+    costoByCity[c]=(costoByCity[c]||0)+A.pc.costo(r);
+    entByCity[c]=(entByCity[c]||0)+A.pc.entregas(r);
+  });
+
+  // ── Planta Fija vs Colaborativo ─────────────────────────
+  var fijoPC=[]; var colaboPC=[]; var fijoCosto=0; var colaboCosto=0;
+  var fijoEnt=0; var colaboEnt=0;
+  rows.forEach(function(r){
+    var tm=A.pc.tipoM(r).toLowerCase();
+    var pc=A.pc.percapita(r);
+    var co=A.pc.costo(r);
+    var en=A.pc.entregas(r);
+    var esFijo=tm.indexOf('fij')!==-1||tm.indexOf('plant')!==-1;
+    var esColabo=tm.indexOf('cola')!==-1;
+    if(esFijo){ if(pc>0)fijoPC.push(pc); fijoCosto+=co; fijoEnt+=en; }
+    else if(esColabo){ if(pc>0)colaboPC.push(pc); colaboCosto+=co; colaboEnt+=en; }
+  });
+  var avgFijoPC=fijoEnt>0?fijoCosto/fijoEnt:0;
+  var avgColaboPC=colaboEnt>0?colaboCosto/colaboEnt:0;
+
+  // ── Métricas globales ───────────────────────────────────
+  var totalCosto=sum(rows,function(r){return A.pc.costo(r);});
+  var totalEnt=sum(rows,function(r){return A.pc.entregas(r);});
+  // Per cápita real = Costo Total / Total Entregas
+  var globalPCAvg=totalEnt>0?totalCosto/totalEnt:0;
+
+  // ══ KPIs ═══════════════════════════════════════════════
+  document.getElementById('pcKPIs').innerHTML=[
+    kpiCard('fas fa-coins','Per Cápita Global Prom.',cop(globalPCAvg),'promedio general','ne','#f59e0b'),
+    kpiCard('fas fa-arrow-up','PC Más Alto',topPC[0]?topPC[0][0].slice(0,18):'—',topPC[0]?cop(topPC[0][1]):'—','dn','#ef4444'),
+    kpiCard('fas fa-arrow-down','PC Más Bajo',botPC[0]?botPC[0][0].slice(0,18):'—',botPC[0]?cop(botPC[0][1]):'—','up','#10b981'),
+    kpiCard('fas fa-dollar-sign','Costo Total',cop(totalCosto),'período seleccionado','ne','#8b5cf6'),
+    kpiCard('fas fa-id-badge','PC Planta Fija',cop(avgFijoPC),'per cápita prom.','ne','#2563eb'),
+    kpiCard('fas fa-handshake','PC Colaborativo',cop(avgColaboPC),'per cápita prom.','ne','#06b6d4'),
+  ].join('');
+
+  // ══ GRÁFICAS ════════════════════════════════════════════
+
+  // 1) Línea de tendencia PC por mes
+  var mesKeys=sortMeses(Object.keys(avgPcByMes));
+  makeChart('cPcMes','line',mesKeys,
+    [lineDS('Per Cápita Prom.',mesKeys.map(function(k){return avgPcByMes[k];}), '#f59e0b', false)]
+  );
+
+  // 2) Top 5 droguerías con PC más alto
+  var top5=topPC.slice(0,5);
+  makeChart('cPcTop','bar',
+    top5.map(function(e){return e[0].slice(0,22);}),
+    [barDS('Per Cápita',top5.map(function(e){return e[1];}), '#ef4444')]
+  );
+
+  // 3) PC por drogería — todas (ordenado mayor→menor)
+  var drogArr=topPC.slice(0,14);
+  makeChart('cPcDrog','bar',
+    drogArr.map(function(e){return e[0].slice(0,18);}),
+    [barDS('Per Cápita',drogArr.map(function(e){return e[1];}), '#f59e0b')]
+  );
+
+  // 4) Planta Fija vs Colaborativo — PC y Costo
+  makeChart('cPcTipoM','bar',
+    ['Planta Fija','Colaborativo'],
+    [
+      barDS('Per Cápita Prom.',  [avgFijoPC,   avgColaboPC],   '#2563eb', 'g'),
+      barDS('Costo Total (miles)',[fijoCosto/1000, colaboCosto/1000], '#06b6d4', 'g')
+    ]
+  );
+
+  // 5) Costo por ciudad
+  var ciudArr=sortObj(costoByCity);
+  makeChart('cPcCiudad','bar',
+    ciudArr.map(function(e){return e[0];}),
+    [barDS('Costo Total',ciudArr.map(function(e){return e[1];}), '#8b5cf6')]
+  );
+
+  // 6) Entregas por tipo de gestión (Domicilio / Transferencia)
+  var byGestion={};
+  rows.forEach(function(r){
+    var g=A.pc.tipo(r)||'Sin tipo';
+    byGestion[g]=(byGestion[g]||0)+A.pc.entregas(r);
+  });
+  var gArr=sortObj(byGestion);
+  makeChart('cPcGestion','doughnut',
+    gArr.map(function(e){return e[0];}),
+    [{data:gArr.map(function(e){return e[1];}),
+      backgroundColor:['#2563ebbb','#06b6d4bb','#8b5cf6bb','#10b981bb'],
+      borderColor:['#3b82f6','#22d3ee','#a855f7','#34d399'],
+      borderWidth:1.5,hoverOffset:5}]
+  );
+
+  // ══ ANÁLISIS INTELIGENTE ════════════════════════════════
+  var alerta=topPC.filter(function(e){return e[1]>globalPCAvg*1.3;});
+  var eficientes=botPC.slice(0,5);
+
+  document.getElementById('pcAnalysis').innerHTML=
+    '<div class="ac"><div class="ac-ttl"><i class="fas fa-brain"></i> Análisis de Per Cápita — Alertas y Oportunidades</div><div class="ac-body">'+
+    '<strong>Per Cápita promedio global:</strong> <span class="hi">'+cop(globalPCAvg)+'</span> por entrega. '+
+    'Total de servicios analizados: <span class="hi">'+totalEnt.toLocaleString('es-CO')+'</span> · Costo total: <span class="hi">'+cop(totalCosto)+'</span><br><br>'+
+    '<strong>🔴 Top 5 puntos más costosos:</strong><br>'+
+    topPC.slice(0,5).map(function(e,i){
+      var pct=globalPCAvg>0?((e[1]/globalPCAvg-1)*100).toFixed(0):0;
+      return (i+1)+'. <span class="bad">'+e[0]+'</span>: '+cop(e[1])+' por entrega <span class="warn">(+'+pct+'% sobre promedio)</span>';
+    }).join('<br>')+'<br><br>'+
+    '<strong>🟢 Top 5 puntos más eficientes:</strong><br>'+
+    eficientes.map(function(e,i){
+      return (i+1)+'. <span class="ok">'+e[0]+'</span>: '+cop(e[1])+' por entrega';
+    }).join('<br>')+'<br><br>'+
+    (alerta.length>0?
+      '<strong>⚠ PUNTOS EN ALERTA CRÍTICA</strong> (PC >30% sobre el promedio):<br>'+
+      alerta.slice(0,5).map(function(e){
+        return '<span class="bad">'+e[0]+'</span>: '+cop(e[1])+' — recomendado revisar volumen y modelo de contratación.';
+      }).join('<br>')+'<br><br>':
+      '<span class="ok">✓ Ningún punto supera el 130% del promedio global.</span><br><br>'
+    )+
+    '<strong>Planta Fija:</strong> PC prom. <span class="hi">'+cop(avgFijoPC)+'</span> · Costo total: '+cop(fijoCosto)+'<br>'+
+    '<strong>Colaborativo:</strong> PC prom. <span class="hi">'+cop(avgColaboPC)+'</span> · Costo total: '+cop(colaboCosto)+
+    '</div></div>'+
+    '<div class="plan"><div class="plan-ttl"><i class="fas fa-clipboard-list"></i> Plan de Acción — Per Cápita</div>'+
+    ['Auditar los 5 puntos con PC más alto|Revisar el volumen de entregas, número de mensajeros y costo del contrato. Un per cápita alto indica que el costo por servicio es elevado respecto al mercado.',
+     'Evaluar modelo de contratación por punto|Comparar si planta fija o colaborativo es más eficiente por drogería. Si el PC de fijo es mayor, considerar migrar a colaborativo en puntos de bajo volumen.',
+     'Incrementar volumen en puntos de alto PC|El per cápita se reduce al aumentar la cantidad de entregas. Gestionar con el cliente acciones comerciales para subir el volumen en puntos costosos.',
+     'Renegociar tarifas en puntos críticos|Presentar al cliente el análisis comparativo de PC para justificar ajuste de tarifa o modelo de servicio.',
+     'Replicar modelo de puntos eficientes|Analizar qué tienen en común los 5 puntos con menor PC (volumen, zona, tipo mensajero) y replicar ese modelo.']
+    .map(function(p,i){
+      var parts=p.split('|');
+      return '<div class="plan-item"><div class="plan-num">'+(i+1)+'</div><div class="plan-content"><div class="plan-title">'+parts[0]+'</div><div class="plan-desc">'+parts[1]+'</div></div></div>';
+    }).join('')+
+    '</div>';
+}
+
+// ═══════════════════════════════════════════════
+// RENDER TIEMPOS
+// ═══════════════════════════════════════════════
+function renderTiempos(){
+  var rows=applyRowFilter(D.tiempos,A.ti,{mes:gv('tfMes'),ciudad:gv('tfCiudad'),drog:gv('tfDrog'),tipoM:gv('tfTipoM')});
+  popFilters(D.tiempos,A.ti,[['tfMes',A.ti.mes],['tfCiudad',A.ti.ciudad],['tfDrog',A.ti.drog],['tfTipoM',A.ti.tipoM]]);
+  showActiveTags('tfActiveTags',['tfMes','tfCiudad','tfDrog','tfTipoM'],['Mes','Ciudad','Drogería','Tipo Mensajero']);
+
+  if(!rows.length){document.getElementById('tiKPIs').innerHTML='<div style="color:#f59e0b;font-size:12px;padding:10px">Sin datos</div>';return;}
+
+  // ── Solo domicilios para tiempo entrega (excluir transferencias)
+  var domRows=rows.filter(function(r){return A.ti.tipoG(r).toLowerCase().indexOf('transf')===-1;});
+  var transRows=rows.filter(function(r){return A.ti.tipoG(r).toLowerCase().indexOf('transf')!==-1;});
+
+  function avgMin(arr,fn){
+    var v=arr.map(fn).filter(function(x){return x>0;});
+    return v.length?v.reduce(function(s,x){return s+x;},0)/v.length:0;
+  }
+
+  var globalDom=avgMin(domRows,function(r){return A.ti.tiempoTotal(r);});
+  var globalTrans=avgMin(transRows,function(r){return A.ti.tiempoTotal(r);});
+  var globalTotal=avgMin(rows,function(r){return A.ti.tiempoTotal(r);});
+  var globalRuta=avgMin(rows,function(r){return A.ti.tiempoRuta(r);});
+  var globalEnt=avgMin(rows,function(r){return A.ti.tiempoEntrega(r);});
+
+  // ── Por drogería
+  var tiByDrog={};
+  rows.forEach(function(r){
+    var d=A.ti.drog(r)||'N/D';
+    var t=A.ti.tiempoTotal(r);
+    if(!tiByDrog[d])tiByDrog[d]=[];
+    if(t>0)tiByDrog[d].push(t);
+  });
+  var avgByDrog={};
+  Object.keys(tiByDrog).forEach(function(k){
+    var a=tiByDrog[k];
+    avgByDrog[k]=a.length?a.reduce(function(s,v){return s+v;},0)/a.length:0;
+  });
+  var topD=sortObj(avgByDrog);
+  var botD=sortObj(avgByDrog,false);
+
+  // ── Por mes
+  var tiByMes={};
+  rows.forEach(function(r){
+    var m=A.ti.mes(r)||'N/D';
+    var t=A.ti.tiempoTotal(r);
+    if(!tiByMes[m])tiByMes[m]=[];
+    if(t>0)tiByMes[m].push(t);
+  });
+  var avgByMes={};
+  Object.keys(tiByMes).forEach(function(k){
+    var a=tiByMes[k];
+    avgByMes[k]=a.length?a.reduce(function(s,v){return s+v;},0)/a.length:0;
+  });
+
+  // ── Por tipo mensajero
+  var fijoMin=[]; var colaboMin=[];
+  rows.forEach(function(r){
+    var tm=A.ti.tipoM(r).toLowerCase();
+    var t=A.ti.tiempoTotal(r);
+    if(t<=0)return;
+    if(tm.indexOf('fij')!==-1||tm.indexOf('plant')!==-1) fijoMin.push(t);
+    else if(tm.indexOf('cola')!==-1) colaboMin.push(t);
+  });
+  var avgFijo=fijoMin.length?fijoMin.reduce(function(s,v){return s+v;},0)/fijoMin.length:0;
+  var avgColabo=colaboMin.length?colaboMin.reduce(function(s,v){return s+v;},0)/colaboMin.length:0;
+
+  var hm=A.ti._minToHHMM.bind(A.ti);
+
+  // ══ KPIs (en formato HH:MM)
+  document.getElementById('tiKPIs').innerHTML=[
+    kpiCard('fas fa-clock','T. Dom. Prom.',hm(globalDom),'HH:MM - domicilios','ne','#2563eb'),
+    kpiCard('fas fa-truck','T. Transfer. Prom.',hm(globalTrans),'HH:MM - transferencias','ne','#8b5cf6'),
+    kpiCard('fas fa-stopwatch','T. Ruta Prom.',hm(globalRuta),'tiempo en ruta','ne','#06b6d4'),
+    kpiCard('fas fa-box-open','T. Entrega Prom.',hm(globalEnt),'tiempo en entrega','ne','#10b981'),
+    kpiCard('fas fa-arrow-up','Mayor Tiempo',topD[0]?topD[0][0].slice(0,16):'—',topD[0]?hm(topD[0][1]):'—','dn','#ef4444'),
+    kpiCard('fas fa-arrow-down','Menor Tiempo',botD[0]?botD[0][0].slice(0,16):'—',botD[0]?hm(botD[0][1]):'—','up','#10b981'),
+  ].join('');
+
+  // ══ GRÁFICAS ══
+  // 1) Tendencia por mes (HH:MM en labels, minutos en data)
+  var mesKeys=sortMeses(Object.keys(avgByMes));
+  makeChart('cTiMes','line',mesKeys,
+    [lineDS('T. Prom. (min)',mesKeys.map(function(k){return avgByMes[k];}), '#2563eb', false)]
+  );
+
+  // 2) Top 5 mayor tiempo
+  var top5=topD.slice(0,5);
+  makeChart('cTiTop','bar',
+    top5.map(function(e){return e[0].slice(0,20);}),
+    [barDS('Minutos',top5.map(function(e){return e[1];}), '#ef4444')]
+  );
+
+  // 3) Por drogería (top 12)
+  var drogArr=topD.slice(0,12);
+  makeChart('cTiDrog','bar',
+    drogArr.map(function(e){return e[0].slice(0,18);}),
+    [barDS('Minutos',drogArr.map(function(e){return e[1];}), '#3b82f6')]
+  );
+
+  // 4) Planta Fija vs Colaborativo
+  makeChart('cTiTipoM','bar',
+    ['Planta Fija','Colaborativo'],
+    [barDS('T. Prom. (min)',[avgFijo,avgColabo], '#06b6d4')]
+  );
+
+  // ══ ANÁLISIS ══
+  var alerta=topD.filter(function(e){return e[1]>globalTotal*1.3;});
+  document.getElementById('tiAnalysis').innerHTML=
+    '<div class="ac"><div class="ac-ttl"><i class="fas fa-brain"></i> Análisis de Tiempos</div><div class="ac-body">'+
+    '<strong>Tiempo promedio domicilios:</strong> <span class="hi">'+hm(globalDom)+'</span> '+
+    '&nbsp;|&nbsp; <strong>Transferencias:</strong> <span class="hi">'+hm(globalTrans)+'</span><br>'+
+    '<strong>Tiempo ruta:</strong> <span class="hi">'+hm(globalRuta)+'</span> '+
+    '&nbsp;|&nbsp; <strong>Tiempo entrega:</strong> <span class="hi">'+hm(globalEnt)+'</span><br><br>'+
+    '<strong>🔴 Top 5 puntos con mayor tiempo:</strong><br>'+
+    topD.slice(0,5).map(function(e,i){return (i+1)+'. <span class="bad">'+e[0]+'</span>: '+hm(e[1]);}).join('<br>')+'<br><br>'+
+    '<strong>🟢 Top 5 puntos más rápidos:</strong><br>'+
+    botD.slice(0,5).map(function(e,i){return (i+1)+'. <span class="ok">'+e[0]+'</span>: '+hm(e[1]);}).join('<br>')+'<br><br>'+
+    (alerta.length?'<strong>⚠ Puntos críticos</strong> (>30% sobre promedio):<br>'+
+    alerta.slice(0,4).map(function(e){return '<span class="bad">'+e[0]+'</span>: '+hm(e[1]);}).join('<br>')+'<br><br>':'')+'</div></div>'+
+    '<div class="plan"><div class="plan-ttl"><i class="fas fa-clipboard-list"></i> Plan de Acción — Tiempos</div>'+
+    ['Intervención en puntos críticos|Revisar rutas, zonas de cobertura y disponibilidad del mensajero en los 5 puntos más lentos.',
+     'Análisis de causa raíz|Identificar si la demora es por tráfico, distancia, procesos internos de la drogería o cliente.',
+     'Estandarizar tiempo de alistamiento|Implementar protocolo de preparación de pedido antes de llegada del mensajero.',
+     'Comparar fijo vs colaborativo|Si un tipo es más lento, reforzar capacitación o reasignar zonas.',
+     'Establecer SLA por zona|Urbana: max 35 min · Periférica: max 60 min · Transferencia: max 20 min.']
+    .map(function(p,i){var pt=p.split('|');
+      return '<div class="plan-item"><div class="plan-num">'+(i+1)+'</div><div class="plan-content"><div class="plan-title">'+pt[0]+'</div><div class="plan-desc">'+pt[1]+'</div></div></div>';
+    }).join('')+'</div>';
+}
+
+// ═══════════════════════════════════════════════
+// RENDER VENTAS
+// ═══════════════════════════════════════════════
+function renderVentas(){
+  var rows=applyRowFilter(D.ventas,A.ven,{mes:gv('vfMes'),ciudad:gv('vfCiudad'),drog:gv('vfDrog')});
+  popFilters(D.ventas,A.ven,[['vfMes',A.ven.mes],['vfCiudad',A.ven.ciudad],['vfDrog',A.ven.drog]]);
+  showActiveTags('vfActiveTags',['vfMes','vfCiudad','vfDrog'],['Mes','Ciudad','Drogería']);
+
+  if(!rows.length){
+    document.getElementById('venKPIs').innerHTML='<div style="color:#f59e0b;font-size:12px;padding:10px">Sin datos para los filtros aplicados</div>';
+    return;
+  }
+
+  // ── Separar por ESTADO (col G) ──────────────────────────
+  var rowsEnt = rows.filter(function(r){ return A.ven.isEntregado(r); });
+  var rowsCan = rows.filter(function(r){ return A.ven.isCancelado(r); });
+
+  var totTotal = sum(rows,    function(r){ return A.ven.valor(r); });
+  var totEf    = sum(rowsEnt, function(r){ return A.ven.valor(r); });
+  var totCan   = sum(rowsCan, function(r){ return A.ven.valor(r); });
+  var pctPerd  = totTotal>0?((totCan/totTotal)*100).toFixed(1):'0';
+
+  // ── Agrupaciones (solo entregados para venta efectiva) ──
+  var byDrogEf  = sumGroup(rowsEnt, function(r){return A.ven.drog(r);},   function(r){return A.ven.valor(r);});
+  var byDrogCan = sumGroup(rowsCan, function(r){return A.ven.drog(r);},   function(r){return A.ven.valor(r);});
+  var byMesEf   = sumGroup(rowsEnt, function(r){return A.ven.mes(r);},    function(r){return A.ven.valor(r);});
+  var byMesCan  = sumGroup(rowsCan, function(r){return A.ven.mes(r);},    function(r){return A.ven.valor(r);});
+  var byTipo    = sumGroup(rowsEnt, function(r){return A.ven.tipo(r)||'Sin tipo';}, function(r){return A.ven.valor(r);});
+  var byCiudad  = sumGroup(rowsEnt, function(r){return A.ven.ciudad(r);}, function(r){return A.ven.valor(r);});
+
+  // ── Agrupación por ESTADO (para mostrar distribución) ───
+  var byEstado  = sumGroup(rows,    function(r){return A.ven.estado(r)||'Sin estado';}, function(r){return A.ven.valor(r);});
+
+  var topEf   = sortObj(byDrogEf);
+  var topPerd = sortObj(byDrogCan);
+
+  // ── Tendencia semanal ────────────────────────────────────
+  var diasVen=Array(7).fill(0);
+  rowsEnt.forEach(function(r){
+    var ds=A.ven.semana(r).toLowerCase();
+    var idx=-1;
+    if(ds.indexOf('lun')!==-1)idx=1;
+    else if(ds.indexOf('mar')!==-1)idx=2;
+    else if(ds.indexOf('mié')!==-1||ds.indexOf('mie')!==-1)idx=3;
+    else if(ds.indexOf('jue')!==-1)idx=4;
+    else if(ds.indexOf('vie')!==-1)idx=5;
+    else if(ds.indexOf('sáb')!==-1||ds.indexOf('sab')!==-1)idx=6;
+    else if(ds.indexOf('dom')!==-1)idx=0;
+    if(idx>=0) diasVen[idx]+=A.ven.valor(r);
+    else { var d=parseDate(A.ven.fecha(r)); if(d) diasVen[d.getDay()]+=A.ven.valor(r); }
+  });
+
+  // ══ KPIs ═════════════════════════════════════════════════
+  document.getElementById('venKPIs').innerHTML=[
+    kpiCard('fas fa-dollar-sign','Valor Total',         cop(totTotal), 'todos los estados','ne','#2563eb'),
+    kpiCard('fas fa-check-circle','Valor Entregado',    cop(totEf),    rowsEnt.length+' servicios','up','#10b981'),
+    kpiCard('fas fa-times-circle','Valor Cancelado',    cop(totCan),   rowsCan.length+' servicios','dn','#ef4444'),
+    kpiCard('fas fa-percent','% Pérdida',               pctPerd+'%',   'sobre valor total',parseFloat(pctPerd)<5?'up':'dn','#8b5cf6'),
+    kpiCard('fas fa-trophy','Mayor Venta',              topEf[0]?topEf[0][0].slice(0,16):'—',topEf[0]?cop(topEf[0][1]):'—','up','#f59e0b'),
+    kpiCard('fas fa-exclamation-triangle','Mayor Pérdida',topPerd[0]?topPerd[0][0].slice(0,16):'—',topPerd[0]?cop(topPerd[0][1]):'—','dn','#ef4444'),
+  ].join('');
+
+  // ══ GRÁFICAS ══════════════════════════════════════════════
+
+  // 1) Valor por mes — Entregado vs Cancelado
+  var mesKeys=sortMeses([...new Set([...Object.keys(byMesEf),...Object.keys(byMesCan)])]);
+  makeChart('cVenMes','bar',mesKeys,[
+    barDS('Entregado', mesKeys.map(function(k){return byMesEf[k]||0;}), '#10b981','s'),
+    barDS('Cancelado', mesKeys.map(function(k){return byMesCan[k]||0;}), '#ef4444','s')
+  ]);
+
+  // 2) Día de semana con más ventas (entregadas)
+  makeChart('cVenDia','bar',DIAS,[
+    barDS('Valor Entregado',diasVen,'#2563eb')
+  ]);
+
+  // 3) Top droguerías por valor entregado
+  var topEfArr=topEf.slice(0,10);
+  makeChart('cVenDrog','bar',
+    topEfArr.map(function(e){return e[0].slice(0,18);}),
+    [barDS('Valor Entregado',topEfArr.map(function(e){return e[1];}), '#10b981')]
+  );
+
+  // 4) Distribución por tipo de gestión
+  var tipoArr=sortObj(byTipo);
+  makeChart('cVenTipo','doughnut',
+    tipoArr.map(function(e){return e[0];}),
+    [{data:tipoArr.map(function(e){return e[1];}),
+      backgroundColor:['#2563ebbb','#06b6d4bb','#8b5cf6bb','#10b981bb'],
+      borderColor:['#3b82f6','#22d3ee','#a855f7','#34d399'],
+      borderWidth:1.5,hoverOffset:4}]
+  );
+
+  // 5) Valor por ciudad
+  var ciudArr=sortObj(byCiudad);
+  makeChart('cVenCiud','bar',
+    ciudArr.map(function(e){return e[0];}),
+    [barDS('Valor Entregado',ciudArr.map(function(e){return e[1];}), '#06b6d4')]
+  );
+
+  // 6) Top pérdidas por drogería
+  var perdArr=topPerd.slice(0,8);
+  makeChart('cVenPerd','bar',
+    perdArr.map(function(e){return e[0].slice(0,18);}),
+    [barDS('Valor Cancelado',perdArr.map(function(e){return e[1];}), '#ef4444')]
+  );
+
+  // ══ ANÁLISIS ══════════════════════════════════════════════
+  // Todos los estados distintos
+  var estadoArr=sortObj(byEstado);
+
+  document.getElementById('venAnalysis').innerHTML=
+    '<div class="ac"><div class="ac-ttl"><i class="fas fa-brain"></i> Análisis de Ventas por Estado</div><div class="ac-body">'+
+    '<strong>Valor total (todos los estados):</strong> <span class="hi">'+cop(totTotal)+'</span> — '+rows.length+' registros<br>'+
+    '<strong>✅ Entregado:</strong> <span class="ok">'+cop(totEf)+'</span> ('+rowsEnt.length+' servicios)<br>'+
+    '<strong>❌ Cancelado:</strong> <span class="bad">'+cop(totCan)+'</span> ('+rowsCan.length+' servicios · '+pctPerd+'% del total)<br><br>'+
+    '<strong>Distribución por estado:</strong><br>'+
+    estadoArr.map(function(e){
+      var isCan=e[0].toUpperCase().indexOf('CANCEL')!==-1;
+      var isEnt=e[0].toUpperCase().indexOf('ENTREGAD')!==-1;
+      var cls=isEnt?'ok':isCan?'bad':'warn';
+      return '<span class="'+cls+'">'+e[0]+'</span>: '+cop(e[1])+' ('+((totTotal>0?e[1]/totTotal*100:0).toFixed(1))+'%)';
+    }).join('<br>')+'<br><br>'+
+    '<strong>🏆 Top 3 puntos más rentables:</strong> '+
+    topEf.slice(0,3).map(function(e){return '<span class="ok">'+e[0]+'</span>: '+cop(e[1]);}).join(' · ')+'<br>'+
+    '<strong>🔴 Top 3 con mayor pérdida:</strong> '+
+    topPerd.slice(0,3).map(function(e){return '<span class="bad">'+e[0]+'</span>: '+cop(e[1]);}).join(' · ')+
+    '</div></div>';
+}
+
+// ═══════════════════════════════════════════════
+// RENDER NOV CANCELACION
+// ═══════════════════════════════════════════════
+function renderNovCancel(){
+  var rows=applyRowFilter(D.novcancel,A.nc,{mes:gv('ncfMes'),ciudad:gv('ncfCiudad'),drog:gv('ncfDrog')});
+  popFilters(D.novcancel,A.nc,[['ncfMes',A.nc.mes],['ncfCiudad',A.nc.ciudad],['ncfDrog',A.nc.drog]]);
+
+  if(!rows.length){document.getElementById('ncKPIs').innerHTML='<div style="color:#f59e0b;font-size:12px;padding:10px">Sin datos</div>';return;}
+
+  var fijo=rows.filter(function(r){var t=A.nc.tipoM(r).toLowerCase();return t.indexOf('fij')!==-1||t.indexOf('plant')!==-1;});
+  var colabo=rows.filter(function(r){return A.nc.tipoM(r).toLowerCase().indexOf('cola')!==-1;});
+
+  var totalNov=sum(rows,function(r){return A.nc.total(r)||1;});
+  var totalQuick=sum(rows,function(r){return A.nc.quick(r);});
+  var totalCafam=sum(rows,function(r){return A.nc.cafam(r);});
+  var fijoTotal=sum(fijo,function(r){return A.nc.total(r)||1;});
+  var colaboTotal=sum(colabo,function(r){return A.nc.total(r)||1;});
+
+  var byDrog=sumGroup(rows,function(r){return A.nc.drog(r);},function(r){return A.nc.total(r)||1;});
+  var byCiudad=sumGroup(rows,function(r){return A.nc.ciudad(r);},function(r){return A.nc.total(r)||1;});
+  var byMes=sumGroup(rows,function(r){return A.nc.mes(r);},function(r){return A.nc.total(r)||1;});
+  var topD=sortObj(byDrog); var botD=sortObj(byDrog,false);
+
+  // Agrupar por tipo de novedad (todas las 16 columnas)
+  var byTipo={};
+  A.nc.TIPOS.forEach(function(tipo){
+    var s=sum(rows,function(r){return A.nc.tipoVal(r,tipo);});
+    if(s>0) byTipo[tipo]=s;
+  });
+  var tipoArr=sortObj(byTipo);
+
+  var pct=function(a,b){return b>0?((a/b)*100).toFixed(1)+'%':'0%';};
+
+  // KPIs
+  document.getElementById('ncKPIs').innerHTML=[
+    kpiCard('fas fa-ban','Total Novedades',totalNov.toLocaleString('es-CO'),'registradas','ne','#ef4444'),
+    kpiCard('fas fa-id-badge','Planta Fija',fijoTotal.toLocaleString('es-CO'),pct(fijoTotal,totalNov),'ne','#2563eb'),
+    kpiCard('fas fa-handshake','Colaborativo',colaboTotal.toLocaleString('es-CO'),pct(colaboTotal,totalNov),'ne','#06b6d4'),
+    kpiCard('fas fa-building','Resp. Quick',totalQuick.toLocaleString('es-CO'),pct(totalQuick,totalNov),'ne','#8b5cf6'),
+    kpiCard('fas fa-hospital','Resp. Cafam/Cliente',totalCafam.toLocaleString('es-CO'),pct(totalCafam,totalNov),'ne','#f59e0b'),
+    kpiCard('fas fa-exclamation-triangle','Mayor Incidencia',topD[0]?topD[0][0].slice(0,18):'—',topD[0]?topD[0][1]+' nov.':'—','dn','#ef4444'),
+  ].join('');
+
+  // Gráficas
+  // 1) Todos los tipos de novedad
+  makeChart('cNcTipo','bar',
+    tipoArr.map(function(e){return e[0].length>30?e[0].slice(0,28)+'…':e[0];}),
+    [barDS('Cantidad',tipoArr.map(function(e){return e[1];}), '#ef4444')]
+  );
+
+  // 2) Planta Fija vs Colaborativo
+  makeChart('cNcTipoM','doughnut',
+    ['Planta Fija','Colaborativo'],
+    [{data:[fijoTotal,colaboTotal],backgroundColor:['#2563ebbb','#06b6d4bb'],borderColor:['#3b82f6','#22d3ee'],borderWidth:1.5,hoverOffset:4}]
+  );
+
+  // 3) Por mes
+  var mesKeys=sortMeses(Object.keys(byMes));
+  makeChart('cNcMes','line',mesKeys,
+    [lineDS('Novedades',mesKeys.map(function(k){return byMes[k];}), '#ef4444', true)]
+  );
+
+  // 4) Top 10 droguerías
+  var topDArr=topD.slice(0,10);
+  makeChart('cNcDrog','bar',
+    topDArr.map(function(e){return e[0].slice(0,18);}),
+    [barDS('Novedades',topDArr.map(function(e){return e[1];}), '#8b5cf6')]
+  );
+
+  // 5) Quick vs Cafam
+  var quickPct=parseFloat(pct(totalQuick,totalNov));
+  var cafamPct=parseFloat(pct(totalCafam,totalNov));
+  makeChart('cNcResp','doughnut',
+    ['Quick ('+pct(totalQuick,totalNov)+')','Cafam/Cliente ('+pct(totalCafam,totalNov)+')'],
+    [{data:[totalQuick,totalCafam],backgroundColor:['#2563ebbb','#f59e0bbb'],borderColor:['#3b82f6','#fbbf24'],borderWidth:1.5,hoverOffset:4}]
+  );
+
+  // 6) Por ciudad
+  var ciudArr=sortObj(byCiudad);
+  makeChart('cNcCiud','bar',
+    ciudArr.map(function(e){return e[0];}),
+    [barDS('Novedades',ciudArr.map(function(e){return e[1];}), '#06b6d4')]
+  );
+
+  // Top tipo para análisis
+  var topTipo=tipoArr[0]||['N/D',0];
+  var top2Tipo=tipoArr[1]||['N/D',0];
+
+  document.getElementById('ncAnalysis').innerHTML=
+    '<div class="g2">'+
+    '<div class="ac mb0"><div class="ac-ttl"><i class="fas fa-brain"></i> Análisis — Novedades de Cancelación</div><div class="ac-body">'+
+    '<strong>Total:</strong> <span class="bad">'+totalNov.toLocaleString('es-CO')+'</span> novedades registradas.<br>'+
+    '<strong>Planta Fija:</strong> <span class="hi">'+fijoTotal+'</span> ('+pct(fijoTotal,totalNov)+') '+
+    '&nbsp;|&nbsp; <strong>Colaborativo:</strong> <span class="hi">'+colaboTotal+'</span> ('+pct(colaboTotal,totalNov)+')<br><br>'+
+    '<strong>Responsabilidad Quick:</strong> <span class="bad">'+pct(totalQuick,totalNov)+'</span> ('+totalQuick+' eventos)<br>'+
+    '<strong>Responsabilidad Cafam/Cliente:</strong> <span class="warn">'+pct(totalCafam,totalNov)+'</span> ('+totalCafam+' eventos)<br><br>'+
+    '<strong>🔴 Tipo más frecuente:</strong> <span class="bad">'+topTipo[0]+'</span>: '+topTipo[1]+' casos<br>'+
+    '<strong>2° tipo:</strong> <span class="warn">'+top2Tipo[0]+'</span>: '+top2Tipo[1]+' casos<br><br>'+
+    '<strong>Droguerías críticas:</strong> '+topD.slice(0,3).map(function(e){return '<span class="bad">'+e[0]+'</span>: '+e[1];}).join(' · ')+'<br>'+
+    '<strong>Menos incidencias:</strong> '+botD.slice(0,3).map(function(e){return '<span class="ok">'+e[0]+'</span>: '+e[1];}).join(' · ')+
+    '</div></div>'+
+    '<div class="plan mb0"><div class="plan-ttl"><i class="fas fa-clipboard-list"></i> Plan de Mitigación</div>'+
+    ['Atacar las 3 causas más frecuentes|Crear protocolo específico para cada tipo de novedad recurrente.',
+     'Mesa de trabajo con Cafam (novedades cliente)|Para novedades de responsabilidad Cafam, gestionar con el cliente mejoras en el proceso de solicitud.',
+     'Monitoreo diario en puntos críticos|Implementar seguimiento en tiempo real en los 3 puntos con mayor incidencia.',
+     'Capacitación reforzada a colaborativos|Si colaborativo supera a fijo, reforzar protocolo de entrega y comunicación con el cliente.']
+    .map(function(p,i){var pt=p.split('|');
+      return '<div class="plan-item"><div class="plan-num">'+(i+1)+'</div><div class="plan-content"><div class="plan-title">'+pt[0]+'</div><div class="plan-desc">'+pt[1]+'</div></div></div>';
+    }).join('')+'</div></div>';
+}
+
+// ═══════════════════════════════════════════════
+// RENDER RESUMEN GENERAL
+// ═══════════════════════════════════════════════
+function renderResumen(){
+  const rfCiud=gv('rfCiudad').toLowerCase();
+  const rfDrog=gv('rfDrog').toLowerCase();
+
+  const fCan=D.cantidad.filter(r=>(!rfCiud||A.can.ciudad(r).toLowerCase().includes(rfCiud))&&(!rfDrog||A.can.drog(r).toLowerCase().includes(rfDrog)));
+  const fVen=D.ventas.filter(r=>(!rfCiud||A.ven.ciudad(r).toLowerCase().includes(rfCiud))&&(!rfDrog||A.ven.drog(r).toLowerCase().includes(rfDrog)));
+  const fNov=D.novedades.filter(r=>(!rfCiud||A.nov.ciudad(r).toLowerCase().includes(rfCiud))&&(!rfDrog||A.nov.drog(r).toLowerCase().includes(rfDrog)));
+  const fNc=D.novcancel.filter(r=>(!rfCiud||A.nc.ciudad(r).toLowerCase().includes(rfCiud))&&(!rfDrog||A.nc.drog(r).toLowerCase().includes(rfDrog)));
+
+  popFilters(D.cantidad,A.can,[['rfCiudad',A.can.ciudad],['rfDrog',A.can.drog]]);
+
+  const totEnt=sum(fCan,function(r){return A.can.efectiva(r)+A.can.cancelada(r);});
+  const totEfRes=sum(fCan,function(r){return A.can.efectiva(r);});
+  const totEf=sum(fCan,r=>A.can.efectiva(r)||A.can.total(r));
+  const totCan2=sum(fCan,r=>A.can.cancelada(r));
+  const cumpl=totEnt?((totEfRes/totEnt)*100).toFixed(1):0;
+  const totVen=sum(fVen,r=>A.ven.efectivo(r)||A.ven.total(r));
+  const totPerd=sum(fVen,r=>A.ven.cancelado(r));
+  const totNov=fNov.length+fNc.length;
+
+  const byDrogEnt=sumGroup(fCan,r=>A.can.drog(r),r=>A.can.efectiva(r));
+  const topDEnt=sortObj(byDrogEnt);const botDEnt=sortObj(byDrogEnt,false);
+  const byCiudEnt=sumGroup(fCan,r=>A.can.ciudad(r),r=>A.can.efectiva(r));
+
+  document.getElementById('resKPIs').innerHTML=[
+    kpiCard('fas fa-box','Total Entregas',totEnt.toLocaleString('es-CO'),'período total','ne','#2563eb'),
+    kpiCard('fas fa-percent','Cumplimiento',cumpl+'%','efectividad','up','#10b981'),
+    kpiCard('fas fa-dollar-sign','Valor Ventas',cop(totVen),'efectivas','up','#f59e0b'),
+    kpiCard('fas fa-exclamation-triangle','Valor Perdido',cop(totPerd),'cancelaciones','dn','#ef4444'),
+    kpiCard('fas fa-triangle-exclamation','Total Novedades',totNov.toLocaleString('es-CO'),'gestión + cancel.','ne','#8b5cf6'),
+    kpiCard('fas fa-trophy','Top Drogería',topDEnt[0]?topDEnt[0][0]:'—',topDEnt[0]?topDEnt[0][1].toLocaleString('es-CO')+' ent.':'—','up','#06b6d4'),
+  ].join('');
+
+  // Top droguería chart
+  const topDA=topDEnt.slice(0,8);
+  makeChart('cTopDrog','bar',topDA.map(e=>e[0].slice(0,16)),[barDS('Entregas',topDA.map(e=>e[1]),'#2563eb')]);
+
+  // Ciudad chart
+  const ciudArr=sortObj(byCiudEnt);
+  makeChart('cCiudadRes','bar',ciudArr.map(e=>e[0]),[barDS('Entregas',ciudArr.map(e=>e[1]),'#06b6d4')]);
+
+  // Analysis per drogería
+  const byDrogNov=sumGroup(fNov,r=>A.nov.drog(r),r=>1);
+  const byDrogNc=sumGroup(fNc,r=>A.nc.drog(r),r=>1);
+  const byDrogVen=sumGroup(fVen,r=>A.ven.drog(r),r=>A.ven.efectivo(r)||A.ven.total(r));
+  const byDrogPerd=sumGroup(fVen,r=>A.ven.drog(r),r=>A.ven.cancelado(r));
+
+  const topDNov=sortObj(byDrogNov);
+
+  const byMesRes=sumGroup(fCan,r=>A.can.mes(r),r=>A.can.efectiva(r));
+  const byMesResArr=sortMeses(Object.keys(byMesRes));
+  const bestMes=sortObj(byMesRes)[0];
+  const worstMes=sortObj(byMesRes,false)[0];
+
+  document.getElementById('resumenUpdate').textContent=`Última actualización: ${new Date().toLocaleString('es-CO')}`;
+
+  // Generar análisis por drogería
+  const drogerias=[...new Set([...Object.keys(byDrogEnt),...Object.keys(byDrogVen)].filter(d=>d&&d!=='N/D'))].slice(0,8);
+  let drogHTML=drogerias.map(d=>{
+    const ent=byDrogEnt[d]||0;const ven=byDrogVen[d]||0;const perd=byDrogPerd[d]||0;const nov=(byDrogNov[d]||0)+(byDrogNc[d]||0);
+    const isTop=topDEnt[0]&&topDEnt[0][0]===d;const isBot=botDEnt[0]&&botDEnt[0][0]===d;
+    const statusClass=isTop?'ok':isBot?'bad':'warn';
+    return `<div class="kc" style="padding:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:12px;font-weight:700;color:var(--t1)">${d.slice(0,24)}</span>
+        <span class="bdg bdg-${isTop?'ok':isBot?'bad':'info'}">${isTop?'TOP':'•'}</span>
+      </div>
+      <div style="font-size:10px;color:var(--t2);line-height:1.8">
+        Entregas: <strong style="color:var(--b4)">${ent.toLocaleString('es-CO')}</strong><br>
+        Ventas: <strong style="color:var(--green)">${cop(ven)}</strong><br>
+        Pérdidas: <strong style="color:var(--red)">${cop(perd)}</strong><br>
+        Novedades: <strong style="color:var(--amber)">${nov}</strong>
+      </div>
+      <div class="pbar mt12"><div class="pfill" style="width:${Math.min(100,(ent/Math.max(...Object.values(byDrogEnt)))*100).toFixed(0)}%"></div></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('resAnalysis').innerHTML=`
+    <div class="ac mb0" style="margin-bottom:16px"><div class="ac-ttl"><i class="fas fa-brain"></i> Análisis Ejecutivo — Resumen de la Operación</div><div class="ac-body">
+      <strong>Período analizado:</strong> Operación completa CAFAM Domicilios.<br>
+      <strong>Cumplimiento global:</strong> <span class="${parseFloat(cumpl)>=95?'ok':'bad'}">${cumpl}%</span> (${totEf.toLocaleString('es-CO')} de ${totEnt.toLocaleString('es-CO')} entregas efectivas).<br>
+      <strong>Valor total efectivo:</strong> <span class="ok">${cop(totVen)}</span> · <strong>Pérdidas:</strong> <span class="bad">${cop(totPerd)}</span><br><br>
+      <strong>🏆 Drogería TOP:</strong> <span class="ok">${topDEnt[0]?topDEnt[0][0]:'—'}</span> con <span class="hi">${topDEnt[0]?topDEnt[0][1].toLocaleString('es-CO'):0} entregas</span><br>
+      <strong>⚠ Drogería con menor rendimiento:</strong> <span class="bad">${botDEnt[0]?botDEnt[0][0]:'—'}</span> con <span class="warn">${botDEnt[0]?botDEnt[0][1].toLocaleString('es-CO'):0} entregas</span><br>
+      <strong>📅 Mejor mes:</strong> <span class="ok">${bestMes?bestMes[0]:'—'}</span> · <strong>Mes más bajo:</strong> <span class="warn">${worstMes?worstMes[0]:'—'}</span><br><br>
+      <strong>Total novedades (gestión + cancelación):</strong> <span class="${totNov>50?'bad':'warn'}">${totNov}</span>
+    </div></div>
+    <div style="font-size:12px;font-weight:700;color:var(--t2);margin:16px 0 10px;letter-spacing:.5px">ANÁLISIS POR DROGERÍA</div>
+    <div class="sum-grid">${drogHTML}</div>
+    <div class="plan"><div class="plan-ttl"><i class="fas fa-rocket"></i> Recomendaciones Ejecutivas Generales</div>
+      ${[['Elevar cumplimiento al 95%+','Revisar puntos con cancelación >10% e implementar protocolo de recuperación de entrega.'],
+         ['Reducir pérdida de valor en cancelaciones','Priorizar los 3 puntos con mayor valor cancelado e identificar causas raíz.'],
+         ['Optimizar per cápita en puntos críticos','Evaluar modelo de servicio (fijo vs colaborativo) en los 5 puntos con mayor costo.'],
+         ['Mitigar novedades recurrentes','Implementar mesa de trabajo mensual con las droguerías con más de 5 novedades/mes.'],
+         ['Fortalecer puntos de bajo volumen','Evaluar viabilidad operativa y costo-beneficio de puntos con menos de 50 entregas/mes.']].map((p,i)=>
+        `<div class="plan-item"><div class="plan-num">${i+1}</div><div class="plan-content"><div class="plan-title">${p[0]}</div><div class="plan-desc">${p[1]}</div></div></div>`).join('')}
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════════
+function exportCSVSheet(key){
+  const rows=D[key];if(!rows||!rows.length){toast('Sin datos','warn');return;}
+  const headers=Object.keys(rows[0]);
+  let csv=headers.join(',')+'\n';
+  rows.forEach(r=>{csv+=headers.map(h=>`"${(r[h]||'').toString().replace(/"/g,'""')}"`).join(',')+'\n';});
+  const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`cafam_${key}_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  toast(`CSV ${key} exportado`,'success');
+}
+
+function exportPDF(section){
+  toast('Generando PDF...','info');
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  doc.setFillColor(5,12,26);doc.rect(0,0,210,297,'F');
+  doc.setFillColor(37,99,235);doc.rect(0,0,210,30,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(16);doc.setFont('helvetica','bold');
+  doc.text('CAFAM DOMICILIOS',15,14);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.text(`Módulo: ${section.toUpperCase()}`,15,22);
+  doc.text(new Date().toLocaleDateString('es-CO'),155,22);
+  doc.setTextColor(148,163,184);doc.setFontSize(9);
+  let y=42;
+  const el=document.getElementById('sec-'+section);
+  if(el){
+    const kpis=el.querySelectorAll('.kc-lbl,.kc-val');
+    kpis.forEach((e,i)=>{if(i%2===0){doc.setTextColor(100,150,200);doc.text(e.textContent,15,y);}else{doc.setTextColor(200,220,255);doc.setFont('helvetica','bold');doc.text(e.textContent.slice(0,30),80,y);doc.setFont('helvetica','normal');y+=8;}if(y>270){doc.addPage();doc.setFillColor(5,12,26);doc.rect(0,0,210,297,'F');y=20;}});
+    const acs=el.querySelectorAll('.ac-body');
+    acs.forEach(ac=>{y+=8;const lines=doc.splitTextToSize(ac.textContent.replace(/\s+/g,' ').trim(),180);doc.setTextColor(148,163,184);doc.setFontSize(8);doc.text(lines,15,y);y+=lines.length*5+8;});
+  }
+  doc.setFillColor(37,99,235);doc.rect(0,285,210,12,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(7);
+  doc.text('CAFAM DOMICILIOS — Plataforma Analítica Corporativa',15,292);
+  doc.save(`CAFAM_${section}_${new Date().toISOString().slice(0,10)}.pdf`);
+  toast('PDF generado','success');
+}
+
+// ═══════════════════════════════════════════════
+// REFRESH
+// ═══════════════════════════════════════════════
+async function refreshAll(){
+  toast('Actualizando datos...','info');
+  var csvEntries=Object.entries(CSV);
+  var refreshPromises=csvEntries.map(function(entry){return fetchCSV(entry[1],entry[0]);});
+  await Promise.all(refreshPromises);
+  buildAccessors();
+  const active=document.querySelector('.sec.active');
+  const id=active?active.id.replace('sec-',''):'resumen';
+  const renders={resumen:renderResumen,novedades:renderNovedades,cantidad:renderCantidad,percapita:renderPercapita,tiempos:renderTiempos,ventas:renderVentas,novcancel:renderNovCancel};
+  if(renders[id])renders[id]();
+  toast('Datos actualizados','success');
+}
+
+// ═══════════════════════════════════════════════
+// GLOBAL SEARCH
+// ═══════════════════════════════════════════════
+document.getElementById('gSearch').addEventListener('input',function(){
+  const q=this.value.trim().toLowerCase();
+  if(!q)return;
+  var sections=['novedades','cantidad','percapita','tiempos','ventas','novcancel'];
+  for(var si=0;si<sections.length;si++){
+    var s=sections[si];
+    var found=D[s].some(function(r){return Object.values(r).join(' ').toLowerCase().indexOf(q)!==-1;});
+    if(found){var btn=document.querySelector('.nav-it[onclick*="'+s+'"]');if(btn){go(s,btn);toast('Mostrando resultados en: '+s,'info');}return;}
+  }
+  toast('Sin resultados para: '+q,'warn');
+});
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+function hideLoader(){
+  var ov=document.getElementById('loadWrap');
+  if(ov){ov.style.opacity='0';setTimeout(function(){if(ov&&ov.parentNode)ov.parentNode.removeChild(ov);},600);}
+}
+
+async function init(){
+  var skipTimer=setTimeout(function(){
+    var skipBtn=document.getElementById('loadSkip');
+    if(skipBtn)skipBtn.style.display='block';
+  },5000);
+
+  var safetyTimer=setTimeout(function(){
+    clearTimeout(skipTimer);
+    buildAccessors();
+    renderResumen();
+    hideLoader();
+    toast('Datos cargados (tiempo límite)','warn');
+    setInterval(refreshAll,5*60*1000);
+  },15000);
+
+  try {
+    var ltxt=document.getElementById('loadTxt');
+    var sheets=Object.keys(CSV);
+    for(var i=0;i<sheets.length;i++){
+      if(ltxt){ ltxt.textContent='Cargando '+(i+1)+' de '+sheets.length+': '+sheets[i]; ltxt.style.color='#22d3ee'; }
+      var lbar=document.getElementById('loadBar');
+      if(lbar)lbar.style.width=Math.round((i/sheets.length)*100)+'%';
+      var ldet=document.getElementById('loadDetail');
+      if(ldet)ldet.textContent='Hoja '+(i+1)+'/'+sheets.length+'...';
+      await fetchCSV(CSV[sheets[i]],sheets[i]);
+      if(lbar)lbar.style.width=Math.round(((i+1)/sheets.length)*100)+'%';
+      if(ldet)ldet.textContent='OK: '+sheets[i]+' ('+D[sheets[i]].length+' registros)';
+    }
+
+    buildAccessors();
+
+    // Diagnostic panel
+    var diag='<strong style="color:#22d3ee">CSV COLUMNS</strong>';
+    ['percapita','tiempos','ventas','novcancel','cantidad'].forEach(function(sh){
+      if(!D[sh]||!D[sh].length){ diag+='<br><span style="color:#ef4444">'+sh+': EMPTY</span>'; return; }
+      var r0=D[sh][0];
+      var cols=Object.keys(r0).filter(function(k){return k!=='__colMap';});
+      diag+='<br><strong style="color:#22d3ee">'+sh+'</strong> ('+D[sh].length+'): '+cols.join(' | ');
+      if(sh==='percapita') diag+='<br>→ costo='+A.pc.costo(r0)+' pc='+A.pc.percapita(r0)+' drog='+A.pc.drog(r0);
+      if(sh==='tiempos')   diag+='<br>→ total='+A.ti.tiempoTotal(r0)+'min drog='+A.ti.drog(r0);
+      if(sh==='ventas')    diag+='<br>→ estado='+A.ven.estado(r0)+' valor='+A.ven.valor(r0);
+    });
+    var diagEl=document.getElementById('diagPanel');
+    if(diagEl)diagEl.innerHTML=diag;
+
+    renderResumen();
+  } catch(e) {
+    console.error('Init error:',e);
+    toast('Error: '+e.message,'warn');
+  }
+
+  clearTimeout(safetyTimer);
+  clearTimeout(skipTimer);
+  setTimeout(function(){
+    hideLoader();
+    toast('CAFAM plataforma lista','success');
+    setInterval(refreshAll,5*60*1000);
+  },500);
+}
+
+function forceSkip(){
+  // User manually skips loading — proceed with whatever data is available
+  var sheets=Object.keys(CSV);
+  sheets.forEach(function(k){ if(!D[k])D[k]=[]; });
+  buildAccessors();
+  renderResumen();
+  hideLoader();
+  toast('Cargado con datos parciales','warn');
+}
+
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded",init);
+}else{
+  init();
+}
+</script>
+</body>
+</html>

@@ -330,15 +330,18 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
       <button class="proj-btn" data-project="institucional" title="Cafam Institucional"><i class="fa-solid fa-building-columns"></i><span class="nav-label">Institucional</span></button>
     </div>
     <div class="nav-group" data-project="comercial">
-    <div class="nav-section">Análisis</div>
-    <div class="nav-item active" data-view="resumen"><i class="fa-solid fa-chart-line"></i><span class="nav-label">Resumen Ejecutivo</span></div>
+    <div class="nav-section">Cafam Comercial</div>
+    <div class="nav-item active" data-view="com-real"><i class="fa-solid fa-store"></i><span class="nav-label">Dashboard Comercial</span></div>
+    <!-- Motor demo anterior conservado oculto (compatibilidad de scripts) -->
+    <div style="display:none" aria-hidden="true">
+    <div class="nav-item" data-view="resumen"><i class="fa-solid fa-chart-line"></i><span class="nav-label">Resumen Ejecutivo</span></div>
     <div class="nav-item" data-view="operacion"><i class="fa-solid fa-map-location-dot"></i><span class="nav-label">Operación en Vivo</span></div>
     <div class="nav-item" data-view="mensajeros"><i class="fa-solid fa-person-biking"></i><span class="nav-label">Productividad</span></div>
     <div class="nav-item" data-view="droguerias"><i class="fa-solid fa-store"></i><span class="nav-label">Droguerías</span><span class="badge" id="alertBadge">0</span></div>
     <div class="nav-item" data-view="novedades"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label">Novedades</span></div>
-    <div class="nav-section">Operación</div>
     <div class="nav-item" data-view="malla"><i class="fa-solid fa-table-cells-large"></i><span class="nav-label">Programación Malla</span></div>
     <div class="nav-item" data-view="ia"><i class="fa-solid fa-brain"></i><span class="nav-label">IA Operativa</span></div>
+    </div>
     </div><!-- /nav-group comercial -->
     <div class="nav-group" data-project="institucional" hidden>
       <div class="nav-section">Nacional</div>
@@ -362,8 +365,8 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
     <header class="topbar">
       <button class="icon-btn" id="toggleSidebar"><i class="fa-solid fa-bars"></i></button>
       <div>
-        <div class="page-title" id="pageTitle">Resumen Ejecutivo</div>
-        <div class="page-sub" id="pageSub">Vista general de la operación logística en tiempo real</div>
+        <div class="page-title" id="pageTitle">Cafam Comercial</div>
+        <div class="page-sub" id="pageSub">Dashboard en vivo conectado a Google Sheets</div>
       </div>
       <div class="topbar-right">
         <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar servicio, mensajero, droguería..."></div>
@@ -375,8 +378,14 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
 
     <div class="content">
 
-      <!-- ========== MÓDULO 1: RESUMEN ========== -->
-      <section class="view active" id="resumen">
+      <!-- ========== CAFAM COMERCIAL — DASHBOARD REAL (Google Sheets en vivo) ========== -->
+      <section class="view active" id="com-real" style="padding:0">
+        <iframe id="comFrame" src="comercial.html" title="Cafam Comercial" loading="lazy"
+          style="width:100%;height:calc(100vh - 96px);border:0;border-radius:14px;background:#0b1120;display:block"></iframe>
+      </section>
+
+      <!-- ========== MÓDULO 1: RESUMEN (motor demo, oculto) ========== -->
+      <section class="view" id="resumen">
         <div class="exec-panel">
           <div class="card"><div class="card-h"><div><h3>Lectura ejecutiva en tiempo real</h3><div class="sub">Corte operativo actual conectado a Google Sheets</div></div></div>
             <div class="card-body"><div class="exec-copy" id="execNarrative">Cargando lectura ejecutiva...</div></div></div>
@@ -2010,6 +2019,7 @@ let recVeh='MOTORIZADO', g51Mode='motos';
 
 /* Registrar títulos de las nuevas vistas en PAGES (usado por switchView) */
 try{Object.assign(PAGES,{
+  'com-real':['Cafam Comercial','Dashboard en vivo conectado a Google Sheets'],
   'inst-nacional':['Gestión Nacional','Entregas, novedades y cumplimiento por ciudad'],
   'inst-recibido':['Recibido Calle 51','Guías recibidas — motorizado y carry'],
   'inst-novc51':['Novedades Calle 51','Análisis de novedades de Calle 51'],
@@ -2401,7 +2411,7 @@ function switchProject(p){
   PROJECT=p;
   document.querySelectorAll('.proj-btn').forEach(b=>b.classList.toggle('active',b.dataset.project===p));
   document.querySelectorAll('.nav-group').forEach(g=>{g.hidden=(g.dataset.project!==p);});
-  if(p==='comercial')switchView('resumen');
+  if(p==='comercial')switchView('com-real');
   else{switchView('inst-nacional');ensureInst();}
 }
 window.switchProject=switchProject;
