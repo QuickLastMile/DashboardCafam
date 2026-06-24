@@ -366,6 +366,7 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
       <div class="nav-item" data-view="ind-comercial"><i class="fa-solid fa-store"></i><span class="nav-label">Cafam Comercial</span></div>
       <div class="nav-item" data-view="ind-institucional"><i class="fa-solid fa-building-columns"></i><span class="nav-label">Cafam Institucional</span></div>
       <div class="nav-item" data-view="ind-biologicos"><i class="fa-solid fa-flask-vial"></i><span class="nav-label">Cafam Biológicos</span></div>
+      <div class="nav-item" data-view="ind-admin"><i class="fa-solid fa-sitemap"></i><span class="nav-label">Área Administrativa</span></div>
     </div>
     <div class="nav-foot">
       <div class="av" style="background:none;padding:0;overflow:hidden"><img src="https://i.ibb.co/KjmjjvNZ/Captura-de-pantalla-2025-09-15-161315.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:10px"></div>
@@ -793,6 +794,7 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
       <section class="view" id="ind-comercial"><div class="ind-wrap" id="indc-body"><div class="ind-loading">Cargando indicadores…</div></div></section>
       <section class="view" id="ind-institucional"><div class="ind-wrap" id="indi-body"><div class="ind-loading">Cargando indicadores…</div></div></section>
       <section class="view" id="ind-biologicos"><div class="ind-wrap" id="indb-body"><div class="ind-loading">Cargando indicadores…</div></div></section>
+      <section class="view" id="ind-admin"><div class="ind-wrap" id="inda-body"><div class="ind-loading">Cargando…</div></div></section>
 <!-- ===================== FIN INDICADORES ===================== -->
 
     </div>
@@ -874,6 +876,34 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
 .cmp-card .cc-v{font-family:var(--font-d);font-size:22px;font-weight:800}
 .cmp-card .cc-var{margin-top:8px;font-size:12px;font-weight:700}
 .cc-up{color:#4ade80}.cc-dn{color:#f87171}.cc-fl{color:var(--text-soft)}
+.ind-subtabs{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 16px;border-bottom:1px solid var(--border)}
+.ind-stab{border:none;background:transparent;color:var(--text-dim);padding:9px 15px;border-radius:10px 10px 0 0;cursor:pointer;font-family:var(--font-b);font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;border-bottom:2px solid transparent;transition:.15s}
+.ind-stab:hover{color:var(--text);background:rgba(148,163,184,.06)}
+.ind-stab.active{color:#fff;border-bottom-color:var(--blue);background:rgba(37,99,235,.08)}
+.ind-fbar{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px}
+.ind-fbar .fld{display:flex;flex-direction:column;gap:5px}
+.ind-fbar label{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-soft);font-weight:600}
+.ind-fbar select{background:var(--surface-solid);border:1px solid var(--border-strong);color:var(--text);border-radius:9px;padding:8px 12px;font-size:13px;min-width:140px;outline:none}
+.ind-fbar select:focus{border-color:var(--blue)}
+.ind-reg-info{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 14px}
+.ind-chip{background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.25);color:#93c5fd;border-radius:20px;padding:5px 13px;font-size:11.5px;font-weight:600}
+.ind-chip.g{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.25);color:#86efac}
+.evid-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.evid-card{background:var(--surface-solid);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.evid-card img{width:100%;height:160px;object-fit:cover;display:block;background:#0b1120}
+.evid-card .ev-b{padding:12px 14px}
+.evid-card .ev-t{font-weight:600;font-size:13.5px}
+.evid-card .ev-m{font-size:11px;color:var(--text-soft);margin-top:3px}
+.org-group{margin-bottom:24px}
+.org-h{font-family:var(--font-d);font-size:14px;font-weight:700;color:#fde68a;background:linear-gradient(135deg,rgba(234,179,8,.18),rgba(234,179,8,.04));border:1px solid rgba(234,179,8,.32);border-radius:10px;padding:8px 16px;display:inline-block;margin-bottom:14px}
+.org-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.org-card{background:var(--surface-solid);border:1px solid var(--border);border-radius:16px;padding:18px;text-align:center}
+.org-av{width:84px;height:84px;border-radius:50%;margin:0 auto 12px;display:grid;place-items:center;color:#fff;font-family:var(--font-d);font-weight:800;font-size:25px;overflow:hidden;border:2px solid var(--border-strong);background:linear-gradient(135deg,#2563EB,#0E8A78)}
+.org-av img{width:100%;height:100%;object-fit:cover}
+.org-name{font-family:var(--font-d);font-weight:700;font-size:14.5px}
+.org-role{font-size:11.5px;color:#60a5fa;font-weight:600;margin:3px 0 9px}
+.org-contact{font-size:11px;color:var(--text-soft);line-height:1.7;word-break:break-all}
+.org-contact i{width:14px;color:var(--text-dim)}
 </style>
 
 <!-- Librerías -->
@@ -2137,7 +2167,8 @@ try{Object.assign(PAGES,{
   'inst-ia':['Resumen IA Institucional','Informes, análisis y sugerencias automáticas'],
   'ind-comercial':['Indicadores · Cafam Comercial','Comparativo mensual 2025 vs 2026'],
   'ind-institucional':['Indicadores · Cafam Institucional','Comparativo mensual 2025 vs 2026'],
-  'ind-biologicos':['Indicadores · Cafam Biológicos','Comparativo mensual 2025 vs 2026']
+  'ind-biologicos':['Indicadores · Cafam Biológicos','Comparativo mensual 2025 vs 2026'],
+  'ind-admin':['Indicadores · Área Administrativa','Línea de gestión Cafam Last Mile']
 });}catch(e){console.warn('No se pudo extender PAGES',e);}
 
 /* ---------- Utilidades ---------- */
@@ -2700,7 +2731,9 @@ function pReg(rows,o){const out=[];for(let i=2;i<rows.length;i++){const r=rows[i
   out.push({anio:a,mes:m,entregado:iNum(r[o+2]),pctEnt:pNum(r[o+3]),cancelado:iNum(r[o+4]),pctCanc:pNum(r[o+5])});}return out;}
 function pFact(rows,o){const out=[];for(let i=2;i<rows.length;i++){const r=rows[i];if(!r)continue;
   const m=cell(r,o).toUpperCase();if(mi(m)<0||!isConc(cell(r,o+5)))continue;
-  out.push({mes:m,v2025:iNum(r[o+1]),v2026:iNum(r[o+2]),variacion:iNum(r[o+3]),pctVar:cell(r,o+4)});}return out;}
+  const v25=iNum(r[o+1]),v26=iNum(r[o+2]);let va=iNum(r[o+3]);if(va==null&&v25!=null&&v26!=null)va=v26-v25;
+  const pctNum=(v25!=null&&v25!==0&&va!=null)?(va/Math.abs(v25)*100):null;
+  out.push({mes:m,v2025:v25,v2026:v26,variacion:va,pctTxt:cell(r,o+4),pctNum});}return out;}
 function pNov(rows,o){const out=[];for(let i=2;i<rows.length;i++){const r=rows[i];if(!r)continue;
   const nv=cell(r,o+2);if(!nv)continue;
   out.push({anio:cell(r,o),mes:cell(r,o+1).toUpperCase(),novedad:nv,cant:iNum(r[o+3]),pct:cell(r,o+4)});}return out;}
@@ -2719,6 +2752,17 @@ function pTiempos(rows){const out=[];for(let i=2;i<rows.length;i++){const r=rows
 function pHist(rows,o){const out=[];for(let i=2;i<rows.length;i++){const r=rows[i];if(!r)continue;
   const f=cell(r,o+2);if(!f)continue;
   out.push({anio:cell(r,o),mes:cell(r,o+1),fecha:f,mod:cell(r,o+3)});}return out;}
+function pEvid(rows){const out=[];if(!rows||!rows.length)return out;
+  let h=-1;for(let i=0;i<Math.min(rows.length,6);i++){if((rows[i]||[]).some(c=>String(c).trim().toUpperCase()==='SEGMENTO')){h=i;break;}}
+  if(h<0)return out;const hd=(rows[h]||[]).map(c=>String(c||'').trim().toUpperCase());
+  const ix=(...nn)=>{for(const n of nn){const j=hd.indexOf(n);if(j>=0)return j;}return -1;};
+  const iS=ix('SEGMENTO'),iA=ix('AÑO','ANO'),iM=ix('MES'),iT=ix('TITULO','TÍTULO','TITULO'),iU=ix('URL','ENLACE','LINK'),iV=ix('VARIACION','VARIACIÓN');
+  for(let i=h+1;i<rows.length;i++){const r=rows[i];if(!r)continue;
+    let seg=String(r[iS]||'').trim().toLowerCase();const url=iU>=0?String(r[iU]||'').trim():'';
+    if(!seg||!url)continue;
+    if(seg.indexOf('biol')>=0)seg='biologicos';else if(seg.indexOf('institu')>=0)seg='institucional';else if(seg.indexOf('comerc')>=0)seg='comercial';
+    out.push({seg,anio:iA>=0?String(r[iA]||'').trim():'',mes:iM>=0?String(r[iM]||'').trim().toUpperCase():'',titulo:iT>=0?String(r[iT]||'').trim():'',url,variacion:iV>=0?String(r[iV]||'').trim():''});}
+  return out;}
 /* ---------- Helpers de render ---------- */
 const monthsOf=arr=>[...new Set(arr.map(x=>x.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));
 const regVal=(reg,m,y,f)=>{const r=reg.find(x=>x.mes===m&&x.anio===y);return r?r[f]:null;};
@@ -2853,6 +2897,131 @@ function renderBiologicos(){
   tbl('indb-fact-t',['MES','2025','2026','Variación','% Var.'],fact.sort((a,b)=>mi(a.mes)-mi(b.mes)).map(f=>{const cls=(f.variacion||0)>0?'pill-g':(f.variacion||0)<0?'pill-r':'pill-y';return [f.mes,money(f.v2025),money(f.v2026),money(f.variacion),`<span class="pill ${cls}">${f.pct||'—'}</span>`];}));
 }
 
+/* ============ Motor v2: sub-pestañas, filtros, resumen, evidencias ============ */
+const SEG={
+ comercial:{body:'indc-body',title:'Cafam Comercial',ic:'fa-store',grad:'linear-gradient(135deg,#2563EB,#1d4ed8)',contrato:'20180123',otrosi:'27/05/2026',
+   desc:'Servicio integral de domicilios: recibo, conducción y entrega de medicamentos, insumos, dispositivos médicos y documentos en los domicilios de los usuarios, a nivel local y nacional.',
+   tabs:['portada','registros','novedades','tiempos','facturacion','evidencias']},
+ institucional:{body:'indi-body',title:'Cafam Institucional & Adulto Mayor',ic:'fa-building-columns',grad:'linear-gradient(135deg,#0E8A78,#074E44)',contrato:'20180123',otrosi:'27/05/2026',
+   desc:'Recepción de servicios a partir de los pendientes emitidos por los convenios de Cafam; se suben a la plataforma vía Call y se asignan a ruta según disponibilidad y alistamiento de la farmacia.',
+   tabs:['portada','registros','novedades','facturacion','evidencias']},
+ biologicos:{body:'indb-body',title:'Cafam Biológicos',ic:'fa-flask-vial',grad:'linear-gradient(135deg,#A855F7,#7c3aed)',contrato:'20190233',otrosi:'27/05/2026',
+   desc:'Transporte de muestras biológicas desde las IPS de Cafam hasta la central de procesamiento, con cadena de frío (neveras con geles congelados y control de temperatura) y recolección de residuos.',
+   tabs:['portada','registros','novedades','facturacion','evidencias']}
+};
+const TLBL={portada:['Portada','fa-house-chimney'],registros:['Registros y efectividad','fa-chart-column'],novedades:['Novedades','fa-triangle-exclamation'],tiempos:['Tiempos','fa-clock'],facturacion:['Facturación','fa-dollar-sign'],evidencias:['Evidencias','fa-camera']};
+const stt={comercial:{sub:'portada',anio:'',mes:''},institucional:{sub:'portada',anio:'',mes:''},biologicos:{sub:'portada',anio:'',mes:''}};
+const segData=seg=>DATA[seg.toUpperCase()];
+const segReg=(d,seg)=>seg==='biologicos'?d.bioReg:d.reg;
+function allYears(d,seg){const ys=new Set();(segReg(d,seg)||[]).forEach(r=>{if(seg==='biologicos'){if(r.v2025!=null)ys.add(2025);if(r.v2026!=null)ys.add(2026);}else if(r.anio)ys.add(r.anio);});(d.fact||[]).forEach(f=>{if(f.v2025!=null)ys.add(2025);if(f.v2026!=null)ys.add(2026);});return [...ys].sort();}
+function allMonths(d,seg){const s=new Set();(segReg(d,seg)||[]).forEach(r=>s.add(r.mes));(d.fact||[]).forEach(f=>s.add(f.mes));return [...s].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));}
+const cap=m=>m?m.charAt(0)+m.slice(1).toLowerCase():'';
+const showY=(st,y)=>!st.anio||st.anio===String(y);
+const yrLbl=st=>st.anio?('Año '+st.anio):'Comparativo 2025 vs 2026';
+function groupedF(id,labels,g25,g26,st,c25,c26,fmt){const ds=[];
+  if(showY(st,2025))ds.push({label:'2025',data:labels.map(g25),backgroundColor:c25,borderRadius:5,maxBarThickness:42});
+  if(showY(st,2026))ds.push({label:'2026',data:labels.map(g26),backgroundColor:c26,borderRadius:5,maxBarThickness:42});
+  mkc(id,{type:'bar',data:{labels,datasets:ds},options:{...BASE,plugins:{legend:LEG,tooltip:fmt?{callbacks:{label:c=>c.dataset.label+': '+fmt(c.parsed.y)}}:{}},scales:{x:GRID,y:GRID}}});}
+function lineF(id,labels,g25,g26,st,fmt,pct){const ds=[];
+  if(showY(st,2025))ds.push({label:'2025',data:labels.map(g25),borderColor:C25,borderWidth:2.4,tension:.35,pointRadius:3,spanGaps:true});
+  if(showY(st,2026))ds.push({label:'2026',data:labels.map(g26),borderColor:CO.green,borderWidth:2.6,tension:.35,pointRadius:3,spanGaps:true});
+  mkc(id,{type:'line',data:{labels,datasets:ds},options:{...BASE,plugins:{legend:LEG,tooltip:fmt?{callbacks:{label:c=>c.dataset.label+': '+fmt(c.parsed.y)}}:{}},scales:{x:GRID,y:pct?{...GRID,suggestedMin:90,suggestedMax:100}:GRID}}});}
+function subtabBar(cfg,st){return '<div class="ind-subtabs">'+cfg.tabs.map(t=>`<button class="ind-stab${st.sub===t?' active':''}" data-sub="${t}"><i class="fa-solid ${TLBL[t][1]}"></i> ${TLBL[t][0]}</button>`).join('')+'</div>';}
+function filterBar(seg,d,st){if(st.sub==='portada')return '';
+  const ys=allYears(d,seg),mss=allMonths(d,seg),px=SEG[seg].body;
+  const yOpt='<option value="">Ambos años</option>'+ys.map(y=>`<option value="${y}"${st.anio===String(y)?' selected':''}>${y}</option>`).join('');
+  const mOpt='<option value="">Todos los meses</option>'+mss.map(m=>`<option value="${m}"${st.mes===m?' selected':''}>${cap(m)}</option>`).join('');
+  if(st.sub==='evidencias')return `<div class="ind-fbar"><div class="fld"><label>Mes</label><select id="${px}-mes">${mOpt}</select></div></div>`;
+  return `<div class="ind-fbar"><div class="fld"><label>Año</label><select id="${px}-anio">${yOpt}</select></div><div class="fld"><label>Mes</label><select id="${px}-mes">${mOpt}</select></div></div>`;}
+function renderSeg(seg){const cfg=SEG[seg],d=segData(seg),st=stt[seg];const body=document.getElementById(cfg.body);if(!body||!d)return;
+  body.innerHTML=subtabBar(cfg,st)+filterBar(seg,d,st)+`<div id="${cfg.body}-panel"></div>`;
+  body.querySelectorAll('.ind-stab').forEach(b=>b.addEventListener('click',()=>{stt[seg].sub=b.dataset.sub;renderSeg(seg);}));
+  const ya=document.getElementById(cfg.body+'-anio');if(ya)ya.addEventListener('change',()=>{stt[seg].anio=ya.value;renderPanel(seg);});
+  const ms=document.getElementById(cfg.body+'-mes');if(ms)ms.addEventListener('change',()=>{stt[seg].mes=ms.value;renderPanel(seg);});
+  renderPanel(seg);
+  setTimeout(()=>Object.values(indCharts).forEach(c=>{try{c.resize();}catch(e){}}),80);}
+function renderPanel(seg){const d=segData(seg),st=stt[seg],p=document.getElementById(SEG[seg].body+'-panel');if(!p||!d)return;
+  if(st.sub==='portada')return panelPortada(seg,d,p);
+  if(st.sub==='registros')return panelReg(seg,d,st,p);
+  if(st.sub==='novedades')return panelNov(seg,d,st,p);
+  if(st.sub==='tiempos')return panelTiempos(seg,d,st,p);
+  if(st.sub==='facturacion')return panelFact(seg,d,st,p);
+  if(st.sub==='evidencias')return panelEvid(seg,st,p);}
+function panelPortada(seg,d,p){const cfg=SEG[seg],reg=segReg(d,seg),ys=allYears(d,seg),mss=allMonths(d,seg);
+  const lm=seg==='biologicos'?(mss.slice(-1)[0]||null):lastMes(reg);
+  const fLast=(d.fact||[]).slice().sort((a,b)=>mi(a.mes)-mi(b.mes)).slice(-1)[0]||{};
+  let kpis;
+  if(seg==='biologicos'){const rLast=(d.bioReg||[]).find(b=>b.mes===lm)||{};const c25=(d.cumpl||[]).find(c=>c.mes===lm&&c.anio===2025),c26=(d.cumpl||[]).find(c=>c.mes===lm&&c.anio===2026);
+    kpis=cmpCard('Registros gestionados ('+(lm||'')+')',rLast.v2025,rLast.v2026,n0)+cmpCard('Cumplimiento % ('+(lm||'')+')',c25?c25.entregado:null,c26?c26.entregado:null,p1)+cmpCard('Facturación ('+(fLast.mes||'')+')',fLast.v2025,fLast.v2026,money);
+  }else{kpis=cmpCard('Registros entregados ('+(lm||'')+')',regVal(reg,lm,2025,'entregado'),regVal(reg,lm,2026,'entregado'),n0)+cmpCard('Efectividad % ('+(lm||'')+')',regVal(reg,lm,2025,'pctEnt'),regVal(reg,lm,2026,'pctEnt'),p1)+cmpCard('Cancelados ('+(lm||'')+')',regVal(reg,lm,2025,'cancelado'),regVal(reg,lm,2026,'cancelado'),n0)+cmpCard('Facturación ('+(fLast.mes||'')+')',fLast.v2025,fLast.v2026,money);}
+  p.innerHTML=hero(cfg.ic,cfg.grad,cfg.title,cfg.desc,'Contrato <b>'+cfg.contrato+'</b> · Fecha otrosí: <b>'+cfg.otrosi+'</b> · Último mes cerrado: <b>'+(lm||'—')+'</b>')
+    +`<div class="ind-reg-info"><span class="ind-chip"><i class="fa-solid fa-calendar"></i> Años registrados: ${ys.join(' · ')||'—'}</span><span class="ind-chip g"><i class="fa-solid fa-circle-check"></i> Meses cerrados: ${mss.map(cap).join(' · ')||'—'}</span></div>`
+    +'<div class="cmp-grid">'+kpis+'</div>'
+    +secT('fa-brain','Resumen general inteligente')+'<div class="card"><div class="card-body"><div class="ia-report">'+smartSummary(seg,d)+'</div></div></div>';}
+function smartSummary(seg,d){const reg=segReg(d,seg)||[],fact=d.fact||[];
+  const totR=y=>seg==='biologicos'?reg.reduce((a,r)=>a+(r[y===2025?'v2025':'v2026']||0),0):reg.filter(r=>r.anio===y).reduce((a,r)=>a+(r.entregado||0),0);
+  const e25=totR(2025),e26=totR(2026),vR=e25?((e26-e25)/e25*100):null;
+  const f25=fact.reduce((a,f)=>a+(f.v2025||0),0),f26=fact.reduce((a,f)=>a+(f.v2026||0),0),vF=f25?((f26-f25)/f25*100):null;
+  const topNov=novTop(d.nov||[])[0];const col=v=>v==null?'#94a3b8':v>=0?'#4ade80':'#f87171';
+  const rl=seg==='biologicos'?'registros gestionados':'registros entregados';
+  let efe='';if(seg!=='biologicos'){const avg=y=>{const a=reg.filter(r=>r.anio===y&&r.pctEnt!=null);return a.length?a.reduce((s,r)=>s+r.pctEnt,0)/a.length:null;};const a25=avg(2025),a26=avg(2026);if(a25!=null&&a26!=null)efe=` La efectividad promedio pasó de <b>${p1(a25)}</b> (2025) a <b style="color:${a26>=a25?'#4ade80':'#f87171'}">${p1(a26)}</b> (2026).`;}
+  let r=`<h4>Lectura ejecutiva · ${SEG[seg].title}</h4><p>En los meses cerrados, los <b>${rl}</b> sumaron <b>${n0(e25)}</b> en 2025 y <b>${n0(e26)}</b> en 2026`;
+  r+=vR==null?'.':`, una <b style="color:${col(vR)}">${vR>=0?'variación de +':'caída de '}${vR>=0?vR.toFixed(1):Math.abs(vR).toFixed(1)}%</b> frente a 2025.`;
+  r+=efe;
+  if(f25||f26){r+=` La facturación acumulada fue <b>${money(f25)}</b> (2025) vs <b>${money(f26)}</b> (2026)`;r+=vF==null?'.':`, <b style="color:${col(vF)}">${vF>=0?'+':''}${vF.toFixed(1)}%</b>.`;}
+  if(topNov)r+=` La novedad más frecuente es <b>${topNov[0]}</b> (${n0(topNov[1])} casos).`;
+  r+='</p><ul>';
+  r+=`<li>${vR!=null&&vR<0?'Volumen a la baja vs 2025: revisar demanda y cobertura por punto.':'Volumen estable o creciente: sostener la capacidad operativa.'}</li>`;
+  if(vF!=null)r+=`<li>${vF<0?'Facturación menor que 2025: validar novedades y cancelaciones que impactan el ingreso.':'Facturación al alza: mantener el nivel de servicio para sostenerla.'}</li>`;
+  if(topNov)r+=`<li>Atacar la causa raíz de <b>${topNov[0]}</b> para reducir reprocesos y mejorar la efectividad.</li>`;
+  return r+'</ul>';}
+function panelReg(seg,d,st,p){const reg=segReg(d,seg),px=SEG[seg].body,ms=allMonths(d,seg).filter(m=>!st.mes||m===st.mes);
+  if(seg==='biologicos'){p.innerHTML=card('Registros gestionados por mes',yrLbl(st),px+'-reg');
+    groupedF(px+'-reg',ms,m=>{const b=reg.find(x=>x.mes===m);return b?b.v2025:null;},m=>{const b=reg.find(x=>x.mes===m);return b?b.v2026:null;},st,C25,CO.purple,n0);return;}
+  p.innerHTML=`<div class="grid-2">${card('Registros entregados por mes',yrLbl(st),px+'-reg')}${card('Efectividad de entrega (%)',yrLbl(st),px+'-efe')}</div>`+card('Cancelados por mes',yrLbl(st),px+'-canc');
+  groupedF(px+'-reg',ms,m=>regVal(reg,m,2025,'entregado'),m=>regVal(reg,m,2026,'entregado'),st,C25,CO.blue,n0);
+  lineF(px+'-efe',ms,m=>regVal(reg,m,2025,'pctEnt'),m=>regVal(reg,m,2026,'pctEnt'),st,p1,true);
+  groupedF(px+'-canc',ms,m=>regVal(reg,m,2025,'cancelado'),m=>regVal(reg,m,2026,'cancelado'),st,C25,CO.red,n0);}
+function panelNov(seg,d,st,p){const px=SEG[seg].body;let nov=(d.nov||[]);if(st.anio)nov=nov.filter(n=>String(n.anio).indexOf(st.anio)>=0);if(st.mes)nov=nov.filter(n=>n.mes===st.mes);
+  const nt=novTop(nov);p.innerHTML=card('Novedades por tipo','Cantidad por tipo de novedad (mayor a menor)',px+'-nov','tall');
+  if(!emptyIf(px+'-nov',nt.length===0,'Sin novedades para el filtro seleccionado'))mkc(px+'-nov',{type:'bar',data:{labels:nt.map(e=>e[0]),datasets:[{data:nt.map(e=>e[1]),backgroundColor:palette(nt.length),borderRadius:6}]},options:{...BASE,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:GRID,y:{...GRID,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});}
+function panelTiempos(seg,d,st,p){const px=SEG[seg].body;let t=(d.tiempos||[]);if(st.anio)t=t.filter(x=>String(x.anio)===st.anio);if(st.mes)t=t.filter(x=>x.mes===st.mes);
+  p.innerHTML=tcard('Tiempos de entrega por mes','Promedios por etapa (HH:MM:SS) — meses conciliados',px+'-tt');
+  tbl(px+'-tt',['MES','AÑO','1 Prioritario','2 Trans. fuera zona','3 Preprogramado','4 Transf. dentro zona','Otros','Total general'],t.sort((a,b)=>mi(a.mes)-mi(b.mes)||(a.anio||0)-(b.anio||0)).map(x=>[x.mes,x.anio||'—',x.c1,x.c2,x.c3,x.c4,x.otros,`<b>${x.total}</b>`]));}
+function panelFact(seg,d,st,p){const px=SEG[seg].body;const fact=d.fact||[];const frows=fact.filter(f=>!st.mes||f.mes===st.mes).sort((a,b)=>mi(a.mes)-mi(b.mes));
+  const ms=frows.map(f=>f.mes);
+  p.innerHTML=card('Facturación por mes',yrLbl(st),px+'-fact')+tcard('Detalle de facturación','Variación y % variación — verde aumenta, rojo disminuye',px+'-factt');
+  groupedF(px+'-fact',ms,m=>{const f=fact.find(x=>x.mes===m);return f?f.v2025:null;},m=>{const f=fact.find(x=>x.mes===m);return f?f.v2026:null;},st,C25,CO.green,money);
+  tbl(px+'-factt',['MES','2025','2026','Variación','% Variación'],frows.map(f=>{const up=(f.variacion||0)>0,dn=(f.variacion||0)<0;const c=up?'#4ade80':dn?'#f87171':'#94a3b8',ar=up?'▲':dn?'▼':'■';
+    const pct=(f.pctTxt&&f.pctTxt!=='')?f.pctTxt:(f.pctNum!=null?(f.pctNum>0?'+':'')+f.pctNum.toFixed(1)+'%':'—');
+    return [f.mes,money(f.v2025),money(f.v2026),`<b style="color:${c}">${money(f.variacion)}</b>`,`<b style="color:${c}">${ar} ${pct}</b>`];}));}
+function panelEvid(seg,st,p){const ev=(DATA.EVID||[]).filter(e=>e.seg===seg&&(!st.mes||e.mes===st.mes));
+  if(!ev.length){p.innerHTML='<div class="card"><div class="card-body"><div class="ind-loading">Aún no hay evidencias para este filtro.<br><br>Para publicarlas (visibles en el link), agrega una hoja <b>EVIDENCIAS</b> al Sheet con columnas:<br><b>SEGMENTO</b> (comercial / institucional / biologicos) · <b>AÑO</b> · <b>MES</b> · <b>TITULO</b> · <b>URL</b> (enlace de imagen o carpeta de Google Drive) · <b>VARIACION</b> (opcional).</div></div></div>';return;}
+  p.innerHTML='<div class="evid-grid">'+ev.map(e=>{const isImg=/\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(e.url)||/googleusercontent|drive\.google\.com\/uc/i.test(e.url);
+    const img=isImg?`<img src="${e.url}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">`:'';
+    return `<div class="evid-card">${img}<div class="ev-b"><div class="ev-t">${e.titulo||'Evidencia'}</div><div class="ev-m">${cap(e.mes)} ${e.anio||''}${e.variacion?' · '+e.variacion:''}</div><a href="${e.url}" target="_blank" rel="noopener" style="display:inline-flex;margin-top:9px;gap:6px;align-items:center;font-size:12px;color:#60a5fa;text-decoration:none"><i class="fa-solid fa-up-right-from-square"></i> Abrir</a></div></div>`;}).join('')+'</div>';}
+/* ---------- Área Administrativa (organigrama fijo) ---------- */
+const ADMIN=[
+ {grupo:'Operaciones Last Mile Cafam',people:[
+   {n:'Jorge Martínez',r:'Manager LM',e:'jorge.martinez@quick.com.co',c:'310 797 3544'},
+   {n:'Giovanni Góngora',r:'Jefe de Operaciones',e:'giovany.gongora@quick.com.co',c:'316 505 1178'},
+   {n:'Maryuri López',r:'Líder de Operaciones',e:'maryuri.lopez@quick.com.co',c:'310 246 8044'}]},
+ {grupo:'Área Financiera · GAF',people:[
+   {n:'Alejandra Pérez',r:'Analista de Negocios',e:'alejandra.perez@quick.com.co',c:'321 960 8525'}]},
+ {grupo:'Comercial Domicilios',people:[
+   {n:'Jorge Martínez',r:'Coordinador Bogotá',e:'coordinador.cafam3@quick.com.co',c:'321 441 0553'},
+   {n:'John Pava',r:'Coordinador Bogotá',e:'coordinador.cafam4@quick.com.co',c:'310 213 6471'},
+   {n:'Efember Quintian',r:'Coordinador Nacional',e:'coordinador.cafam5@quick.com.co',c:'310 797 2288'},
+   {n:'Daniela Alexandra',r:'Coordinadora Nacional',e:'coordinador.cafam7@quick.com.co',c:'314 534 3917'}]},
+ {grupo:'Institucional · Adulto Mayor',people:[
+   {n:'Angie Salazar',r:'Coordinadora Institucional Calle 51',e:'coordinador.cafam8@quick.com.co',c:'312 318 0151'},
+   {n:'Carlos Cortés',r:'Coordinador Institucional Floresta',e:'coordinador.cafam2@quick.com.co',c:'321 441 0757'}]}
+];
+const initials=n=>n.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+function renderAdmin(){const b=document.getElementById('inda-body');if(!b)return;
+  b.innerHTML=hero('fa-sitemap','linear-gradient(135deg,#EAB308,#ca8a04)','Línea de Gestión Cafam Last Mile','Estructura de gestión y contactos del equipo Quick a cargo de la operación Cafam: Comercial, Institucional &amp; Adulto Mayor y áreas de soporte.','Organigrama vigente')
+    +ADMIN.map(g=>`<div class="org-group"><div class="org-h">${g.grupo}</div><div class="org-grid">${g.people.map(pp=>`<div class="org-card"><div class="org-av">${pp.photo?`<img src="${pp.photo}" referrerpolicy="no-referrer">`:initials(pp.n)}</div><div class="org-name">${pp.n}</div><div class="org-role">${pp.r}</div><div class="org-contact"><i class="fa-solid fa-envelope"></i> ${pp.e}<br><i class="fa-solid fa-phone"></i> ${pp.c}</div></div>`).join('')}</div></div>`).join('');}
+
 /* ---------- Carga ---------- */
 function fetchInd(sheet){return new Promise((res,rej)=>{Papa.parse(IND_CFG.url(sheet),{download:true,header:false,skipEmptyLines:false,complete:r=>res(r.data),error:rej});});}
 async function ensureInd(){
@@ -2862,8 +3031,9 @@ async function ensureInd(){
     DATA.COMERCIAL={reg:pReg(com,13),nov:pNov(com,21),fact:pFact(com,36),tiempos:pTiempos(com),fija:pPlanta(com,3,true),colab:pPlanta(com,8,true),hist:pHist(com,43)};
     DATA.INSTITUCIONAL={reg:pReg(ins,7),nov:pNov(ins,15),fact:pFact(ins,21),fija:pPlanta(ins,3,false),hist:pHist(ins,28)};
     DATA.BIOLOGICOS={bioReg:pBioReg(bio,3),cumpl:pCumpl(bio,9),nov:pNov(bio,15),fact:pFact(bio,21)};
+    try{const ev=await fetchInd('EVIDENCIAS');DATA.EVID=pEvid(ev);}catch(e){DATA.EVID=[];}
     indLoaded=true;
-    renderComercial();renderInstitucional();renderBiologicos();
+    renderSeg('comercial');renderSeg('institucional');renderSeg('biologicos');renderAdmin();
     setTimeout(()=>Object.values(indCharts).forEach(c=>{try{c.resize();}catch(e){}}),180);
   }catch(e){console.warn('Indicadores: fallo de carga',e);
     ['indc-body','indi-body','indb-body'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<div class="ind-loading">No se pudo cargar el Sheet de indicadores. Verifica que esté compartido como "Cualquiera con el enlace · Lector".</div>';});}
