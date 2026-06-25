@@ -904,6 +904,21 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
 .org-role{font-size:11.5px;color:#60a5fa;font-weight:600;margin:3px 0 9px}
 .org-contact{font-size:11px;color:var(--text-soft);line-height:1.7;word-break:break-all}
 .org-contact i{width:14px;color:var(--text-dim)}
+.org-ini{position:absolute}
+.org-av img{position:relative;z-index:1}
+/* Etiquetas de totales (rediseño) */
+.ind-tot{display:flex;gap:14px;flex-wrap:wrap;margin:2px 0 18px}
+.ind-tot .t{flex:1 1 230px;display:flex;align-items:center;gap:13px;padding:14px 17px;border-radius:14px;background:var(--surface-solid);border:1px solid var(--border)}
+.ind-tot .t .ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:16px;color:#fff;flex-shrink:0;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.ind-tot .t .lbl{font-size:10.5px;color:var(--text-soft);font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+.ind-tot .t .vv{font-family:var(--font-d);font-size:21px;font-weight:800;color:var(--text);margin-top:4px;line-height:1}
+/* Espaciado entre tarjetas dentro de un panel de indicadores */
+.ind-panel>.card,.ind-panel>.grid-2,.ind-panel>.grid-2b,.ind-panel>.kpi-grid,.ind-panel>.ind-hero{margin-bottom:20px}
+/* Sub-pestañas de Área Administrativa */
+.org-sub{display:inline-flex;gap:4px;background:var(--surface-solid);border:1px solid var(--border-strong);border-radius:12px;padding:4px;margin:0 0 22px;flex-wrap:wrap;max-width:100%}
+.org-stab{border:none;background:transparent;color:var(--text-dim);padding:9px 18px;border-radius:9px;cursor:pointer;font-family:var(--font-b);font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;transition:.18s}
+.org-stab:hover{color:var(--text)}
+.org-stab.active{background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;box-shadow:var(--glow-blue)}
 </style>
 
 <!-- Librerías -->
@@ -2934,42 +2949,63 @@ const BW=st=>st.mes?96:46;
 function visYR(arr,st){const ys=st.anio?[+st.anio]:[2025,2026];return arr.filter(r=>ys.includes(r.anio)&&(st.anio||r.conc)&&(!st.mes||r.mes===st.mes));}
 /* mesrow: filas con v2025/v2026 (fact, bioReg). Ambos→solo conc; un año→todo */
 function visMS(arr,st){let r=st.anio?arr.slice():arr.filter(x=>x.conc);if(st.mes)r=r.filter(x=>x.mes===st.mes);return r;}
-function groupedYR(id,rows,f,st,c25,c26,fmt){
+function groupedYR(id,rows,f,st,c25,c26,fmt,months){
   const val=(m,y)=>{const r=rows.find(x=>x.mes===m&&x.anio===y);return r?r[f]:null;};
-  const months=[...new Set(rows.filter(r=>r[f]!=null).map(r=>r.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));
+  months=months||[...new Set(rows.filter(r=>r[f]!=null).map(r=>r.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));
   const ds=[];
   if(showY(st,2025))ds.push({label:'2025',data:months.map(m=>val(m,2025)),backgroundColor:c25,borderRadius:5,maxBarThickness:BW(st)});
   if(showY(st,2026))ds.push({label:'2026',data:months.map(m=>val(m,2026)),backgroundColor:c26,borderRadius:5,maxBarThickness:BW(st)});
   mkc(id,{type:'bar',data:{labels:months,datasets:ds},options:{...BASE,plugins:{legend:LEG,tooltip:{callbacks:{label:c=>{let s=c.dataset.label+': '+fmt(c.parsed.y);if(c.dataset.label==='2026'){const v=val(months[c.dataIndex],2025);if(v!=null&&c.parsed.y!=null){const dd=c.parsed.y-v;s+=' · '+(dd>=0?'+':'')+fmt(dd)+' vs 2025';}}return s;}}}},scales:{x:GRID,y:GRID}}});}
-function lineYR(id,rows,f,st,fmt,pct){
+function lineYR(id,rows,f,st,fmt,pct,months){
   const val=(m,y)=>{const r=rows.find(x=>x.mes===m&&x.anio===y);return r?r[f]:null;};
-  const months=[...new Set(rows.filter(r=>r[f]!=null).map(r=>r.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));
+  months=months||[...new Set(rows.filter(r=>r[f]!=null).map(r=>r.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));
   const ds=[];
   if(showY(st,2025))ds.push({label:'2025',data:months.map(m=>val(m,2025)),borderColor:C25,borderWidth:2.4,tension:.35,pointRadius:3,spanGaps:true});
   if(showY(st,2026))ds.push({label:'2026',data:months.map(m=>val(m,2026)),borderColor:CO.green,borderWidth:2.6,tension:.35,pointRadius:3,spanGaps:true});
   mkc(id,{type:'line',data:{labels:months,datasets:ds},options:{...BASE,plugins:{legend:LEG,tooltip:{callbacks:{label:c=>{let s=c.dataset.label+': '+fmt(c.parsed.y);if(c.dataset.label==='2026'){const v=val(months[c.dataIndex],2025);if(v!=null&&c.parsed.y!=null){const dd=c.parsed.y-v;s+=' · '+(dd>=0?'+':'')+dd.toFixed(1)+' pts vs 2025';}}return s;}}}},scales:{x:GRID,y:pct?{...GRID,suggestedMin:90,suggestedMax:100}:GRID}}});}
-function groupedMS(id,rows,st,c25,c26,fmt){
+function groupedMS(id,rows,st,c25,c26,fmt,months){
   const get=(m,k)=>{const r=rows.find(x=>x.mes===m);return r?r[k]:null;};
-  const months=[...new Set(rows.map(r=>r.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b)).filter(m=>(showY(st,2025)&&get(m,'v2025')!=null)||(showY(st,2026)&&get(m,'v2026')!=null));
+  months=months||[...new Set(rows.map(r=>r.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b)).filter(m=>(showY(st,2025)&&get(m,'v2025')!=null)||(showY(st,2026)&&get(m,'v2026')!=null));
   const ds=[];
   if(showY(st,2025))ds.push({label:'2025',data:months.map(m=>get(m,'v2025')),backgroundColor:c25,borderRadius:5,maxBarThickness:BW(st)});
   if(showY(st,2026))ds.push({label:'2026',data:months.map(m=>get(m,'v2026')),backgroundColor:c26,borderRadius:5,maxBarThickness:BW(st)});
   mkc(id,{type:'bar',data:{labels:months,datasets:ds},options:{...BASE,plugins:{legend:LEG,tooltip:{callbacks:{label:c=>{let s=c.dataset.label+': '+fmt(c.parsed.y);if(c.dataset.label==='2026'){const v=get(months[c.dataIndex],'v2025');if(v!=null&&c.parsed.y!=null){const dd=c.parsed.y-v;s+=' · '+(dd>=0?'+':'')+fmt(dd)+' vs 2025';}}return s;}}}},scales:{x:GRID,y:GRID}}});}
-function chips2(t25,t26,fmt,lbl){lbl=lbl||'Total';return `<div class="ind-reg-info"><span class="ind-chip"><i class="fa-solid fa-calendar"></i> ${lbl} 2025 (conc.+pend.): <b>${fmt(t25)}</b></span><span class="ind-chip g"><i class="fa-solid fa-circle-check"></i> ${lbl} 2026 (conc.): <b>${fmt(t26)}</b></span></div>`;}
+const GR_SLATE='linear-gradient(135deg,#64748b,#475569)',GR_GREEN='linear-gradient(135deg,#22C55E,#15803d)',GR_BLUE='linear-gradient(135deg,#2563EB,#1d4ed8)',GR_PURPLE='linear-gradient(135deg,#A855F7,#7c3aed)';
+function totStrip(items){return '<div class="ind-tot">'+items.map(it=>`<div class="t"><div class="ic" style="background:${it.grad||GR_BLUE}"><i class="fa-solid ${it.ic}"></i></div><div><div class="lbl">${it.label}</div><div class="vv">${it.value}</div></div></div>`).join('')+'</div>';}
+function chips2(t25,t26,fmt,lbl){lbl=lbl||'Total';return totStrip([
+  {ic:'fa-layer-group',grad:GR_SLATE,label:`${lbl} 2025 · conciliado + pendiente`,value:fmt(t25)},
+  {ic:'fa-circle-check',grad:GR_GREEN,label:`${lbl} 2026 · conciliado`,value:fmt(t26)}]);}
 function chipsYR(reg,f,fmt,lbl){return chips2(sumF(reg.filter(r=>r.anio===2025),f),sumF(reg.filter(r=>r.anio===2026&&r.conc),f),fmt,lbl);}
 function chipsMS(rows,fmt,lbl){return chips2(sumF(rows,'v2025'),sumF(rows.filter(r=>r.conc),'v2026'),fmt,lbl);}
-function chipsAvg(reg,f,fmt){const a=(y,oc)=>{const rr=reg.filter(r=>r.anio===y&&(oc?r.conc:true)&&r[f]!=null);return rr.length?rr.reduce((s,r)=>s+r[f],0)/rr.length:null;};return `<div class="ind-reg-info"><span class="ind-chip">Promedio 2025 (conc.+pend.): <b>${fmt(a(2025,false))}</b></span><span class="ind-chip g">Promedio 2026 (conc.): <b>${fmt(a(2026,true))}</b></span></div>`;}
+function chipsAvg(reg,f,fmt){const a=(y,oc)=>{const rr=reg.filter(r=>r.anio===y&&(oc?r.conc:true)&&r[f]!=null);return rr.length?rr.reduce((s,r)=>s+r[f],0)/rr.length:null;};return totStrip([
+  {ic:'fa-layer-group',grad:GR_SLATE,label:'Promedio 2025 · conciliado + pendiente',value:fmt(a(2025,false))},
+  {ic:'fa-circle-check',grad:GR_GREEN,label:'Promedio 2026 · conciliado',value:fmt(a(2026,true))}]);}
+/* ---- Meses según el año filtrado (por defecto 2026) ---- */
+const refYear=st=>st.anio?+st.anio:2026;
+function monthsForYear(d,seg,year){const s=new Set();
+  if(seg==='biologicos'){(d.bioReg||[]).forEach(r=>{if((year===2025?r.v2025:r.v2026)!=null)s.add(r.mes);});(d.cumpl||[]).forEach(r=>{if(r.anio===year&&r.entregado!=null)s.add(r.mes);});}
+  else{(segReg(d,seg)||[]).forEach(r=>{if(r.anio===year&&(r.entregado!=null||r.cancelado!=null))s.add(r.mes);});}
+  (d.fact||[]).forEach(f=>{if((year===2025?f.v2025:f.v2026)!=null)s.add(f.mes);});
+  return [...s].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));}
+function dispMonthsYR(rows,st,field){const ry=refYear(st);let mr=rows.filter(r=>r.anio===ry&&(!field||r[field]!=null));if(!st.anio)mr=mr.filter(r=>r.conc);let ms=[...new Set(mr.map(r=>r.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));if(st.mes)ms=ms.filter(m=>m===st.mes);return ms;}
+function dispMonthsMS(rows,st){const ry=refYear(st),k=ry===2025?'v2025':'v2026';let mr=rows.filter(r=>r[k]!=null);if(!st.anio)mr=mr.filter(r=>r.conc);let ms=[...new Set(mr.map(r=>r.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));if(st.mes)ms=ms.filter(m=>m===st.mes);return ms;}
 function subtabBar(cfg,st){return '<div class="ind-subtabs">'+cfg.tabs.map(t=>`<button class="ind-stab${st.sub===t?' active':''}" data-sub="${t}"><i class="fa-solid ${TLBL[t][1]}"></i> ${TLBL[t][0]}</button>`).join('')+'</div>';}
-function filterBar(seg,d,st){if(st.sub==='portada'||st.sub==='cobertura'||st.sub==='historico')return '';
-  const ys=allYears(d,seg),mss=allMonths(d,seg),px=SEG[seg].body;
+function filterBar(seg,d,st){if(st.sub==='portada'||st.sub==='cobertura')return '';
+  const ys=allYears(d,seg),px=SEG[seg].body;
+  const mss=monthsForYear(d,seg,st.anio?+st.anio:2026);
   const yOpt='<option value="">Ambos años</option>'+ys.map(y=>`<option value="${y}"${st.anio===String(y)?' selected':''}>${y}</option>`).join('');
-  const mOpt='<option value="">Todos los meses</option>'+mss.map(m=>`<option value="${m}"${st.mes===m?' selected':''}>${cap(m)}</option>`).join('');
-  if(st.sub==='evidencias')return `<div class="ind-fbar"><div class="fld"><label>Mes</label><select id="${px}-mes">${mOpt}</select></div></div>`;
+  const mOpt='<option value="">Todos los meses</option>'+mss.map(m=>`<option value="${m}"${st.mes===m?' selected':''}>${m}</option>`).join('');
+  if(st.sub==='evidencias'){const em='<option value="">Todos los meses</option>'+allMonths(d,seg).map(m=>`<option value="${m}"${st.mes===m?' selected':''}>${m}</option>`).join('');return `<div class="ind-fbar"><div class="fld"><label>Mes</label><select id="${px}-mes">${em}</select></div></div>`;}
   return `<div class="ind-fbar"><div class="fld"><label>Año</label><select id="${px}-anio">${yOpt}</select></div><div class="fld"><label>Mes</label><select id="${px}-mes">${mOpt}</select></div></div>`;}
 function renderSeg(seg){const cfg=SEG[seg],d=segData(seg),st=stt[seg];const body=document.getElementById(cfg.body);if(!body||!d)return;
-  body.innerHTML=subtabBar(cfg,st)+filterBar(seg,d,st)+`<div id="${cfg.body}-panel"></div>`;
+  body.innerHTML=subtabBar(cfg,st)+filterBar(seg,d,st)+`<div class="ind-panel" id="${cfg.body}-panel"></div>`;
   body.querySelectorAll('.ind-stab').forEach(b=>b.addEventListener('click',()=>{stt[seg].sub=b.dataset.sub;renderSeg(seg);}));
-  const ya=document.getElementById(cfg.body+'-anio');if(ya)ya.addEventListener('change',()=>{stt[seg].anio=ya.value;renderPanel(seg);});
+  const ya=document.getElementById(cfg.body+'-anio');if(ya)ya.addEventListener('change',()=>{stt[seg].anio=ya.value;
+    const mss=monthsForYear(d,seg,ya.value?+ya.value:2026);
+    if(stt[seg].mes&&mss.indexOf(stt[seg].mes)<0)stt[seg].mes='';
+    const msel=document.getElementById(cfg.body+'-mes');
+    if(msel)msel.innerHTML='<option value="">Todos los meses</option>'+mss.map(m=>`<option value="${m}"${stt[seg].mes===m?' selected':''}>${m}</option>`).join('');
+    renderPanel(seg);});
   const ms=document.getElementById(cfg.body+'-mes');if(ms)ms.addEventListener('change',()=>{stt[seg].mes=ms.value;renderPanel(seg);});
   renderPanel(seg);
   setTimeout(()=>Object.values(indCharts).forEach(c=>{try{c.resize();}catch(e){}}),80);}
@@ -3011,29 +3047,46 @@ function smartSummary(seg,d){const reg=segReg(d,seg)||[],fact=d.fact||[];
   if(topNov)r+=`<li>Atacar la causa raíz de <b>${topNov[0]}</b> para reducir reprocesos y mejorar la efectividad.</li>`;
   return r+'</ul>';}
 function panelReg(seg,d,st,p){const px=SEG[seg].body;
-  if(seg==='biologicos'){const rows=visMS(d.bioReg||[],st);
-    p.innerHTML=chipsMS(d.bioReg||[],n0,'Registros')+card('Registros gestionados por mes',yrLbl(st),px+'-reg');
-    groupedMS(px+'-reg',rows,st,C25,CO.purple,n0);return;}
-  const reg=d.reg||[],rows=visYR(reg,st);
+  if(seg==='biologicos'){const bioReg=d.bioReg||[],cumpl=d.cumpl||[];
+    const rows=visMS(bioReg,st),crows=visYR(cumpl,st);
+    const bM=dispMonthsMS(bioReg,st),cM=dispMonthsYR(cumpl,st,'entregado');
+    p.innerHTML=chipsMS(bioReg,n0,'Registros')+card('Registros gestionados por mes',yrLbl(st),px+'-reg')
+      +chipsAvg(cumpl,'entregado',p1)+card('Cumplimiento de entrega (%) por mes','Cumplimiento de frecuencias',px+'-ent')
+      +card('% Cancelado por mes',yrLbl(st),px+'-canc');
+    groupedMS(px+'-reg',rows,st,C25,CO.purple,n0,bM);
+    lineYR(px+'-ent',crows,'entregado',st,p1,true,cM);
+    groupedYR(px+'-canc',crows,'cancelado',st,C25,CO.red,p1,cM);return;}
+  const reg=d.reg||[],rows=visYR(reg,st),M=dispMonthsYR(reg,st,'entregado');
   p.innerHTML=chipsYR(reg,'entregado',n0,'Registros')+card('Registros entregados por mes',yrLbl(st),px+'-reg')
     +chipsAvg(reg,'pctEnt',p1)+card('Efectividad de entrega (%)',yrLbl(st),px+'-efe')
     +card('Cancelados por mes',yrLbl(st),px+'-canc');
-  groupedYR(px+'-reg',rows,'entregado',st,C25,CO.blue,n0);
-  lineYR(px+'-efe',rows,'pctEnt',st,p1,true);
-  groupedYR(px+'-canc',rows,'cancelado',st,C25,CO.red,n0);}
-function panelNov(seg,d,st,p){const px=SEG[seg].body;let nov=(d.nov||[]);if(st.anio)nov=nov.filter(n=>String(n.anio).indexOf(st.anio)>=0);if(st.mes)nov=nov.filter(n=>n.mes===st.mes);
-  const nt=novTop(nov);p.innerHTML=card('Novedades por tipo','Cantidad por tipo de novedad (mayor a menor)',px+'-nov','tall');
+  groupedYR(px+'-reg',rows,'entregado',st,C25,CO.blue,n0,M);
+  lineYR(px+'-efe',rows,'pctEnt',st,p1,true,M);
+  groupedYR(px+'-canc',rows,'cancelado',st,C25,CO.red,n0,M);}
+function panelNov(seg,d,st,p){const px=SEG[seg].body;const nov0=(d.nov||[]);
+  const ny=n=>+(yr(n.anio)||n.anio)||null;
+  let novf=nov0.slice();if(st.anio)novf=novf.filter(n=>String(ny(n))===st.anio);if(st.mes)novf=novf.filter(n=>n.mes===st.mes);
+  const nt=novTop(novf);
+  const refY=refYear(st);
+  let months=[...new Set(nov0.filter(n=>ny(n)===refY).map(n=>n.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));
+  if(st.mes)months=months.filter(m=>m===st.mes);
+  const sumNov=(m,y)=>nov0.filter(n=>n.mes===m&&ny(n)===y).reduce((a,n)=>a+(n.cant||0),0);
+  p.innerHTML=card('Total de novedades por mes',yrLbl(st),px+'-novmes')+card('Novedades por tipo','Cantidad por tipo de novedad (mayor a menor)',px+'-nov','tall');
+  const ds=[];
+  if(showY(st,2025))ds.push({label:'2025',data:months.map(m=>sumNov(m,2025)),backgroundColor:C25,borderRadius:5,maxBarThickness:BW(st)});
+  if(showY(st,2026))ds.push({label:'2026',data:months.map(m=>sumNov(m,2026)),backgroundColor:CO.yellow,borderRadius:5,maxBarThickness:BW(st)});
+  if(!emptyIf(px+'-novmes',months.length===0,'Sin novedades para el filtro seleccionado'))mkc(px+'-novmes',{type:'bar',data:{labels:months,datasets:ds},options:{...BASE,plugins:{legend:LEG,tooltip:{callbacks:{label:c=>c.dataset.label+': '+n0(c.parsed.y)}}},scales:{x:GRID,y:GRID}}});
   if(!emptyIf(px+'-nov',nt.length===0,'Sin novedades para el filtro seleccionado'))mkc(px+'-nov',{type:'bar',data:{labels:nt.map(e=>e[0]),datasets:[{data:nt.map(e=>e[1]),backgroundColor:palette(nt.length),borderRadius:6}]},options:{...BASE,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:GRID,y:{...GRID,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});}
 function panelTiempos(seg,d,st,p){const px=SEG[seg].body;const tAll=d.tiempos||[];const tv=visYR(tAll,st);
   const avg=rows=>{const rr=rows.filter(x=>x.totMin!=null);return rr.length?rr.reduce((a,x)=>a+x.totMin,0)/rr.length:null;};
   p.innerHTML=chips2(avg(tAll.filter(x=>x.anio===2025)),avg(tAll.filter(x=>x.anio===2026&&x.conc)),fmtDur,'Total general prom.')
     +card('Total general por mes','Tiempo total de entrega (H:MM) — 2025 vs 2026',px+'-ttot')
     +tcard('Tiempos de entrega por mes','Promedios por etapa (HH:MM:SS)',px+'-tt');
-  groupedYR(px+'-ttot',tv,'totMin',st,C25,CO.blue,fmtDur);
+  groupedYR(px+'-ttot',tv,'totMin',st,C25,CO.blue,fmtDur,dispMonthsYR(tAll,st,'totMin'));
   const ch=Chart.getChart(px+'-ttot');if(ch){ch.options.scales.y.ticks={...(ch.options.scales.y.ticks||{}),callback:v=>fmtDur(v)};ch.update('none');}
   tbl(px+'-tt',['MES','AÑO','1 Prioritario','2 Trans. fuera zona','3 Preprogramado','4 Transf. dentro zona','Otros','Total general'],tv.slice().sort((a,b)=>mi(a.mes)-mi(b.mes)||(a.anio||0)-(b.anio||0)).map(x=>[x.mes,x.anio||'—',x.c1,x.c2,x.c3,x.c4,x.otros,`<b>${x.total}</b>`]));}
-function panelFact(seg,d,st,p){const px=SEG[seg].body;const fact=d.fact||[];const frows=fact.filter(f=>!st.mes||f.mes===st.mes).sort((a,b)=>mi(a.mes)-mi(b.mes));
-  const ms=frows.map(f=>f.mes);
+function panelFact(seg,d,st,p){const px=SEG[seg].body;const fact=d.fact||[];const ms=dispMonthsMS(fact,st);
+  const frows=fact.filter(f=>ms.indexOf(f.mes)>=0).sort((a,b)=>mi(a.mes)-mi(b.mes));
   p.innerHTML=chipsMS(fact,money,'Total ingreso')+card('Facturación por mes',yrLbl(st),px+'-fact')+tcard('Detalle de facturación','Variación y % variación — verde aumenta, rojo disminuye',px+'-factt');
   groupedF(px+'-fact',ms,m=>{const f=fact.find(x=>x.mes===m);return f?f.v2025:null;},m=>{const f=fact.find(x=>x.mes===m);return f?f.v2026:null;},st,C25,CO.green,money);
   tbl(px+'-factt',['MES','2025','2026','Variación','% Variación'],frows.map(f=>{const up=(f.variacion||0)>0,dn=(f.variacion||0)<0;const c=up?'#4ade80':dn?'#f87171':'#94a3b8',ar=up?'▲':dn?'▼':'■';
@@ -3050,7 +3103,7 @@ function panelCobertura(seg,d,st,p){const px=SEG[seg].body;const fija=d.fija||[]
   kpis.push(['Ciudades cubiertas',ciudades,'fa-city','yellow']);
   const byCity={};[...fija,...colab].forEach(x=>{const c=x.ciudad||'—';byCity[c]=(byCity[c]||0)+(x.cant||0);});
   const cl=Object.keys(byCity).sort((a,b)=>byCity[b]-byCity[a]);
-  p.innerHTML=`<div class="ind-reg-info"><span class="ind-chip"><i class="fa-solid fa-location-dot"></i> Total puntos: <b>${n0(kf.pts+kc.pts)}</b></span><span class="ind-chip g"><i class="fa-solid fa-people-group"></i> Total mensajeros: <b>${n0(kf.cant+kc.cant)}</b></span></div>`
+  p.innerHTML=totStrip([{ic:'fa-location-dot',grad:GR_BLUE,label:'Total puntos de operación',value:n0(kf.pts+kc.pts)},{ic:'fa-people-group',grad:GR_GREEN,label:'Total mensajeros',value:n0(kf.cant+kc.cant)}])
     +`<div class="kpi-grid">`+kpis.map(k=>`<div class="kpi"><div class="top"><div><div class="label">${k[0]}</div></div><div class="ic bg-${k[3]}"><i class="fa-solid ${k[2]}"></i></div></div><div class="val">${n0(k[1])}</div></div>`).join('')+`</div>`
     +card('Mensajeros por ciudad','Recurso total por ciudad (planta fija + colaborativa)',px+'-cov')
     +(colab.length
@@ -3059,37 +3112,43 @@ function panelCobertura(seg,d,st,p){const px=SEG[seg].body;const fija=d.fija||[]
   if(!emptyIf(px+'-cov',cl.length===0,'Sin información de planta cargada'))mkc(px+'-cov',{type:'bar',data:{labels:cl,datasets:[{label:'Mensajeros',data:cl.map(c=>byCity[c]),backgroundColor:palette(cl.length),borderRadius:6,maxBarThickness:64}]},options:{...BASE,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+n0(c.parsed.y)+' mensajeros'}}},scales:{x:GRID,y:GRID}}});
   tbl(px+'-fija',['CIUDAD','PUNTO','Mensajeros','MODELO'],fija.map(x=>[x.ciudad,x.punto,n0(x.cant),x.modelo||'—']));
   if(colab.length)tbl(px+'-colab',['CIUDAD','PUNTO','Mensajeros','Inicio modelo'],colab.map(x=>[x.ciudad,x.punto,n0(x.cant),x.modelo||'—']));}
-function panelHistorico(seg,d,st,p){const px=SEG[seg].body;const hist=(d.hist||[]).slice();
+function panelHistorico(seg,d,st,p){const px=SEG[seg].body;let hist=(d.hist||[]).slice();
+  if(st.anio)hist=hist.filter(h=>String(yr(h.anio)||h.anio).indexOf(st.anio)>=0);
+  if(st.mes)hist=hist.filter(h=>String(h.mes).trim().toUpperCase()===st.mes);
   hist.sort((a,b)=>((+yr(a.anio)||0)-(+yr(b.anio)||0))||(mi(a.mes)-mi(b.mes)));
-  p.innerHTML=`<div class="ind-reg-info"><span class="ind-chip"><i class="fa-solid fa-clock-rotate-left"></i> Cambios registrados: <b>${n0(hist.length)}</b></span></div>`
+  p.innerHTML=totStrip([{ic:'fa-clock-rotate-left',grad:GR_BLUE,label:'Cambios registrados en el periodo',value:n0(hist.length)}])
     +tcard('Histórico de cambios','Modificaciones del contrato / operación realizadas en el periodo',px+'-hist');
-  tbl(px+'-hist',['AÑO','MES','FECHA','Modificación'],hist.map(h=>[h.anio||'—',cap(h.mes)||'—',h.fecha||'—',h.mod||'—']));}
+  tbl(px+'-hist',['AÑO','MES','FECHA','Modificación'],hist.map(h=>[h.anio||'—',h.mes||'—',h.fecha||'—',h.mod||'—']));}
 function panelEvid(seg,st,p){const ev=(DATA.EVID||[]).filter(e=>e.seg===seg&&(!st.mes||e.mes===st.mes));
   if(!ev.length){p.innerHTML='<div class="card"><div class="card-body"><div class="ind-loading">Aún no hay evidencias para este filtro.<br><br>Para publicarlas (visibles en el link), agrega una hoja <b>EVIDENCIAS</b> al Sheet con columnas:<br><b>SEGMENTO</b> (comercial / institucional / biologicos) · <b>AÑO</b> · <b>MES</b> · <b>TITULO</b> · <b>URL</b> (enlace de imagen o carpeta de Google Drive) · <b>VARIACION</b> (opcional).</div></div></div>';return;}
   p.innerHTML='<div class="evid-grid">'+ev.map(e=>{const isImg=/\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(e.url)||/googleusercontent|drive\.google\.com\/uc/i.test(e.url);
     const img=isImg?`<img src="${e.url}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">`:'';
     return `<div class="evid-card">${img}<div class="ev-b"><div class="ev-t">${e.titulo||'Evidencia'}</div><div class="ev-m">${cap(e.mes)} ${e.anio||''}${e.variacion?' · '+e.variacion:''}</div><a href="${e.url}" target="_blank" rel="noopener" style="display:inline-flex;margin-top:9px;gap:6px;align-items:center;font-size:12px;color:#60a5fa;text-decoration:none"><i class="fa-solid fa-up-right-from-square"></i> Abrir</a></div></div>`;}).join('')+'</div>';}
-/* ---------- Área Administrativa (organigrama fijo) ---------- */
-const ADMIN=[
- {grupo:'Operaciones Last Mile Cafam',people:[
-   {n:'Jorge Martínez',r:'Manager LM',e:'jorge.martinez@quick.com.co',c:'310 797 3544'},
-   {n:'Giovanni Góngora',r:'Jefe de Operaciones',e:'giovany.gongora@quick.com.co',c:'316 505 1178'},
-   {n:'Maryuri López',r:'Líder de Operaciones',e:'maryuri.lopez@quick.com.co',c:'310 246 8044'}]},
- {grupo:'Área Financiera · GAF',people:[
-   {n:'Alejandra Pérez',r:'Analista de Negocios',e:'alejandra.perez@quick.com.co',c:'321 960 8525'}]},
- {grupo:'Comercial Domicilios',people:[
-   {n:'Jorge Martínez',r:'Coordinador Bogotá',e:'coordinador.cafam3@quick.com.co',c:'321 441 0553'},
-   {n:'John Pava',r:'Coordinador Bogotá',e:'coordinador.cafam4@quick.com.co',c:'310 213 6471'},
-   {n:'Efember Quintian',r:'Coordinador Nacional',e:'coordinador.cafam5@quick.com.co',c:'310 797 2288'},
-   {n:'Daniela Alexandra',r:'Coordinadora Nacional',e:'coordinador.cafam7@quick.com.co',c:'314 534 3917'}]},
- {grupo:'Institucional · Adulto Mayor',people:[
-   {n:'Angie Salazar',r:'Coordinadora Institucional Calle 51',e:'coordinador.cafam8@quick.com.co',c:'312 318 0151'},
-   {n:'Carlos Cortés',r:'Coordinador Institucional Floresta',e:'coordinador.cafam2@quick.com.co',c:'321 441 0757'}]}
-];
+/* ---------- Área Administrativa (desde hoja AREA ADMINISTRATIVA) ---------- */
 const initials=n=>n.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
-function renderAdmin(){const b=document.getElementById('inda-body');if(!b)return;
-  b.innerHTML=hero('fa-sitemap','linear-gradient(135deg,#EAB308,#ca8a04)','Línea de Gestión Cafam Last Mile','Estructura de gestión y contactos del equipo Quick a cargo de la operación Cafam: Comercial, Institucional &amp; Adulto Mayor y áreas de soporte.','Organigrama vigente')
-    +ADMIN.map(g=>`<div class="org-group"><div class="org-h">${g.grupo}</div><div class="org-grid">${g.people.map(pp=>`<div class="org-card"><div class="org-av">${pp.photo?`<img src="${pp.photo}" referrerpolicy="no-referrer">`:initials(pp.n)}</div><div class="org-name">${pp.n}</div><div class="org-role">${pp.r}</div><div class="org-contact"><i class="fa-solid fa-envelope"></i> ${pp.e}<br><i class="fa-solid fa-phone"></i> ${pp.c}</div></div>`).join('')}</div></div>`).join('');}
+function driveImg(u){if(!u)return '';const m=String(u).match(/\/d\/([-\w]{20,})/)||String(u).match(/[?&]id=([-\w]{20,})/);return m?`https://drive.google.com/thumbnail?id=${m[1]}&sz=w400`:String(u).trim();}
+function pAdmin(rows){const out=[];if(!rows||!rows.length)return out;
+  for(let i=1;i<rows.length;i++){const r=rows[i];if(!r)continue;
+    const nom=cell(r,2);if(!nom)continue;
+    out.push({cargo:cell(r,0),op:cell(r,1).trim(),nombre:nom,cel:cell(r,3).trim(),correo:cell(r,4).trim(),foto:driveImg(cell(r,5))});}
+  return out;}
+const ADM_COMMON=['Operaciones Last Mile Cafam','Área Financiera · GAF'];
+const ADM_OPS={comercial:'Cafam Comercial',institucional:'Cafam Institucional',biologicos:'Cafam Biologicos'};
+const ADM_TABS=[['comercial','Cafam Comercial','fa-store'],['institucional','Cafam Institucional','fa-building-columns'],['biologicos','Cafam Biológicos','fa-flask-vial']];
+const admNorm=s=>String(s||'').trim().toUpperCase();
+let admSub='comercial';
+function orgCardHTML(pp){const ph=pp.foto?`<img src="${pp.foto}" referrerpolicy="no-referrer" loading="lazy" onerror="this.remove()">`:'';
+  return `<div class="org-card"><div class="org-av"><span class="org-ini">${initials(pp.nombre)}</span>${ph}</div><div class="org-name">${pp.nombre}</div><div class="org-role">${pp.cargo||''}</div><div class="org-contact">${pp.correo?`<i class="fa-solid fa-envelope"></i> ${pp.correo}<br>`:''}${pp.cel?`<i class="fa-solid fa-phone"></i> ${pp.cel}`:''}</div></div>`;}
+function renderAdmin(sub){sub=sub||admSub;admSub=sub;const b=document.getElementById('inda-body');if(!b)return;
+  const adm=DATA.ADMIN||[];
+  const order=[...ADM_COMMON,ADM_OPS[sub]];
+  const groups=order.map(op=>({grupo:op,people:adm.filter(pp=>admNorm(pp.op)===admNorm(op))})).filter(g=>g.people.length);
+  const subbar='<div class="org-sub">'+ADM_TABS.map(t=>`<button class="org-stab${sub===t[0]?' active':''}" data-osub="${t[0]}"><i class="fa-solid ${t[2]}"></i> ${t[1]}</button>`).join('')+'</div>';
+  b.innerHTML=hero('fa-sitemap','linear-gradient(135deg,#EAB308,#ca8a04)','Línea de Gestión Cafam Last Mile','Estructura de gestión y contactos del equipo Quick a cargo de la operación Cafam. Las áreas <b>Operaciones Last Mile Cafam</b> y <b>Financiera · GAF</b> son transversales a las tres operaciones.','Organigrama vigente · con evidencia fotográfica')
+    +subbar
+    +(groups.length?groups.map(g=>`<div class="org-group"><div class="org-h">${g.grupo}</div><div class="org-grid">${g.people.map(orgCardHTML).join('')}</div></div>`).join('')
+      :'<div class="card"><div class="card-body"><div class="ind-loading">No se pudo cargar la hoja <b>AREA ADMINISTRATIVA</b>. Verifica que el Sheet esté compartido como "Cualquiera con el enlace · Lector".</div></div></div>');
+  b.querySelectorAll('.org-stab').forEach(btn=>btn.addEventListener('click',()=>renderAdmin(btn.dataset.osub)));}
 
 /* ---------- Carga ---------- */
 function fetchInd(sheet){return new Promise((res,rej)=>{Papa.parse(IND_CFG.url(sheet),{download:true,header:false,skipEmptyLines:false,complete:r=>res(r.data),error:rej});});}
@@ -3101,6 +3160,7 @@ async function ensureInd(){
     DATA.INSTITUCIONAL={reg:pReg(ins,7),nov:pNov(ins,15),fact:pFact(ins,21),fija:pPlanta(ins,3,false),hist:pHist(ins,28)};
     DATA.BIOLOGICOS={bioReg:pBioReg(bio,3),cumpl:pCumpl(bio,9),nov:pNov(bio,15),fact:pFact(bio,21)};
     try{const ev=await fetchInd('EVIDENCIAS');DATA.EVID=pEvid(ev);}catch(e){DATA.EVID=[];}
+    try{const adm=await fetchInd('AREA ADMINISTRATIVA');DATA.ADMIN=pAdmin(adm);}catch(e){DATA.ADMIN=[];}
     indLoaded=true;
     renderSeg('comercial');renderSeg('institucional');renderSeg('biologicos');renderAdmin();
     setTimeout(()=>Object.values(indCharts).forEach(c=>{try{c.resize();}catch(e){}}),180);
