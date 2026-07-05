@@ -130,7 +130,9 @@ body::after{
 .card-body{padding:18px 20px}
 
 /* KPI grid */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:16px}
+.kpi-grid{display:flex;flex-wrap:wrap;gap:16px}
+.kpi-grid>.kpi{flex:1 1 30%;min-width:212px}
+@media(max-width:520px){.kpi-grid>.kpi{flex-basis:100%}}
 .kpi{padding:18px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);backdrop-filter:blur(14px);position:relative;overflow:hidden;opacity:0;transform:translateY(16px);animation:fadeUp .5s ease forwards}
 .kpi:hover{transform:translateY(-4px);transition:transform .3s;border-color:var(--border-strong)}
 .kpi .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
@@ -2762,7 +2764,7 @@ function pPlanta(rows,o,withModel){const out=[];for(let i=2;i<rows.length;i++){c
   const c=cell(r,o),p=cell(r,o+1);if(!c||!p)continue;
   out.push({ciudad:c,punto:p,cant:iNum(r[o+2]),modelo:withModel?cell(r,o+3):''});}return out;}
 function durMin(s){const m=String(s||'').match(/(\d+):(\d{2}):(\d{2})/);if(!m)return null;return (+m[1])*60+(+m[2])+(+m[3])/60;}
-function fmtDur(min){if(min==null||isNaN(min))return '—';const h=Math.floor(min/60),mm=Math.round(min%60);return h+':'+String(mm===60?0:mm).padStart(2,'0');}
+function fmtDur(min){if(min==null||isNaN(min))return '—';const tot=Math.round(min*60);const h=Math.floor(tot/3600),m=Math.floor((tot%3600)/60),s=tot%60;return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
 function pTiempos(rows){const out=[];for(let i=2;i<rows.length;i++){const r=rows[i];if(!r)continue;
   const m=cell(r,27).toUpperCase();if(mi(m)<0)continue;
   out.push({anio:yr(cell(r,13)),mes:m,c1:cell(r,28),c2:cell(r,29),c3:cell(r,30),c4:cell(r,31),otros:cell(r,32),total:cell(r,33),totMin:durMin(cell(r,33)),conc:isConc(cell(r,34))});}return out;}
@@ -2972,14 +2974,20 @@ function groupedMS(id,rows,st,c25,c26,fmt,months){
   mkc(id,{type:'bar',data:{labels:months,datasets:ds},options:{...BASE,plugins:{legend:LEG,tooltip:{callbacks:{label:c=>{let s=c.dataset.label+': '+fmt(c.parsed.y);if(c.dataset.label==='2026'){const v=get(months[c.dataIndex],'v2025');if(v!=null&&c.parsed.y!=null){const dd=c.parsed.y-v;s+=' · '+(dd>=0?'+':'')+fmt(dd)+' vs 2025';}}return s;}}}},scales:{x:GRID,y:GRID}}});}
 const GR_SLATE='linear-gradient(135deg,#64748b,#475569)',GR_GREEN='linear-gradient(135deg,#22C55E,#15803d)',GR_BLUE='linear-gradient(135deg,#2563EB,#1d4ed8)',GR_PURPLE='linear-gradient(135deg,#A855F7,#7c3aed)';
 function totStrip(items){return '<div class="ind-tot">'+items.map(it=>`<div class="t"><div class="ic" style="background:${it.grad||GR_BLUE}"><i class="fa-solid ${it.ic}"></i></div><div><div class="lbl">${it.label}</div><div class="vv">${it.value}</div></div></div>`).join('')+'</div>';}
-function chips2(t25,t26,fmt,lbl){lbl=lbl||'Total';return totStrip([
-  {ic:'fa-layer-group',grad:GR_SLATE,label:`${lbl} 2025 · conciliado + pendiente`,value:fmt(t25)},
-  {ic:'fa-circle-check',grad:GR_GREEN,label:`${lbl} 2026 · conciliado`,value:fmt(t26)}]);}
-function chipsYR(reg,f,fmt,lbl){return chips2(sumF(reg.filter(r=>r.anio===2025),f),sumF(reg.filter(r=>r.anio===2026&&r.conc),f),fmt,lbl);}
-function chipsMS(rows,fmt,lbl){return chips2(sumF(rows,'v2025'),sumF(rows.filter(r=>r.conc),'v2026'),fmt,lbl);}
-function chipsAvg(reg,f,fmt){const a=(y,oc)=>{const rr=reg.filter(r=>r.anio===y&&(oc?r.conc:true)&&r[f]!=null);return rr.length?rr.reduce((s,r)=>s+r[f],0)/rr.length:null;};return totStrip([
-  {ic:'fa-layer-group',grad:GR_SLATE,label:'Promedio 2025 · conciliado + pendiente',value:fmt(a(2025,false))},
-  {ic:'fa-circle-check',grad:GR_GREEN,label:'Promedio 2026 · conciliado',value:fmt(a(2026,true))}]);}
+/* chips sensibles al filtro (st.mes / st.anio); el sufijo del mes se muestra si hay filtro */
+function chipItems(lbl,v25,v26,fmt,st,word){st=st||{};word=word||'';
+  const sfx=st.mes?(' · '+cap(st.mes)):'';const it=[];
+  if(!st.anio||st.anio==='2025')it.push({ic:'fa-layer-group',grad:GR_SLATE,label:`${lbl} 2025${sfx} · conciliado + pendiente`,value:fmt(v25)});
+  if(!st.anio||st.anio==='2026')it.push({ic:'fa-circle-check',grad:GR_GREEN,label:`${lbl} 2026${sfx} · conciliado`,value:fmt(v26)});
+  return totStrip(it);}
+function chips2(t25,t26,fmt,lbl,st){lbl=lbl||'Total';return chipItems(lbl,t25,t26,fmt,st);}
+function chipsYR(reg,f,fmt,lbl,st){st=st||{};const flt=(y,oc)=>reg.filter(r=>r.anio===y&&(oc?r.conc:true)&&(!st.mes||r.mes===st.mes));return chipItems(lbl,sumF(flt(2025,false),f),sumF(flt(2026,true),f),fmt,st);}
+function chipsMS(rows,fmt,lbl,st){st=st||{};const flt=oc=>rows.filter(r=>(oc?r.conc:true)&&(!st.mes||r.mes===st.mes));return chipItems(lbl,sumF(flt(false),'v2025'),sumF(flt(true),'v2026'),fmt,st);}
+function chipsAvg(reg,f,fmt,st){st=st||{};const a=(y,oc)=>{const rr=reg.filter(r=>r.anio===y&&(oc?r.conc:true)&&r[f]!=null&&(!st.mes||r.mes===st.mes));return rr.length?rr.reduce((s,r)=>s+r[f],0)/rr.length:null;};
+  const sfx=st.mes?(' · '+cap(st.mes)):'';const it=[];
+  if(!st.anio||st.anio==='2025')it.push({ic:'fa-layer-group',grad:GR_SLATE,label:`Promedio 2025${sfx} · conciliado + pendiente`,value:fmt(a(2025,false))});
+  if(!st.anio||st.anio==='2026')it.push({ic:'fa-circle-check',grad:GR_GREEN,label:`Promedio 2026${sfx} · conciliado`,value:fmt(a(2026,true))});
+  return totStrip(it);}
 /* ---- Meses según el año filtrado (por defecto 2026) ---- */
 const refYear=st=>st.anio?+st.anio:2026;
 function monthsForYear(d,seg,year){const s=new Set();
@@ -3050,15 +3058,15 @@ function panelReg(seg,d,st,p){const px=SEG[seg].body;
   if(seg==='biologicos'){const bioReg=d.bioReg||[],cumpl=d.cumpl||[];
     const rows=visMS(bioReg,st),crows=visYR(cumpl,st);
     const bM=dispMonthsMS(bioReg,st),cM=dispMonthsYR(cumpl,st,'entregado');
-    p.innerHTML=chipsMS(bioReg,n0,'Registros')+card('Registros gestionados por mes',yrLbl(st),px+'-reg')
-      +chipsAvg(cumpl,'entregado',p1)+card('Cumplimiento de entrega (%) por mes','Cumplimiento de frecuencias',px+'-ent')
+    p.innerHTML=chipsMS(bioReg,n0,'Registros',st)+card('Registros gestionados por mes',yrLbl(st),px+'-reg')
+      +chipsAvg(cumpl,'entregado',p1,st)+card('Cumplimiento de entrega (%) por mes','Cumplimiento de frecuencias',px+'-ent')
       +card('% Cancelado por mes',yrLbl(st),px+'-canc');
     groupedMS(px+'-reg',rows,st,C25,CO.purple,n0,bM);
     lineYR(px+'-ent',crows,'entregado',st,p1,true,cM);
     groupedYR(px+'-canc',crows,'cancelado',st,C25,CO.red,p1,cM);return;}
   const reg=d.reg||[],rows=visYR(reg,st),M=dispMonthsYR(reg,st,'entregado');
-  p.innerHTML=chipsYR(reg,'entregado',n0,'Registros')+card('Registros entregados por mes',yrLbl(st),px+'-reg')
-    +chipsAvg(reg,'pctEnt',p1)+card('Efectividad de entrega (%)',yrLbl(st),px+'-efe')
+  p.innerHTML=chipsYR(reg,'entregado',n0,'Registros',st)+card('Registros entregados por mes',yrLbl(st),px+'-reg')
+    +chipsAvg(reg,'pctEnt',p1,st)+card('Efectividad de entrega (%)',yrLbl(st),px+'-efe')
     +card('Cancelados por mes',yrLbl(st),px+'-canc');
   groupedYR(px+'-reg',rows,'entregado',st,C25,CO.blue,n0,M);
   lineYR(px+'-efe',rows,'pctEnt',st,p1,true,M);
@@ -3079,7 +3087,7 @@ function panelNov(seg,d,st,p){const px=SEG[seg].body;const nov0=(d.nov||[]);
   if(!emptyIf(px+'-nov',nt.length===0,'Sin novedades para el filtro seleccionado'))mkc(px+'-nov',{type:'bar',data:{labels:nt.map(e=>e[0]),datasets:[{data:nt.map(e=>e[1]),backgroundColor:palette(nt.length),borderRadius:6}]},options:{...BASE,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:GRID,y:{...GRID,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});}
 function panelTiempos(seg,d,st,p){const px=SEG[seg].body;const tAll=d.tiempos||[];const tv=visYR(tAll,st);
   const avg=rows=>{const rr=rows.filter(x=>x.totMin!=null);return rr.length?rr.reduce((a,x)=>a+x.totMin,0)/rr.length:null;};
-  p.innerHTML=chips2(avg(tAll.filter(x=>x.anio===2025)),avg(tAll.filter(x=>x.anio===2026&&x.conc)),fmtDur,'Total general prom.')
+  p.innerHTML=chips2(avg(tAll.filter(x=>x.anio===2025&&(!st.mes||x.mes===st.mes))),avg(tAll.filter(x=>x.anio===2026&&x.conc&&(!st.mes||x.mes===st.mes))),fmtDur,'Total general prom.',st)
     +card('Total general por mes','Tiempo total de entrega (H:MM) — 2025 vs 2026',px+'-ttot')
     +tcard('Tiempos de entrega por mes','Promedios por etapa (HH:MM:SS)',px+'-tt');
   groupedYR(px+'-ttot',tv,'totMin',st,C25,CO.blue,fmtDur,dispMonthsYR(tAll,st,'totMin'));
@@ -3087,7 +3095,7 @@ function panelTiempos(seg,d,st,p){const px=SEG[seg].body;const tAll=d.tiempos||[
   tbl(px+'-tt',['MES','AÑO','1 Prioritario','2 Trans. fuera zona','3 Preprogramado','4 Transf. dentro zona','Otros','Total general'],tv.slice().sort((a,b)=>mi(a.mes)-mi(b.mes)||(a.anio||0)-(b.anio||0)).map(x=>[x.mes,x.anio||'—',x.c1,x.c2,x.c3,x.c4,x.otros,`<b>${x.total}</b>`]));}
 function panelFact(seg,d,st,p){const px=SEG[seg].body;const fact=d.fact||[];const ms=dispMonthsMS(fact,st);
   const frows=fact.filter(f=>ms.indexOf(f.mes)>=0).sort((a,b)=>mi(a.mes)-mi(b.mes));
-  p.innerHTML=chipsMS(fact,money,'Total ingreso')+card('Facturación por mes',yrLbl(st),px+'-fact')+tcard('Detalle de facturación','Variación y % variación — verde aumenta, rojo disminuye',px+'-factt');
+  p.innerHTML=chipsMS(fact,money,'Total ingreso',st)+card('Facturación por mes',yrLbl(st),px+'-fact')+tcard('Detalle de facturación','Variación y % variación — verde aumenta, rojo disminuye',px+'-factt');
   groupedF(px+'-fact',ms,m=>{const f=fact.find(x=>x.mes===m);return f?f.v2025:null;},m=>{const f=fact.find(x=>x.mes===m);return f?f.v2026:null;},st,C25,CO.green,money);
   tbl(px+'-factt',['MES','2025','2026','Variación','% Variación'],frows.map(f=>{const up=(f.variacion||0)>0,dn=(f.variacion||0)<0;const c=up?'#4ade80':dn?'#f87171':'#94a3b8',ar=up?'▲':dn?'▼':'■';
     const pct=(f.pctTxt&&f.pctTxt!=='')?f.pctTxt:(f.pctNum!=null?(f.pctNum>0?'+':'')+f.pctNum.toFixed(1)+'%':'—');
