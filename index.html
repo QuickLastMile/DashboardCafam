@@ -361,6 +361,7 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
       <div class="nav-section">Operación</div>
       <div class="nav-item" data-view="inst-gestion51"><i class="fa-solid fa-list-check"></i><span class="nav-label">Gestión</span></div>
       <div class="nav-item" data-view="inst-cross"><i class="fa-solid fa-file-signature"></i><span class="nav-label">Pendiente Cross</span></div>
+      <div class="nav-item" data-view="inst-percapita"><i class="fa-solid fa-coins"></i><span class="nav-label">Per Cápita</span></div>
       <div class="nav-item" data-view="inst-ia"><i class="fa-solid fa-brain"></i><span class="nav-label">Resumen IA</span></div>
     </div>
     <div class="nav-group" data-project="indicadores" hidden>
@@ -770,6 +771,36 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
             <div><h4 class="ia-sub"><i class="fa-solid fa-bell" style="color:var(--red)"></i> Alertas</h4><div class="ia-report" id="crx-ia-a">—</div></div>
           </div>
         </div></div>
+      </section>
+
+      <!-- ===== PER CÁPITA (costo operativo por entrega) ===== -->
+      <section class="view" id="inst-percapita">
+        <div class="card" style="margin-bottom:16px"><div class="card-body" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div class="vhead-ic" style="background:linear-gradient(135deg,#EAB308,#ca8a04)"><i class="fa-solid fa-coins"></i></div>
+          <div><h3 style="font-family:var(--font-d);font-size:17px">Cafam Institucional · Per Cápita</h3><div class="sub">Costo operativo por entrega — por punto de dispensación, ciudad y mes</div></div>
+          <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="ipc-stamp">--</span></span></div>
+        </div></div>
+        <div class="ins-bar">
+          <div class="fld"><label>Mes</label><select id="ipc-fMes"><option value="">Todos</option></select></div>
+          <div class="fld"><label>Ciudad</label><select id="ipc-fCiudad"><option value="">Todas</option></select></div>
+          <div class="fld"><label>Punto</label><select id="ipc-fDrog"><option value="">Todos</option></select></div>
+          <button class="ins-reset" id="ipc-reset"><i class="fa-solid fa-rotate-left"></i> Limpiar</button>
+        </div>
+        <div class="kpi-grid" id="ipc-kpi"></div>
+        <div class="grid-2">
+          <div class="card"><div class="card-h"><div><h3>Per cápita por mes</h3><div class="sub">Evolución del costo por entrega</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="ipc-mes"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Top 5 puntos — per cápita más alto</h3><div class="sub">Puntos con mayor costo operativo</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="ipc-top"></canvas></div></div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card"><div class="card-h"><div><h3>Per cápita por punto</h3><div class="sub">Ranking de puntos por costo promedio</div></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="ipc-drog"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Costo total por ciudad</h3><div class="sub">Distribución del costo operativo</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="ipc-ciudad"></canvas></div></div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card"><div class="card-h"><div><h3>Per cápita por ciudad</h3><div class="sub">Costo por entrega (costo ÷ entregas)</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="ipc-pcciudad"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Entregas por ciudad</h3><div class="sub">Distribución de la operación</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="ipc-entciudad"></canvas></div></div></div>
+        </div>
+        <div class="card"><div class="card-h"><div><h3>Detalle por punto</h3><div class="sub" id="ipc-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="ipc-table"></table></div></div></div>
+        <div class="card"><div class="card-h"><div><h3><i class="fa-solid fa-lightbulb" style="color:var(--yellow)"></i> Análisis de per cápita</h3><div class="sub">Alertas y oportunidades de costo</div></div></div><div class="card-body"><div class="ia-report" id="ipc-ia"></div></div></div>
       </section>
 
       <!-- ===== RESUMEN IA ===== -->
@@ -2169,7 +2200,7 @@ const INST_CFG={
 };
 
 /* ---------- Estado ---------- */
-let NAC=[],NOVNAC=[],RECI=[],NOVC=[],GMOT=[],GCAR=[],CROSS=[];
+let NAC=[],NOVNAC=[],RECI=[],NOVC=[],GMOT=[],GCAR=[],CROSS=[],PCAP=[];
 let instCharts={},instLoaded=false,instLoading=false,PROJECT='comercial';
 let recVeh='', g51Mode='motos', crxEst='';
 
@@ -2181,6 +2212,7 @@ try{Object.assign(PAGES,{
   'inst-novc51':['Novedades Calle 51','Análisis de novedades de Calle 51'],
   'inst-gestion51':['Gestión Calle 51','Cumplimiento diario — motos y carry'],
   'inst-cross':['Pendiente Cross','Recuperación de firmas de Cross Docking — legalizado vs pendiente'],
+  'inst-percapita':['Per Cápita Institucional','Costo operativo por entrega — por punto, ciudad y mes'],
   'inst-ia':['Resumen IA Institucional','Informes, análisis y sugerencias automáticas'],
   'ind-comercial':['Indicadores · Cafam Comercial','Comparativo mensual 2025 vs 2026'],
   'ind-institucional':['Indicadores · Cafam Institucional','Comparativo mensual 2025 vs 2026'],
@@ -2294,23 +2326,90 @@ function parseCross(raw){return raw.map(r=>{
     tipo,estado:est,recup,fechaRec:(r['FECHA RECUPERACIÓN']||'').toString().trim()};
 }).filter(r=>r.entrega||r.documento||r.cliente);}
 
+/* ---------- PER CÁPITA (costo operativo por entrega) ---------- */
+function copNumI(x){var s=String(x==null?'':x).replace(/[^0-9]/g,'');return s?parseInt(s,10):0;}
+function parsePercap(raw){return (raw||[]).map(function(r){
+  // En la hoja, las columnas "CANT ENTREGAS" y "COSTO" vienen intercambiadas:
+  // el costo (con "$") queda bajo CANT ENTREGAS. Detectar el costo por el "$"
+  // (o, en su defecto, por magnitud: el costo es mucho mayor que las entregas).
+  var v1=String(r['CANT ENTREGAS']==null?'':r['CANT ENTREGAS']),v2=String(r.COSTO==null?'':r.COSTO);
+  var costo,ent;
+  if(v1.indexOf('$')>=0){costo=copNumI(v1);ent=copNumI(v2);}
+  else if(v2.indexOf('$')>=0){costo=copNumI(v2);ent=copNumI(v1);}
+  else{var a=copNumI(v1),b=copNumI(v2);costo=Math.max(a,b);ent=Math.min(a,b);}
+  var pc=copNumI(r['PER CAPITA']);if(!pc&&ent>0)pc=Math.round(costo/ent);
+  return {ciudad:(r.CIUDAD||'').trim(),mes:(r.MES||'').trim().toUpperCase(),
+    punto:(r.DROUERIA||r.DROGUERIA||r['DROGUERIA NOMBRE CORTO']||'').trim(),
+    entregas:ent,costo:costo,pc:pc};
+}).filter(function(x){return x.ciudad||x.punto;});}
+function renderPercap(){
+  const money=n=>'$ '+Math.round(n||0).toLocaleString('es-CO');
+  const tc=s=>s?s.charAt(0)+s.slice(1).toLowerCase():'';
+  const st=document.getElementById('ipc-stamp');if(st)st.textContent=stampNow();
+  if(!PCAP.length){const k=document.getElementById('ipc-kpi');if(k)k.innerHTML='<div class="ind-loading">Sin datos de Per Cápita — verifica la hoja "PER CAPITA" en el Google Sheet.</div>';return;}
+  fillSel('ipc-fMes',sortMes(uniq(PCAP.map(r=>r.mes))));
+  fillSel('ipc-fCiudad',uniq(PCAP.map(r=>r.ciudad)));
+  fillSel('ipc-fDrog',uniq(PCAP.map(r=>r.punto)));
+  const mes=v('ipc-fMes'),city=v('ipc-fCiudad'),drog=v('ipc-fDrog');
+  const D=PCAP.filter(r=>(!mes||r.mes===mes)&&(!city||r.ciudad===city)&&(!drog||r.punto===drog));
+  if(!D.length){document.getElementById('ipc-kpi').innerHTML='<div class="ind-loading">Sin datos para los filtros seleccionados</div>';['ipc-mes','ipc-top','ipc-drog','ipc-ciudad','ipc-pcciudad','ipc-entciudad'].forEach(id=>{if(instCharts[id])instCharts[id].destroy();});renderTable('ipc-table',['PUNTO','CIUDAD','MES','Entregas','Costo','Per cápita'],[]);return;}
+  const pcP=groupAvg(D,r=>r.punto,r=>r.pc);
+  const entriesP=Object.entries(pcP).sort((a,b)=>b[1]-a[1]);
+  const topP=entriesP,botP=entriesP.slice().reverse();
+  const pcM=groupAvg(D,r=>r.mes,r=>r.pc);
+  const costoCity=groupSum(D,r=>r.ciudad,r=>r.costo),entCity=groupSum(D,r=>r.ciudad,r=>r.entregas);
+  const totalCosto=D.reduce((a,r)=>a+r.costo,0),totalEnt=D.reduce((a,r)=>a+r.entregas,0);
+  const globalPC=totalEnt>0?totalCosto/totalEnt:0;
+  const pcCity={};Object.keys(costoCity).forEach(c=>{pcCity[c]=entCity[c]>0?costoCity[c]/entCity[c]:0;});
+  kpiCards('ipc-kpi',[
+    {l:'Per cápita global prom.',txt:money(globalPC),ic:'fa-coins',c:'yellow'},
+    {l:'PC más alto',txt:money(topP[0]?topP[0][1]:0),ic:'fa-arrow-up',c:'red',t:topP[0]?topP[0][0]:'—',up:0},
+    {l:'PC más bajo',txt:money(botP[0]?botP[0][1]:0),ic:'fa-arrow-down',c:'green',t:botP[0]?botP[0][0]:'—',up:1},
+    {l:'Costo total',txt:money(totalCosto),ic:'fa-dollar-sign',c:'purple'},
+    {l:'Total entregas',v:totalEnt,ic:'fa-boxes-stacked',c:'blue'},
+    {l:'Puntos de operación',v:uniq(D.map(r=>r.punto)).length,ic:'fa-store',c:'yellow'}
+  ]);
+  const moneyTipY={callbacks:{label:c=>' '+money(c.parsed.y!=null?c.parsed.y:c.parsed)}};
+  const mesL=sortMes(Object.keys(pcM));
+  mkChart('ipc-mes',{type:'line',data:{labels:mesL,datasets:[{label:'Per cápita prom.',data:mesL.map(m=>Math.round(pcM[m])),borderColor:CO.yellow,backgroundColor:gradFill('#EAB308'),fill:true,tension:.35,borderWidth:2.6,pointRadius:3}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:moneyTipY},scales:{x:BC.grid,y:BC.grid}}});
+  const top5=topP.slice(0,5);
+  mkChart('ipc-top',{type:'bar',data:{labels:top5.map(e=>e[0]),datasets:[{label:'Per cápita',data:top5.map(e=>Math.round(e[1])),backgroundColor:CO.red,borderRadius:6,maxBarThickness:52}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:moneyTipY},scales:{x:BC.grid,y:BC.grid}}});
+  const drogArr=topP.slice(0,14);
+  mkChart('ipc-drog',{type:'bar',data:{labels:drogArr.map(e=>e[0]),datasets:[{label:'Per cápita',data:drogArr.map(e=>Math.round(e[1])),backgroundColor:palette(drogArr.length),borderRadius:6}]},options:{...BC.base,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+money(c.parsed.x!=null?c.parsed.x:c.parsed)}}},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
+  const cityArr=Object.entries(costoCity).sort((a,b)=>b[1]-a[1]);
+  mkChart('ipc-ciudad',{type:'bar',data:{labels:cityArr.map(e=>e[0]),datasets:[{label:'Costo total',data:cityArr.map(e=>e[1]),backgroundColor:palette(cityArr.length),borderRadius:6,maxBarThickness:66}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:moneyTipY},scales:{x:BC.grid,y:BC.grid}}});
+  const pcCityArr=Object.entries(pcCity).sort((a,b)=>b[1]-a[1]);
+  mkChart('ipc-pcciudad',{type:'bar',data:{labels:pcCityArr.map(e=>e[0]),datasets:[{label:'Per cápita',data:pcCityArr.map(e=>Math.round(e[1])),backgroundColor:palette(pcCityArr.length),borderRadius:6,maxBarThickness:66}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:moneyTipY},scales:{x:BC.grid,y:BC.grid}}});
+  const entCityArr=Object.entries(entCity).sort((a,b)=>b[1]-a[1]);
+  mkChart('ipc-entciudad',{type:'doughnut',data:{labels:entCityArr.map(e=>e[0]),datasets:[{data:entCityArr.map(e=>e[1]),backgroundColor:palette(entCityArr.length),borderColor:'#0b1120',borderWidth:2}]},options:{...BC.base,plugins:{legend:legBase}}});
+  renderTable('ipc-table',['PUNTO','CIUDAD','MES','Entregas','Costo','Per cápita'],D.slice().sort((a,b)=>b.pc-a.pc).map(r=>[r.punto,r.ciudad,tc(r.mes),r.entregas.toLocaleString('es-CO'),money(r.costo),money(r.pc)]));
+  const cnt=document.getElementById('ipc-count');if(cnt)cnt.textContent=D.length+' registros';
+  const alerta=topP.filter(e=>e[1]>globalPC*1.3);
+  const ia=document.getElementById('ipc-ia');if(ia)ia.innerHTML=
+    '<b>Per cápita promedio global:</b> '+money(globalPC)+' por entrega · <b>Total entregas:</b> '+totalEnt.toLocaleString('es-CO')+' · <b>Costo total:</b> '+money(totalCosto)+'<br><br>'+
+    '<b>🔴 Top 5 puntos más costosos:</b><br>'+topP.slice(0,5).map((e,i)=>{const p=globalPC>0?Math.round((e[1]/globalPC-1)*100):0;return (i+1)+'. '+e[0]+': '+money(e[1])+' ('+(p>=0?'+':'')+p+'% vs promedio)';}).join('<br>')+'<br><br>'+
+    '<b>🟢 Top 5 puntos más eficientes:</b><br>'+botP.slice(0,5).map((e,i)=>(i+1)+'. '+e[0]+': '+money(e[1])).join('<br>')+
+    (alerta.length?'<br><br><b style="color:#f87171">⚠ Puntos en alerta</b> (per cápita &gt;30% sobre el promedio): '+alerta.length+' punto(s) — revisar volumen y modelo de operación.':'');
+}
+
 async function ensureInst(){
   if(instLoaded||instLoading)return;
   instLoading=true;
   ['nac-count','rec-count','nvc-count','g51-count','crx-count'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='Cargando datos de Google Sheets…';});
   try{
-    const [cn,nn,rc,nc,g,cx]=await Promise.all([
+    const [cn,nn,rc,nc,g,cx,pc]=await Promise.all([
       fetchInst('CANT NACIONAL',false),
       fetchInst('NOVEDADES NACIONAL',false),
       fetchInst('RECIBIDO CALLE 51',true),
       fetchInst('NOVEDADES CALLE 51',true),
       fetchInst('GESTIÓN',false),
-      fetchInst('PENDIENTE CROSS',true)
+      fetchInst('PENDIENTE CROSS',true),
+      fetchInst('PER CAPITA',true).catch(()=>[])
     ]);
     NAC=parseNacional(cn);NOVNAC=parseNovNac(nn);RECI=parseRecibido(rc);NOVC=parseNovC51(nc);
-    const gg=parseGest51(g);GMOT=gg.motos;GCAR=gg.carry;CROSS=parseCross(cx);
+    const gg=parseGest51(g);GMOT=gg.motos;GCAR=gg.carry;CROSS=parseCross(cx);PCAP=parsePercap(pc);
     instLoaded=true;
-    renderNacional();renderRecibido();renderNovC51();renderGest51();renderCross();instReport('consolidado');
+    renderNacional();renderRecibido();renderNovC51();renderGest51();renderCross();renderPercap();instReport('consolidado');
     setTimeout(()=>Object.values(instCharts).forEach(ch=>{try{ch.resize();}catch(e){}}),160);
   }catch(e){console.warn('Institucional: fallo de carga',e);const el=document.getElementById('nac-count');if(el)el.textContent='Error al conectar con Google Sheets (verifica que la hoja sea pública: "Cualquiera con el enlace · Lector").';}
   instLoading=false;
@@ -2665,7 +2764,7 @@ window.switchProject=switchProject;
 
 /* ---------- Wiring ---------- */
 document.querySelectorAll('.proj-btn').forEach(b=>b.addEventListener('click',()=>switchProject(b.dataset.project)));
-const INST_RENDER={'inst-nacional':renderNacional,'inst-recibido':renderRecibido,'inst-novc51':renderNovC51,'inst-gestion51':renderGest51,'inst-cross':renderCross};
+const INST_RENDER={'inst-nacional':renderNacional,'inst-recibido':renderRecibido,'inst-novc51':renderNovC51,'inst-gestion51':renderGest51,'inst-cross':renderCross,'inst-percapita':renderPercap};
 document.querySelectorAll('.nav-item[data-view^="inst-"]').forEach(n=>n.addEventListener('click',()=>{
   if(!instLoaded)return;
   const fn=INST_RENDER[n.dataset.view];
@@ -2683,6 +2782,9 @@ document.querySelectorAll('#rec-toggle .seg-btn').forEach(b=>b.addEventListener(
 // Novedades C51
 ['nvc-fMes','nvc-fNov','nvc-fTipo','nvc-dia-mes','nvc-sem-mes','nvc-nov-mes','nvc-novtipo-mes'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('change',renderNovC51);});
 const nvcR=document.getElementById('nvc-reset');if(nvcR)nvcR.addEventListener('click',()=>{['nvc-fMes','nvc-fNov','nvc-fTipo','nvc-dia-mes','nvc-sem-mes','nvc-nov-mes','nvc-novtipo-mes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});renderNovC51();});
+// Per Cápita
+['ipc-fMes','ipc-fCiudad','ipc-fDrog'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('change',renderPercap);});
+const ipcR=document.getElementById('ipc-reset');if(ipcR)ipcR.addEventListener('click',()=>{['ipc-fMes','ipc-fCiudad','ipc-fDrog'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});renderPercap();});
 // Gestión 51
 ['g51-fMes','g51-flujo-mes','g51-total-mes','g51-cumpl-mes'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('change',renderGest51);});
 const g51R=document.getElementById('g51-reset');if(g51R)g51R.addEventListener('click',()=>{['g51-fMes','g51-flujo-mes','g51-total-mes','g51-cumpl-mes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});renderGest51();});
