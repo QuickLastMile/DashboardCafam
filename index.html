@@ -1958,7 +1958,12 @@ document.getElementById('overlay').addEventListener('click',()=>{document.getEle
 document.getElementById('applyFilter').addEventListener('click',filterMalla);
 document.getElementById('clearFilter').addEventListener('click',()=>{['fCiudad','fDrog','fTurno','fMens'].forEach(id=>document.getElementById(id).value='');filterMalla();});
 document.getElementById('refreshBtn').addEventListener('click',()=>refreshAll(true));
-document.getElementById('pdfBtn').addEventListener('click',generateExecutivePdf);
+document.getElementById('pdfBtn').addEventListener('click',()=>{
+  const v=(document.querySelector('.view.active')||{}).id||'';
+  const segMap={'ind-comercial':'comercial','ind-institucional':'institucional','ind-biologicos':'biologicos'};
+  if(segMap[v]&&window.segReport){window.segReport(segMap[v]);return;}
+  generateExecutivePdf();
+});
 document.getElementById('opMensajero').addEventListener('change',()=>renderMap());
 document.getElementById('toggleRoute').addEventListener('click',()=>{
   routeEnabled=!routeEnabled;
@@ -3124,7 +3129,7 @@ function monthsForYear(d,seg,year){const s=new Set();
   return [...s].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));}
 function dispMonthsYR(rows,st,field){const ry=refYear(st);let mr=rows.filter(r=>r.anio===ry&&(!field||r[field]!=null));if(!st.anio)mr=mr.filter(r=>r.conc);let ms=[...new Set(mr.map(r=>r.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));if(st.mes)ms=ms.filter(m=>m===st.mes);return ms;}
 function dispMonthsMS(rows,st){const ry=refYear(st),k=ry===2025?'v2025':'v2026';let mr=rows.filter(r=>r[k]!=null);if(!st.anio)mr=mr.filter(r=>r.conc);let ms=[...new Set(mr.map(r=>r.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));if(st.mes)ms=ms.filter(m=>m===st.mes);return ms;}
-function subtabBar(cfg,st){return '<div class="ind-subtabs">'+cfg.tabs.map(t=>`<button class="ind-stab${st.sub===t?' active':''}" data-sub="${t}"><i class="fa-solid ${TLBL[t][1]}"></i> ${TLBL[t][0]}</button>`).join('')+'<button class="ind-stab" data-dl="1" title="Descargar informe PDF según el filtro seleccionado" style="margin-left:auto;background:linear-gradient(135deg,#2563EB,#1d4ed8);color:#fff;border:none"><i class="fa-solid fa-file-arrow-down"></i> Descargar informe</button></div>';}
+function subtabBar(cfg,st){return '<div class="ind-subtabs">'+cfg.tabs.map(t=>`<button class="ind-stab${st.sub===t?' active':''}" data-sub="${t}"><i class="fa-solid ${TLBL[t][1]}"></i> ${TLBL[t][0]}</button>`).join('')+'</div>';}
 function filterBar(seg,d,st){if(st.sub==='portada'||st.sub==='cobertura')return '';
   const ys=allYears(d,seg),px=SEG[seg].body;
   const mss=monthsForYear(d,seg,st.anio?+st.anio:2026);
@@ -3193,8 +3198,7 @@ function segReport(seg){
   pdfMake.createPdf(doc).download(fn);}
 function renderSeg(seg){const cfg=SEG[seg],d=segData(seg),st=stt[seg];const body=document.getElementById(cfg.body);if(!body||!d)return;
   body.innerHTML=subtabBar(cfg,st)+filterBar(seg,d,st)+`<div class="ind-panel" id="${cfg.body}-panel"></div>`;
-  body.querySelectorAll('.ind-stab[data-sub]').forEach(b=>b.addEventListener('click',()=>{stt[seg].sub=b.dataset.sub;renderSeg(seg);}));
-  const dlb=body.querySelector('[data-dl]');if(dlb)dlb.addEventListener('click',()=>segReport(seg));
+  body.querySelectorAll('.ind-stab').forEach(b=>b.addEventListener('click',()=>{stt[seg].sub=b.dataset.sub;renderSeg(seg);}));
   const ya=document.getElementById(cfg.body+'-anio');if(ya)ya.addEventListener('change',()=>{stt[seg].anio=ya.value;
     const mss=monthsForYear(d,seg,ya.value?+ya.value:2026);
     if(stt[seg].mes&&mss.indexOf(stt[seg].mes)<0)stt[seg].mes='';
@@ -3372,7 +3376,7 @@ async function ensureInd(){
     ['indc-body','indi-body','indb-body'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<div class="ind-loading">No se pudo cargar el Sheet de indicadores. Verifica que esté compartido como "Cualquiera con el enlace · Lector".</div>';});}
   indLoading=false;
 }
-window.ensureInd=ensureInd;
+window.ensureInd=ensureInd;window.segReport=segReport;
 document.querySelectorAll('.nav-item[data-view^="ind-"]').forEach(n=>n.addEventListener('click',()=>{
   setTimeout(()=>Object.values(indCharts).forEach(c=>{try{c.resize();}catch(e){}}),70);
 }));
