@@ -2896,14 +2896,14 @@ const RESP_MAP={
   'FALLA MECANICA':'Quick','AUSENCIA':'Quick','AUSENCIAS':'Quick','RETRASO':'Quick','RETRASOS':'Quick',
   'ABANDONO':'Quick','INCUMPLIMIENTO':'Quick','MALA PRESENTACION':'Quick','NO GESTIONADO POR TIEMPO':'Quick',
   'CLIENTE CANCELA POR DEMORA EN LA ENTREGA':'Quick','NEVERA GESTIONADA DÍA 1':'Quick','NEVERA GESTIONADA DÍA 2':'Quick','NEVERA GESTION DÍA 3':'Quick',
-  'RECLAMO':'Quick','SOLICITUD':'Quick',
+  'RECLAMO':'Quick','SOLICITUD':'Quick','CLIENTE NO LO PUEDE ESPERAR':'Quick',
   /* CAFAM — farmacia / call center / datos / sistemas / guías */
   'MEDICAMENTOS NO DISPONIBLES':'Cafam','MEDICAMENTOS INCOMPLETOS':'Cafam','ERROR ASESOR':'Cafam','ERROR DE CREACION':'Cafam','ERROR DE SISTEMAS':'Cafam',
   'DIRECCION ERRADA':'Cafam','DIRECCION INCOMPLETA':'Cafam','CANCELACION POR GUIA SIN COBERTURA':'Cafam','CANCELACION POR GUIA DUPLICADA':'Cafam',
   'ENTRAGADO EN PUNTO CAFAM':'Cafam','NOVEDAD TRANSFERENCIA':'Cafam','CANCELACION POR ZONA ROJA':'Cafam','ZONA ROJA':'Cafam',
   /* CLIENTE — decisión / situación del usuario final */
   'CLIENTE YA NO DESEA EL DOMICILIO':'Cliente','CLIENTE NO CONTESTA':'Cliente','CLIENTE COMPRO PRODUCTO EN OTRA CADENA':'Cliente','CLIENTE COMPRO POR OTRO CANAL':'Cliente',
-  'CLIENTE NO LO PUEDE ESPERAR':'Cliente','ERROR DEL CLIENTE EN SOLICITUD DE PRODUCTO':'Cliente','CLIENTE NO TIENE DINERO PARA PAGAR':'Cliente','NO CUENTA CON MEDIO DE PAGO':'Cliente',
+  'ERROR DEL CLIENTE EN SOLICITUD DE PRODUCTO':'Cliente','CLIENTE NO TIENE DINERO PARA PAGAR':'Cliente','NO CUENTA CON MEDIO DE PAGO':'Cliente',
   'CLIENTE NO LO REQUIERE POR CAMBIO DE FORMULA MEDICA':'Cliente','NO SE ENCUENTRA EL USUARIO':'Cliente','NADIE PARA RECIBIR':'Cliente','NADIE PARA RECIBIR 2DA VISITA':'Cliente',
   'CLIENTE NO RESIDE':'Cliente','RECHAZADO POR EL USUARIO':'Cliente'
 };
@@ -3124,7 +3124,7 @@ function monthsForYear(d,seg,year){const s=new Set();
   return [...s].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));}
 function dispMonthsYR(rows,st,field){const ry=refYear(st);let mr=rows.filter(r=>r.anio===ry&&(!field||r[field]!=null));if(!st.anio)mr=mr.filter(r=>r.conc);let ms=[...new Set(mr.map(r=>r.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));if(st.mes)ms=ms.filter(m=>m===st.mes);return ms;}
 function dispMonthsMS(rows,st){const ry=refYear(st),k=ry===2025?'v2025':'v2026';let mr=rows.filter(r=>r[k]!=null);if(!st.anio)mr=mr.filter(r=>r.conc);let ms=[...new Set(mr.map(r=>r.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));if(st.mes)ms=ms.filter(m=>m===st.mes);return ms;}
-function subtabBar(cfg,st){return '<div class="ind-subtabs">'+cfg.tabs.map(t=>`<button class="ind-stab${st.sub===t?' active':''}" data-sub="${t}"><i class="fa-solid ${TLBL[t][1]}"></i> ${TLBL[t][0]}</button>`).join('')+'</div>';}
+function subtabBar(cfg,st){return '<div class="ind-subtabs">'+cfg.tabs.map(t=>`<button class="ind-stab${st.sub===t?' active':''}" data-sub="${t}"><i class="fa-solid ${TLBL[t][1]}"></i> ${TLBL[t][0]}</button>`).join('')+'<button class="ind-stab" data-dl="1" title="Descargar informe PDF según el filtro seleccionado" style="margin-left:auto;background:linear-gradient(135deg,#2563EB,#1d4ed8);color:#fff;border:none"><i class="fa-solid fa-file-arrow-down"></i> Descargar informe</button></div>';}
 function filterBar(seg,d,st){if(st.sub==='portada'||st.sub==='cobertura')return '';
   const ys=allYears(d,seg),px=SEG[seg].body;
   const mss=monthsForYear(d,seg,st.anio?+st.anio:2026);
@@ -3132,9 +3132,69 @@ function filterBar(seg,d,st){if(st.sub==='portada'||st.sub==='cobertura')return 
   const mOpt='<option value="">Todos los meses</option>'+mss.map(m=>`<option value="${m}"${st.mes===m?' selected':''}>${m}</option>`).join('');
   if(st.sub==='evidencias'){const em='<option value="">Todos los meses</option>'+allMonths(d,seg).map(m=>`<option value="${m}"${st.mes===m?' selected':''}>${m}</option>`).join('');return `<div class="ind-fbar"><div class="fld"><label>Mes</label><select id="${px}-mes">${em}</select></div></div>`;}
   return `<div class="ind-fbar"><div class="fld"><label>Año</label><select id="${px}-anio">${yOpt}</select></div><div class="fld"><label>Mes</label><select id="${px}-mes">${mOpt}</select></div></div>`;}
+/* ---- Informe descargable por segmento (PDF, según filtro año/mes) ---- */
+function reportSummary(seg,d){let h=smartSummary(seg,d);
+  return h.replace(/<h4>[\s\S]*?<\/h4>/g,'').replace(/<li>/g,'• ').replace(/<\/li>/g,'\n').replace(/<\/p>/g,'\n').replace(/<[^>]+>/g,'').replace(/\n{2,}/g,'\n').replace(/[ \t]{2,}/g,' ').trim();}
+function segReport(seg){
+  if(!window.pdfMake){alert('No se pudo cargar el generador de PDF (pdfMake).');return;}
+  const cfg=SEG[seg],d=segData(seg),st=stt[seg];if(!d)return;
+  const bio=seg==='biologicos',reg=segReg(d,seg)||[];
+  const filtLbl=(st.anio?('Año '+st.anio):'Comparativo 2025 vs 2026')+(st.mes?(' · '+cap(st.mes)):' · Todos los meses');
+  const mss=monthsForYear(d,seg,2026),lm=st.mes||mss.slice(-1)[0]||null;
+  const fLast=(d.fact||[]).find(f=>f.mes===lm)||{};
+  const ny=n=>+(yr(n.anio)||n.anio)||null;
+  let kpiBody;
+  if(bio){const rL=(d.bioReg||[]).find(b=>b.mes===lm)||{},c25=(d.cumpl||[]).find(c=>c.mes===lm&&c.anio===2025),c26=(d.cumpl||[]).find(c=>c.mes===lm&&c.anio===2026);
+    kpiBody=[['Indicador ('+(lm||'—')+')','2025','2026'],['Registros gestionados',n0(rL.v2025),n0(rL.v2026)],['Cumplimiento %',c25?p1(c25.entregado):'—',c26?p1(c26.entregado):'—'],['Facturación',money(fLast.v2025),money(fLast.v2026)]];
+  }else{kpiBody=[['Indicador ('+(lm||'—')+')','2025','2026'],['Registros entregados',n0(regVal(reg,lm,2025,'entregado')),n0(regVal(reg,lm,2026,'entregado'))],['Efectividad %',p1(regVal(reg,lm,2025,'pctEnt')),p1(regVal(reg,lm,2026,'pctEnt'))],['Cancelados',n0(regVal(reg,lm,2025,'cancelado')),n0(regVal(reg,lm,2026,'cancelado'))],['Facturación',money(fLast.v2025),money(fLast.v2026)]];}
+  const C=[];
+  C.push({canvas:[{type:'rect',x:0,y:0,w:515,h:74,r:6,color:'#0B0F19'}],absolutePosition:{x:40,y:30}});
+  C.push({text:'QUICK · Informe de seguimiento',style:'coverTitle',margin:[16,14,16,0]});
+  C.push({text:cfg.title,style:'coverSeg',margin:[16,3,16,24]});
+  C.push({text:cfg.desc,style:'p',margin:[0,8,0,10]});
+  C.push({stack:[
+    {text:[{text:'Filtro seleccionado: ',bold:true},filtLbl],style:'p'},
+    {text:[{text:'Contrato: ',bold:true},cfg.contrato,'    Fecha otrosí: ',cfg.otrosi],style:'p'},
+    {text:[{text:'Último mes cerrado: ',bold:true},lm||'—'],style:'p'},
+    {text:[{text:'Meses cerrados 2026: ',bold:true},(mss.map(cap).join(' · ')||'—')],style:'p'},
+    {text:[{text:'Generado: ',bold:true},new Date().toLocaleString('es-CO')],style:'muted'}
+  ]});
+  C.push({text:'Indicadores clave',style:'h2'});
+  C.push({table:{headerRows:1,widths:['*','auto','auto'],body:kpiBody},layout:tableLayout()});
+  C.push({text:'Resumen ejecutivo',style:'h2'});
+  C.push({text:reportSummary(seg,d),style:'p'});
+  C.push({text:'',pageBreak:'after'});
+  /* Registros / gestión */
+  if(bio){const rows=visMS(d.bioReg||[],st).slice().sort((a,b)=>mi(a.mes)-mi(b.mes));
+    if(rows.length){C.push({text:'Registros gestionados por mes',style:'h2'});C.push({table:{headerRows:1,widths:['*','auto','auto'],body:[['Mes','2025','2026'],...rows.map(r=>[cap(r.mes),n0(r.v2025),n0(r.v2026)])]},layout:tableLayout()});}
+    const cr=visYR(d.cumpl||[],st).slice().sort((a,b)=>mi(a.mes)-mi(b.mes)||(a.anio-b.anio));
+    if(cr.length){C.push({text:'Cumplimiento y cancelación (%)',style:'h2'});C.push({table:{headerRows:1,widths:['*','auto','auto','auto'],body:[['Mes','Año','Cumplimiento','% Cancelado'],...cr.map(r=>[cap(r.mes),r.anio,p1(r.entregado),p1(r.cancelado)])]},layout:tableLayout()});}
+  }else{const rows=visYR(reg,st).slice().sort((a,b)=>mi(a.mes)-mi(b.mes)||(a.anio-b.anio));
+    if(rows.length){C.push({text:'Registros y efectividad por mes',style:'h2'});C.push({table:{headerRows:1,widths:['*','auto','auto','auto','auto'],body:[['Mes','Año','Entregados','Efectividad','Cancelados'],...rows.map(r=>[cap(r.mes),r.anio,n0(r.entregado),p1(r.pctEnt),n0(r.cancelado)])]},layout:tableLayout()});}}
+  /* Novedades + responsable */
+  let novf=(d.nov||[]).slice();if(st.anio)novf=novf.filter(n=>String(ny(n))===st.anio);if(st.mes)novf=novf.filter(n=>n.mes===st.mes);
+  const nt=novTop(novf);
+  if(nt.length){const rc=respBreakdown(novf),rTot=Object.values(rc).reduce((a,b)=>a+b,0)||1;
+    C.push({text:'Novedades por responsable',style:'h2'});
+    C.push({table:{headerRows:1,widths:['*','auto','auto'],body:[['Responsable','Casos','%'],...['Quick','Cafam','Cliente','Sin clasificar'].filter(k=>rc[k]).map(k=>[k,n0(rc[k]),(rc[k]/rTot*100).toFixed(1)+'%'])]},layout:tableLayout()});
+    C.push({text:'Detalle de novedades',style:'h2'});
+    C.push({table:{headerRows:1,widths:['*','auto','auto','auto'],body:[['Novedad','Responsable','Casos','%'],...nt.map(([nv,c])=>[cap(nv),novResp(nv),n0(c),(c/rTot*100).toFixed(1)+'%'])]},layout:tableLayout()});}
+  /* Facturación */
+  const fms=dispMonthsMS(d.fact||[],st),frows=(d.fact||[]).filter(f=>fms.indexOf(f.mes)>=0).sort((a,b)=>mi(a.mes)-mi(b.mes));
+  if(frows.length){C.push({text:'Facturación',style:'h2'});C.push({table:{headerRows:1,widths:['*','auto','auto','auto','auto'],body:[['Mes','2025','2026','Variación','% Var'],...frows.map(f=>[cap(f.mes),money(f.v2025),money(f.v2026),money(f.variacion),(f.pctTxt&&f.pctTxt!==''?f.pctTxt:(f.pctNum!=null?(f.pctNum>0?'+':'')+f.pctNum.toFixed(1)+'%':'—'))])]},layout:tableLayout()});}
+  /* Tiempos (comercial) */
+  if(seg==='comercial'&&(d.tiempos||[]).length){const tv=visYR(d.tiempos,st).slice().sort((a,b)=>mi(a.mes)-mi(b.mes)||(a.anio-b.anio));
+    if(tv.length){C.push({text:'Tiempos de entrega',style:'h2'});C.push({table:{headerRows:1,widths:['*','auto','auto'],body:[['Mes','Año','Total (H:MM:SS)'],...tv.map(t=>[cap(t.mes),t.anio,fmtDur(t.totMin)])]},layout:tableLayout()});}}
+  const fn='informe-cafam-'+seg+(st.anio?('-'+st.anio):'-2025-2026')+(st.mes?('-'+st.mes.toLowerCase()):'')+'-'+new Date().toISOString().slice(0,10)+'.pdf';
+  const doc={pageSize:'A4',pageMargins:[40,46,40,44],content:C,
+    styles:{coverTitle:{fontSize:16,bold:true,color:'#FFFFFF'},coverSeg:{fontSize:12,color:'#CBD5E1'},h2:{fontSize:13,bold:true,color:'#0B0F19',margin:[0,14,0,7]},p:{fontSize:10,lineHeight:1.35,color:'#334155',margin:[0,0,0,4]},muted:{fontSize:8.5,color:'#64748B',margin:[0,4,0,0]}},
+    defaultStyle:{fontSize:9.5,color:'#0f172a'},
+    footer:(cur,tot)=>({text:'QUICK · Seguimiento Cafam — '+cfg.title+'    ·    Página '+cur+' de '+tot,alignment:'center',fontSize:8,color:'#94A3B8',margin:[0,10,0,0]})};
+  pdfMake.createPdf(doc).download(fn);}
 function renderSeg(seg){const cfg=SEG[seg],d=segData(seg),st=stt[seg];const body=document.getElementById(cfg.body);if(!body||!d)return;
   body.innerHTML=subtabBar(cfg,st)+filterBar(seg,d,st)+`<div class="ind-panel" id="${cfg.body}-panel"></div>`;
-  body.querySelectorAll('.ind-stab').forEach(b=>b.addEventListener('click',()=>{stt[seg].sub=b.dataset.sub;renderSeg(seg);}));
+  body.querySelectorAll('.ind-stab[data-sub]').forEach(b=>b.addEventListener('click',()=>{stt[seg].sub=b.dataset.sub;renderSeg(seg);}));
+  const dlb=body.querySelector('[data-dl]');if(dlb)dlb.addEventListener('click',()=>segReport(seg));
   const ya=document.getElementById(cfg.body+'-anio');if(ya)ya.addEventListener('change',()=>{stt[seg].anio=ya.value;
     const mss=monthsForYear(d,seg,ya.value?+ya.value:2026);
     if(stt[seg].mes&&mss.indexOf(stt[seg].mes)<0)stt[seg].mes='';
