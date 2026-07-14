@@ -3208,9 +3208,14 @@ function panelNov(seg,d,st,p){const px=SEG[seg].body;const nov0=(d.nov||[]);
   const sumNov=(m,y)=>nov0.filter(n=>n.mes===m&&ny(n)===y).reduce((a,n)=>a+(n.cant||0),0);
   p.innerHTML=card('Total de novedades por mes',yrLbl(st),px+'-novmes')
     +card('Responsable de las novedades','% según a quién corresponde — Quick · Cafam · Cliente',px+'-novresp')
+    +tcard('Detalle por responsable','Qué tipo de novedad corresponde a cada responsable',px+'-novrespt')
     +card('Novedades por tipo','Cantidad por tipo de novedad (mayor a menor)',px+'-nov','tall');
   const rc=respBreakdown(novf),rEnt=Object.entries(rc).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]),rTot=rEnt.reduce((a,e)=>a+e[1],0);
   if(!emptyIf(px+'-novresp',rTot===0,'Sin novedades para el filtro seleccionado'))mkc(px+'-novresp',{type:'doughnut',data:{labels:rEnt.map(e=>e[0]+' · '+(e[1]/rTot*100).toFixed(1)+'%'),datasets:[{data:rEnt.map(e=>e[1]),backgroundColor:rEnt.map(e=>RESP_COL[e[0]]||CO.gray),borderWidth:0,hoverOffset:8}]},options:{...BASE,cutout:'58%',plugins:{legend:{position:'right',labels:LEG.labels},tooltip:{callbacks:{label:c=>String(c.label).split(' · ')[0]+': '+n0(c.parsed)+' ('+(rTot?(c.parsed/rTot*100):0).toFixed(1)+'%)'}}}}});
+  const RORD={Quick:0,Cafam:1,Cliente:2,'Sin clasificar':3};
+  const detRows=nt.map(([nv,c])=>({r:novResp(nv),nv,c})).sort((a,b)=>(RORD[a.r]-RORD[b.r])||(b.c-a.c))
+    .map(x=>[`<b style="color:${RESP_COL[x.r]||CO.gray}">● ${x.r}</b>`,x.nv.charAt(0)+x.nv.slice(1).toLowerCase(),n0(x.c),rTot?((x.c/rTot*100).toFixed(1)+'%'):'—']);
+  tbl(px+'-novrespt',['Responsable','Novedad','Casos','% del total'],detRows);
   const ds=[];
   if(showY(st,2025))ds.push({label:'2025',data:months.map(m=>sumNov(m,2025)),backgroundColor:C25,borderRadius:5,maxBarThickness:BW(st)});
   if(showY(st,2026))ds.push({label:'2026',data:months.map(m=>sumNov(m,2026)),backgroundColor:CO.yellow,borderRadius:5,maxBarThickness:BW(st)});
