@@ -3128,9 +3128,9 @@ function renderPanel(seg){const d=segData(seg),st=stt[seg],p=document.getElement
   if(st.sub==='cobertura')return panelCobertura(seg,d,st,p);
   if(st.sub==='historico')return panelHistorico(seg,d,st,p);
   if(st.sub==='evidencias')return panelEvid(seg,st,p);}
-function panelPortada(seg,d,p){const cfg=SEG[seg],reg=segReg(d,seg),ys=allYears(d,seg),mss=allMonths(d,seg);
-  const lm=seg==='biologicos'?(mss.slice(-1)[0]||null):lastMes(reg);
-  const fLast=(d.fact||[]).slice().sort((a,b)=>mi(a.mes)-mi(b.mes)).slice(-1)[0]||{};
+function panelPortada(seg,d,p){const cfg=SEG[seg],reg=segReg(d,seg),ys=allYears(d,seg),mss=monthsForYear(d,seg,2026);
+  const lm=mss.slice(-1)[0]||(seg==='biologicos'?null:lastMes(reg));
+  const fLast=(d.fact||[]).find(f=>f.mes===lm)||{};
   let kpis;
   if(seg==='biologicos'){const rLast=(d.bioReg||[]).find(b=>b.mes===lm)||{};const c25=(d.cumpl||[]).find(c=>c.mes===lm&&c.anio===2025),c26=(d.cumpl||[]).find(c=>c.mes===lm&&c.anio===2026);
     kpis=cmpCard('Registros gestionados ('+(lm||'')+')',rLast.v2025,rLast.v2026,n0)+cmpCard('Cumplimiento % ('+(lm||'')+')',c25?c25.entregado:null,c26?c26.entregado:null,p1)+cmpCard('Facturación ('+(fLast.mes||'')+')',fLast.v2025,fLast.v2026,money);
