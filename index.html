@@ -2889,6 +2889,31 @@ const monthsOf=arr=>[...new Set(arr.map(x=>x.mes))].filter(m=>mi(m)>=0).sort((a,
 const regVal=(reg,m,y,f)=>{const r=reg.find(x=>x.mes===m&&x.anio===y);return r?r[f]:null;};
 const lastMes=(reg)=>{const ms=monthsOf((reg||[]).filter(r=>r.anio===2026&&r.conc&&r.entregado!=null));return ms.length?ms[ms.length-1]:(monthsOf((reg||[]).filter(r=>r.conc)).slice(-1)[0]||null);};
 function novTop(nov){const by={};nov.forEach(n=>{if(n.cant!=null)by[n.novedad]=(by[n.novedad]||0)+n.cant;});return Object.entries(by).sort((a,b)=>b[1]-a[1]);}
+/* ---- Responsable de cada novedad: QUICK · CAFAM · CLIENTE ----
+   Editable: agrega/mueve novedades aquí. Clave en MAYÚSCULAS exactas del Sheet. */
+const RESP_MAP={
+  /* QUICK — operación / transporte / mensajería */
+  'FALLA MECANICA':'Quick','AUSENCIA':'Quick','AUSENCIAS':'Quick','RETRASO':'Quick','RETRASOS':'Quick',
+  'ABANDONO':'Quick','INCUMPLIMIENTO':'Quick','MALA PRESENTACION':'Quick','NO GESTIONADO POR TIEMPO':'Quick',
+  'CLIENTE CANCELA POR DEMORA EN LA ENTREGA':'Quick','NEVERA GESTIONADA DÍA 1':'Quick','NEVERA GESTIONADA DÍA 2':'Quick','NEVERA GESTION DÍA 3':'Quick',
+  'RECLAMO':'Quick','SOLICITUD':'Quick',
+  /* CAFAM — farmacia / call center / datos / sistemas / guías */
+  'MEDICAMENTOS NO DISPONIBLES':'Cafam','MEDICAMENTOS INCOMPLETOS':'Cafam','ERROR ASESOR':'Cafam','ERROR DE CREACION':'Cafam','ERROR DE SISTEMAS':'Cafam',
+  'DIRECCION ERRADA':'Cafam','DIRECCION INCOMPLETA':'Cafam','CANCELACION POR GUIA SIN COBERTURA':'Cafam','CANCELACION POR GUIA DUPLICADA':'Cafam',
+  'ENTRAGADO EN PUNTO CAFAM':'Cafam','NOVEDAD TRANSFERENCIA':'Cafam','CANCELACION POR ZONA ROJA':'Cafam','ZONA ROJA':'Cafam',
+  /* CLIENTE — decisión / situación del usuario final */
+  'CLIENTE YA NO DESEA EL DOMICILIO':'Cliente','CLIENTE NO CONTESTA':'Cliente','CLIENTE COMPRO PRODUCTO EN OTRA CADENA':'Cliente','CLIENTE COMPRO POR OTRO CANAL':'Cliente',
+  'CLIENTE NO LO PUEDE ESPERAR':'Cliente','ERROR DEL CLIENTE EN SOLICITUD DE PRODUCTO':'Cliente','CLIENTE NO TIENE DINERO PARA PAGAR':'Cliente','NO CUENTA CON MEDIO DE PAGO':'Cliente',
+  'CLIENTE NO LO REQUIERE POR CAMBIO DE FORMULA MEDICA':'Cliente','NO SE ENCUENTRA EL USUARIO':'Cliente','NADIE PARA RECIBIR':'Cliente','NADIE PARA RECIBIR 2DA VISITA':'Cliente',
+  'CLIENTE NO RESIDE':'Cliente','RECHAZADO POR EL USUARIO':'Cliente'
+};
+const RESP_COL={Quick:'#2563EB',Cafam:'#A855F7',Cliente:'#EAB308','Sin clasificar':'#94A3B8'};
+function novResp(nv){const k=String(nv||'').trim().toUpperCase();if(RESP_MAP[k])return RESP_MAP[k];
+  if(/CLIENTE|USUARIO/.test(k))return 'Cliente';
+  if(/CAFAM|MEDICAMENTO|ASESOR|SISTEMA|DIRECCION|GUIA|CREACION|TRANSFERENCIA|COBERTURA/.test(k))return 'Cafam';
+  if(/FALLA|AUSENC|RETRAS|DEMORA|ABANDONO|INCUMPLIMIENTO|MENSAJERO|RUTA|NEVERA|GESTIONADO/.test(k))return 'Quick';
+  return 'Sin clasificar';}
+function respBreakdown(nov){const rc={};nov.forEach(n=>{if(n.cant!=null){const r=novResp(n.novedad);rc[r]=(rc[r]||0)+n.cant;}});return rc;}
 function plantaKpis(planta){const pts=planta.length,cant=planta.reduce((a,p)=>a+(p.cant||0),0),ciu=new Set(planta.map(p=>p.ciudad)).size;return {pts,cant,ciu};}
 
 /* ---------- COMERCIAL ---------- */
@@ -3181,7 +3206,11 @@ function panelNov(seg,d,st,p){const px=SEG[seg].body;const nov0=(d.nov||[]);
   let months=[...new Set(nov0.filter(n=>ny(n)===refY).map(n=>n.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));
   if(st.mes)months=months.filter(m=>m===st.mes);
   const sumNov=(m,y)=>nov0.filter(n=>n.mes===m&&ny(n)===y).reduce((a,n)=>a+(n.cant||0),0);
-  p.innerHTML=card('Total de novedades por mes',yrLbl(st),px+'-novmes')+card('Novedades por tipo','Cantidad por tipo de novedad (mayor a menor)',px+'-nov','tall');
+  p.innerHTML=card('Total de novedades por mes',yrLbl(st),px+'-novmes')
+    +card('Responsable de las novedades','% según a quién corresponde — Quick · Cafam · Cliente',px+'-novresp')
+    +card('Novedades por tipo','Cantidad por tipo de novedad (mayor a menor)',px+'-nov','tall');
+  const rc=respBreakdown(novf),rEnt=Object.entries(rc).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]),rTot=rEnt.reduce((a,e)=>a+e[1],0);
+  if(!emptyIf(px+'-novresp',rTot===0,'Sin novedades para el filtro seleccionado'))mkc(px+'-novresp',{type:'doughnut',data:{labels:rEnt.map(e=>e[0]+' · '+(e[1]/rTot*100).toFixed(1)+'%'),datasets:[{data:rEnt.map(e=>e[1]),backgroundColor:rEnt.map(e=>RESP_COL[e[0]]||CO.gray),borderWidth:0,hoverOffset:8}]},options:{...BASE,cutout:'58%',plugins:{legend:{position:'right',labels:LEG.labels},tooltip:{callbacks:{label:c=>String(c.label).split(' · ')[0]+': '+n0(c.parsed)+' ('+(rTot?(c.parsed/rTot*100):0).toFixed(1)+'%)'}}}}});
   const ds=[];
   if(showY(st,2025))ds.push({label:'2025',data:months.map(m=>sumNov(m,2025)),backgroundColor:C25,borderRadius:5,maxBarThickness:BW(st)});
   if(showY(st,2026))ds.push({label:'2026',data:months.map(m=>sumNov(m,2026)),backgroundColor:CO.yellow,borderRadius:5,maxBarThickness:BW(st)});
