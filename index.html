@@ -2867,6 +2867,13 @@ function pBioReg(rows,o){const out=[];for(let i=2;i<rows.length;i++){const r=row
 function pCumpl(rows,o){const out=[];for(let i=2;i<rows.length;i++){const r=rows[i];if(!r)continue;
   const a=yr(cell(r,o)),m=cell(r,o+1).toUpperCase();if(!a||mi(m)<0)continue;
   out.push({anio:a,mes:m,entregado:pNum(r[o+2]),cancelado:pNum(r[o+3]),conc:isConc(cell(r,o+4))});}return out;}
+/* Cumplimiento de ingreso (carrys) — Biológicos */
+function pRutaIng(rows,o){const out=[];for(let i=2;i<rows.length;i++){const r=rows[i];if(!r)continue;
+  const m=cell(r,o).toUpperCase(),ruta=cell(r,o+1);if(mi(m)<0||!ruta)continue;
+  out.push({mes:m,ruta,aTiempo:iNum(r[o+2]),aTiempoPct:pNum(r[o+3]),retraso:iNum(r[o+4]),retrasoPct:pNum(r[o+5])});}return out;}
+function pCantIng(rows,o){const out=[];for(let i=2;i<rows.length;i++){const r=rows[i];if(!r)continue;
+  const m=cell(r,o).toUpperCase();if(mi(m)<0)continue;
+  out.push({mes:m,aTiempo:iNum(r[o+1]),retraso:iNum(r[o+2]),total:iNum(r[o+3])});}return out;}
 function pPlanta(rows,o,withModel){const out=[];for(let i=2;i<rows.length;i++){const r=rows[i];if(!r)continue;
   const c=cell(r,o),p=cell(r,o+1);if(!c||!p)continue;
   out.push({ciudad:c,punto:p,cant:iNum(r[o+2]),modelo:withModel?cell(r,o+3):''});}return out;}
@@ -3058,9 +3065,9 @@ const SEG={
    tabs:['portada','registros','novedades','facturacion','cobertura','historico','evidencias']},
  biologicos:{body:'indb-body',title:'Cafam Biológicos',ic:'fa-flask-vial',grad:'linear-gradient(135deg,#A855F7,#7c3aed)',contrato:'20190233',otrosi:'27/05/2026',
    desc:'Transporte de muestras biológicas desde las IPS de Cafam hasta la central de procesamiento, con cadena de frío (neveras con geles congelados y control de temperatura) y recolección de residuos.',
-   tabs:['portada','registros','novedades','facturacion','evidencias']}
+   tabs:['portada','registros','novedades','facturacion','carrys','evidencias']}
 };
-const TLBL={portada:['Portada','fa-house-chimney'],registros:['Registros y efectividad','fa-chart-column'],novedades:['Novedades','fa-triangle-exclamation'],tiempos:['Tiempos','fa-clock'],facturacion:['Facturación','fa-dollar-sign'],cobertura:['Cobertura','fa-store'],historico:['Histórico','fa-clock-rotate-left'],evidencias:['Evidencias','fa-camera']};
+const TLBL={portada:['Portada','fa-house-chimney'],registros:['Registros y efectividad','fa-chart-column'],novedades:['Novedades','fa-triangle-exclamation'],tiempos:['Tiempos','fa-clock'],facturacion:['Facturación','fa-dollar-sign'],carrys:['Cumplimiento ingreso carrys','fa-truck-fast'],cobertura:['Cobertura','fa-store'],historico:['Histórico','fa-clock-rotate-left'],evidencias:['Evidencias','fa-camera']};
 const stt={comercial:{sub:'portada',anio:'',mes:''},institucional:{sub:'portada',anio:'',mes:''},biologicos:{sub:'portada',anio:'',mes:''}};
 const segData=seg=>DATA[seg.toUpperCase()];
 const segReg=(d,seg)=>seg==='biologicos'?d.bioReg:d.reg;
@@ -3130,7 +3137,7 @@ function monthsForYear(d,seg,year){const s=new Set();
 function dispMonthsYR(rows,st,field){const ry=refYear(st);let mr=rows.filter(r=>r.anio===ry&&(!field||r[field]!=null));if(!st.anio)mr=mr.filter(r=>r.conc);let ms=[...new Set(mr.map(r=>r.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));if(st.mes)ms=ms.filter(m=>m===st.mes);return ms;}
 function dispMonthsMS(rows,st){const ry=refYear(st),k=ry===2025?'v2025':'v2026';let mr=rows.filter(r=>r[k]!=null);if(!st.anio)mr=mr.filter(r=>r.conc);let ms=[...new Set(mr.map(r=>r.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));if(st.mes)ms=ms.filter(m=>m===st.mes);return ms;}
 function subtabBar(cfg,st){return '<div class="ind-subtabs">'+cfg.tabs.map(t=>`<button class="ind-stab${st.sub===t?' active':''}" data-sub="${t}"><i class="fa-solid ${TLBL[t][1]}"></i> ${TLBL[t][0]}</button>`).join('')+'</div>';}
-function filterBar(seg,d,st){if(st.sub==='portada'||st.sub==='cobertura')return '';
+function filterBar(seg,d,st){if(st.sub==='portada'||st.sub==='cobertura'||st.sub==='carrys')return '';
   const ys=allYears(d,seg),px=SEG[seg].body;
   const mss=monthsForYear(d,seg,st.anio?+st.anio:2026);
   const yOpt='<option value="">Ambos años</option>'+ys.map(y=>`<option value="${y}"${st.anio===String(y)?' selected':''}>${y}</option>`).join('');
@@ -3214,6 +3221,7 @@ function renderPanel(seg){const d=segData(seg),st=stt[seg],p=document.getElement
   if(st.sub==='novedades')return panelNov(seg,d,st,p);
   if(st.sub==='tiempos')return panelTiempos(seg,d,st,p);
   if(st.sub==='facturacion')return panelFact(seg,d,st,p);
+  if(st.sub==='carrys')return panelCarrys(seg,d,st,p);
   if(st.sub==='cobertura')return panelCobertura(seg,d,st,p);
   if(st.sub==='historico')return panelHistorico(seg,d,st,p);
   if(st.sub==='evidencias')return panelEvid(seg,st,p);}
@@ -3300,6 +3308,39 @@ function panelFact(seg,d,st,p){const px=SEG[seg].body;const fact=d.fact||[];cons
   tbl(px+'-factt',['MES','2025','2026','Variación','% Variación'],frows.map(f=>{const up=(f.variacion||0)>0,dn=(f.variacion||0)<0;const c=up?'#4ade80':dn?'#f87171':'#94a3b8',ar=up?'▲':dn?'▼':'■';
     const pct=(f.pctTxt&&f.pctTxt!=='')?f.pctTxt:(f.pctNum!=null?(f.pctNum>0?'+':'')+f.pctNum.toFixed(1)+'%':'—');
     return [f.mes,money(f.v2025),money(f.v2026),`<b style="color:${c}">${money(f.variacion)}</b>`,`<b style="color:${c}">${ar} ${pct}</b>`];}));}
+/* ---- Cumplimiento de ingreso (carrys) — Biológicos ---- */
+function panelCarrys(seg,d,st,p){const px=SEG[seg].body;const ci=(d.cantIng||[]),ri=(d.rutaIng||[]);
+  const meses=[...new Set(ci.map(x=>x.mes))].filter(m=>mi(m)>=0).sort((a,b)=>mi(a)-mi(b));
+  const tA=ci.reduce((a,x)=>a+(x.aTiempo||0),0),tR=ci.reduce((a,x)=>a+(x.retraso||0),0),tT=tA+tR;
+  const pctG=tT?(tA/tT*100):null;
+  p.innerHTML=totStrip([
+      {ic:'fa-truck-fast',grad:GR_GREEN,label:'Ingresos a tiempo · periodo',value:n0(tA)},
+      {ic:'fa-clock',grad:GR_SLATE,label:'Ingresos con retraso · periodo',value:n0(tR)},
+      {ic:'fa-circle-check',grad:GR_GREEN,label:'% Cumplimiento global',value:p1(pctG)}])
+    +card('Cantidad por mes de ingreso','Servicios a tiempo vs. con retraso, por mes',px+'-cimes')
+    +card('% Cumplimiento vs. no cumplimiento','Participación total del periodo — a tiempo vs. retraso',px+'-cipie')
+    +tcard('Detalle · cantidad por mes de ingreso','Cantidades y % de cumplimiento por mes',px+'-cimest')
+    +card('% Cumplimiento de rutas por ingreso','A tiempo % por ruta (consolidado del periodo)',px+'-ciruta','tall')
+    +tcard('Detalle · cumplimiento de rutas por ingreso','Por mes y ruta — a tiempo y retraso',px+'-cirutat');
+  /* Cantidad por mes: barras a tiempo vs retraso */
+  if(!emptyIf(px+'-cimes',meses.length===0,'Sin datos de ingreso carrys')){
+    const at=meses.map(m=>{const r=ci.find(x=>x.mes===m);return r?(r.aTiempo||0):0;}),rt=meses.map(m=>{const r=ci.find(x=>x.mes===m);return r?(r.retraso||0):0;});
+    mkc(px+'-cimes',{type:'bar',data:{labels:meses.map(cap),datasets:[
+      {label:'A tiempo',data:at,backgroundColor:CO.green,borderRadius:5,maxBarThickness:54},
+      {label:'Retraso',data:rt,backgroundColor:CO.red,borderRadius:5,maxBarThickness:54}]},
+      options:{...BASE,plugins:{legend:LEG,tooltip:{callbacks:{label:c=>c.dataset.label+': '+n0(c.parsed.y)}}},scales:{x:GRID,y:GRID}}});}
+  /* Torta cumplimiento vs no cumplimiento */
+  if(!emptyIf(px+'-cipie',tT===0,'Sin datos de ingreso carrys'))
+    mkc(px+'-cipie',{type:'doughnut',data:{labels:['Cumplimiento (a tiempo) · '+(tT?(tA/tT*100).toFixed(1):0)+'%','No cumplimiento (retraso) · '+(tT?(tR/tT*100).toFixed(1):0)+'%'],datasets:[{data:[tA,tR],backgroundColor:[CO.green,CO.red],borderWidth:0,hoverOffset:8}]},options:{...BASE,cutout:'58%',plugins:{legend:{position:'right',labels:LEG.labels},tooltip:{callbacks:{label:c=>String(c.label).split(' · ')[0]+': '+n0(c.parsed)+' ('+(tT?(c.parsed/tT*100):0).toFixed(1)+'%)'}}}}});
+  /* Tabla cantidad por mes */
+  tbl(px+'-cimest',['Mes','A tiempo','Retraso','Total','% Cumplimiento'],meses.map(m=>{const r=ci.find(x=>x.mes===m)||{};const t=(r.total!=null?r.total:((r.aTiempo||0)+(r.retraso||0)));const pc=t?((r.aTiempo||0)/t*100):null;return [cap(m),n0(r.aTiempo),n0(r.retraso),n0(t),`<b style="color:${pc==null?'#94a3b8':pc>=95?'#4ade80':pc>=85?'#eab308':'#f87171'}">${p1(pc)}</b>`];}));
+  /* Rutas: barra horizontal a tiempo % (consolidado por ruta) */
+  const byR={};ri.forEach(x=>{const k=x.ruta;if(!byR[k])byR[k]={a:0,r:0};byR[k].a+=(x.aTiempo||0);byR[k].r+=(x.retraso||0);});
+  const rE=Object.entries(byR).map(([ruta,v])=>({ruta,pct:(v.a+v.r)?v.a/(v.a+v.r)*100:0,tot:v.a+v.r})).sort((a,b)=>a.pct-b.pct||b.tot-a.tot);
+  if(!emptyIf(px+'-ciruta',rE.length===0,'Sin datos de rutas'))
+    mkc(px+'-ciruta',{type:'bar',data:{labels:rE.map(e=>e.ruta),datasets:[{label:'A tiempo %',data:rE.map(e=>+e.pct.toFixed(1)),backgroundColor:rE.map(e=>e.pct>=95?CO.green:e.pct>=85?CO.yellow:CO.red),borderRadius:5}]},options:{...BASE,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'A tiempo: '+p1(c.parsed.x)+' ('+n0(rE[c.dataIndex].tot)+' ingresos)'}}},scales:{x:{...GRID,max:100,ticks:{color:'#94A3B8',callback:v=>v+'%'}},y:{...GRID,ticks:{color:'#94A3B8',font:{size:10},autoSkip:false}}}}});
+  /* Tabla rutas por mes */
+  tbl(px+'-cirutat',['Mes','Ruta','A tiempo','A tiempo %','Retraso','Retraso %'],ri.slice().sort((a,b)=>mi(a.mes)-mi(b.mes)||(b.aTiempo||0)-(a.aTiempo||0)).map(x=>[cap(x.mes),x.ruta,n0(x.aTiempo),p1(x.aTiempoPct),n0(x.retraso),p1(x.retrasoPct)]));}
 function panelCobertura(seg,d,st,p){const px=SEG[seg].body;const fija=d.fija||[],colab=d.colab||[];
   const kf=plantaKpis(fija),kc=plantaKpis(colab);
   const ciudades=new Set([...fija,...colab].map(x=>x.ciudad).filter(Boolean)).size;
@@ -3366,7 +3407,7 @@ async function ensureInd(){
     const [com,ins,bio]=await Promise.all([fetchInd('COMERCIAL'),fetchInd('INSTITUCIONAL'),fetchInd('BIOLOGICOS')]);
     DATA.COMERCIAL={reg:pReg(com,13),nov:pNov(com,21),fact:pFact(com,36),tiempos:pTiempos(com),fija:pPlanta(com,3,true),colab:pPlanta(com,8,true),hist:pHist(com,43)};
     DATA.INSTITUCIONAL={reg:pReg(ins,7),nov:pNov(ins,15),fact:pFact(ins,21),fija:pPlanta(ins,3,false),hist:pHist(ins,28)};
-    DATA.BIOLOGICOS={bioReg:pBioReg(bio,3),cumpl:pCumpl(bio,9),nov:pNov(bio,15),fact:pFact(bio,21)};
+    DATA.BIOLOGICOS={bioReg:pBioReg(bio,3),cumpl:pCumpl(bio,9),nov:pNov(bio,15),fact:pFact(bio,21),rutaIng:pRutaIng(bio,28),cantIng:pCantIng(bio,35)};
     try{const ev=await fetchInd('EVIDENCIAS');DATA.EVID=pEvid(ev);}catch(e){DATA.EVID=[];}
     try{const adm=await fetchInd('AREA ADMINISTRATIVA');DATA.ADMIN=pAdmin(adm);}catch(e){DATA.ADMIN=[];}
     indLoaded=true;
