@@ -3370,12 +3370,18 @@ function panelHistorico(seg,d,st,p){const px=SEG[seg].body;let hist=(d.hist||[])
   tbl(px+'-hist',['AÑO','MES','FECHA','Modificación'],hist.map(h=>[h.anio||'—',h.mes||'—',h.fecha||'—',h.mod||'—']));}
 function panelEvid(seg,st,p){const ev=(DATA.EVID||[]).filter(e=>e.seg===seg&&(!st.mes||e.mes===st.mes));
   if(!ev.length){p.innerHTML='<div class="card"><div class="card-body"><div class="ind-loading">Aún no hay evidencias para este filtro.<br><br>Para publicarlas (visibles en el link), agrega una hoja <b>EVIDENCIAS</b> al Sheet con columnas:<br><b>SEGMENTO</b> (comercial / institucional / biologicos) · <b>AÑO</b> · <b>MES</b> · <b>TITULO</b> · <b>URL</b> (enlace de imagen o carpeta de Google Drive) · <b>VARIACION</b> (opcional).</div></div></div>';return;}
-  p.innerHTML='<div class="evid-grid">'+ev.map(e=>{const isImg=/\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(e.url)||/googleusercontent|drive\.google\.com\/uc/i.test(e.url);
-    const img=isImg?`<img src="${e.url}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">`:'';
+  p.innerHTML='<div class="evid-grid">'+ev.map(e=>{const src=evidImg(e.url);
+    const img=src?`<img src="${src}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">`:'';
     return `<div class="evid-card">${img}<div class="ev-b"><div class="ev-t">${e.titulo||'Evidencia'}</div><div class="ev-m">${cap(e.mes)} ${e.anio||''}${e.variacion?' · '+e.variacion:''}</div><a href="${e.url}" target="_blank" rel="noopener" style="display:inline-flex;margin-top:9px;gap:6px;align-items:center;font-size:12px;color:#60a5fa;text-decoration:none"><i class="fa-solid fa-up-right-from-square"></i> Abrir</a></div></div>`;}).join('')+'</div>';}
 /* ---------- Área Administrativa (desde hoja AREA ADMINISTRATIVA) ---------- */
 const initials=n=>n.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
 function driveImg(u){if(!u)return '';const m=String(u).match(/\/d\/([-\w]{20,})/)||String(u).match(/[?&]id=([-\w]{20,})/);return m?`https://drive.google.com/thumbnail?id=${m[1]}&sz=w400`:String(u).trim();}
+/* Evidencias: enlace normal de Drive (/file/d/ID/view) -> miniatura; carpeta -> sin img */
+function evidImg(u){u=String(u||'').trim();if(!u)return '';
+  if(/\/folders\//i.test(u))return '';
+  if(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(u)||/googleusercontent|drive\.google\.com\/uc/i.test(u))return u;
+  const m=u.match(/\/d\/([-\w]{20,})/)||u.match(/[?&]id=([-\w]{20,})/);
+  return m?`https://drive.google.com/thumbnail?id=${m[1]}&sz=w600`:'';}
 function pAdmin(rows){const out=[];if(!rows||!rows.length)return out;
   for(let i=1;i<rows.length;i++){const r=rows[i];if(!r)continue;
     const nom=cell(r,2);if(!nom)continue;
