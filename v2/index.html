@@ -14,7 +14,7 @@
 <!-- Iconos -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-<link rel="stylesheet" href="assets/styles.css?v=5">
+<link rel="stylesheet" href="assets/styles.css?v=6">
 </head>
 <body>
 <div class="app">
@@ -28,7 +28,7 @@
 
     <div class="nav-section">Cafam Institucional</div>
     <div class="nav-item active" data-view="inst-nacional"><i class="fa-solid fa-map-location-dot"></i><span class="nav-label">Nacional</span></div>
-    <div class="nav-item" data-view="inst-recibido"><i class="fa-solid fa-box-archive"></i><span class="nav-label">Recibido Calle 51</span></div>
+    <div class="nav-item" data-view="inst-recibido"><i class="fa-solid fa-box-archive"></i><span class="nav-label">Calle 51</span></div>
     <div class="nav-item" data-view="inst-percapita"><i class="fa-solid fa-coins"></i><span class="nav-label">Per Cápita</span></div>
 
     <div class="nav-foot">
@@ -68,27 +68,42 @@
           <button class="seg-btn" data-city="Santa Marta"><i class="fa-solid fa-location-dot"></i> Santa Marta</button>
         </div>
         <div class="kpi-grid" id="nac-kpi"></div>
-        <div class="card"><div class="card-h"><div><h3>Entregas (efectivo) por mes y ciudad</h3><div class="sub">Comparativo mensual entre ciudades</div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="nac-efmes"></canvas></div></div></div>
-        <div class="card"><div class="card-h"><div><h3>Novedades por mes y ciudad</h3><div class="sub">Comparativo mensual entre ciudades</div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="nac-nvmes"></canvas></div></div></div>
-        <div class="grid-2" id="nac-ciudad-row">
-          <div class="card"><div class="card-h"><div><h3>Total entregas y novedades por ciudad</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="nac-ciudad"></canvas></div></div></div>
-          <div class="card"><div class="card-h"><div><h3>% de cumplimiento por ciudad</h3><div class="sub">Efectivo ÷ total</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="nac-cumpl"></canvas></div></div></div>
+
+        <div class="subtabs" id="nac-subtabs">
+          <button class="subtab-btn active" data-tab="cantidad"><i class="fa-solid fa-box"></i> Cantidad</button>
+          <button class="subtab-btn" data-tab="novedades"><i class="fa-solid fa-triangle-exclamation"></i> Novedades</button>
+          <button class="subtab-btn" data-tab="tiempos"><i class="fa-solid fa-clock"></i> Tiempos · hora promedio</button>
         </div>
-        <div class="card"><div class="card-h"><div><h3>Entregas por día — pico de operación</h3><div class="sub">Volumen diario de entregas efectivas</div></div>
-          <div class="cf-bar"><div class="msel sm" id="nac-dia-city"></div><div class="msel sm" id="nac-dia-mes"></div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="nac-dia"></canvas></div></div></div>
-        <div class="card"><div class="card-h"><div><h3>Tendencia por día de la semana</h3><div class="sub">Volumen total acumulado por día (Lun–Dom)</div></div>
-          <div class="cf-bar"><div class="msel sm" id="nac-sem-city"></div><div class="msel sm" id="nac-sem-mes"></div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="nac-sem"></canvas></div></div></div>
-        <div class="card"><div class="card-h"><div><h3>Hora promedio de operación por día</h3><div class="sub" id="nac-hdia-sub">Hora promedio de entrega (formato militar 24h)</div></div>
-          <div class="cf-bar"><div class="msel sm" id="nac-hdia-city"></div><div class="msel sm" id="nac-hdia-mes"></div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="nac-hdia"></canvas></div></div></div>
-        <div class="grid-2">
-          <div class="card"><div class="card-h"><div><h3>Hora promedio por ciudad</h3><div class="sub" id="nac-hciu-sub">Promedio del periodo (formato militar 24h)</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="nac-hciu"></canvas></div></div></div>
-          <div class="card"><div class="card-h"><div><h3>Hora promedio por mes</h3><div class="sub" id="nac-hmes-sub">Comparativo mensual por ciudad (formato militar 24h)</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="nac-hmes"></canvas></div></div></div>
+
+        <div class="subtab-panel active" id="nac-tab-cantidad">
+          <div class="card"><div class="card-h"><div><h3>Entregas (efectivo) por mes y ciudad</h3><div class="sub">Comparativo mensual entre ciudades</div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="nac-efmes"></canvas></div></div></div>
+          <div class="grid-2" id="nac-ciudad-row">
+            <div class="card"><div class="card-h"><div><h3>Total entregas y novedades por ciudad</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="nac-ciudad"></canvas></div></div></div>
+            <div class="card"><div class="card-h"><div><h3>% de cumplimiento por ciudad</h3><div class="sub">Efectivo ÷ total</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="nac-cumpl"></canvas></div></div></div>
+          </div>
+          <div class="card"><div class="card-h"><div><h3>Entregas por día — pico de operación</h3><div class="sub">Volumen diario de entregas efectivas</div></div>
+            <div class="cf-bar"><div class="msel sm" id="nac-dia-city"></div><div class="msel sm" id="nac-dia-mes"></div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="nac-dia"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Tendencia por día de la semana</h3><div class="sub">Volumen total acumulado por día (Lun–Dom)</div></div>
+            <div class="cf-bar"><div class="msel sm" id="nac-sem-city"></div><div class="msel sm" id="nac-sem-mes"></div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="nac-sem"></canvas></div></div></div>
         </div>
-        <div class="card"><div class="card-h"><div><h3>Tipo de novedad por mes</h3><div class="sub">Barras horizontales para lectura clara del texto</div></div>
-          <div class="cf-bar"><div class="msel sm" id="nac-novmes-mes"></div></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="nac-novmes"></canvas></div></div></div>
-        <div class="card"><div class="card-h"><div><h3>Tipo de novedad por ciudad</h3><div class="sub">Barras horizontales</div></div>
-          <div class="cf-bar"><div class="msel sm" id="nac-novciu-city"></div></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="nac-novciu"></canvas></div></div></div>
-        <div class="card"><div class="card-h"><div><h3>Detalle nacional</h3><div class="sub" id="nac-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="nac-table"></table></div></div></div>
+
+        <div class="subtab-panel" id="nac-tab-novedades">
+          <div class="card"><div class="card-h"><div><h3>Novedades por mes y ciudad</h3><div class="sub">Comparativo mensual entre ciudades</div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="nac-nvmes"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Tipo de novedad por mes</h3><div class="sub">Barras horizontales para lectura clara del texto</div></div>
+            <div class="cf-bar"><div class="msel sm" id="nac-novmes-mes"></div></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="nac-novmes"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Tipo de novedad por ciudad</h3><div class="sub">Barras horizontales</div></div>
+            <div class="cf-bar"><div class="msel sm" id="nac-novciu-city"></div></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="nac-novciu"></canvas></div></div></div>
+        </div>
+
+        <div class="subtab-panel" id="nac-tab-tiempos">
+          <div class="card"><div class="card-h"><div><h3>Hora promedio de operación por día</h3><div class="sub" id="nac-hdia-sub">Hora promedio de entrega (formato militar 24h)</div></div>
+            <div class="cf-bar"><div class="msel sm" id="nac-hdia-city"></div><div class="msel sm" id="nac-hdia-mes"></div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="nac-hdia"></canvas></div></div></div>
+          <div class="grid-2">
+            <div class="card"><div class="card-h"><div><h3>Hora promedio por ciudad</h3><div class="sub" id="nac-hciu-sub">Promedio del periodo (formato militar 24h)</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="nac-hciu"></canvas></div></div></div>
+            <div class="card"><div class="card-h"><div><h3>Hora promedio por mes</h3><div class="sub" id="nac-hmes-sub">Comparativo mensual por ciudad (formato militar 24h)</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="nac-hmes"></canvas></div></div></div>
+          </div>
+        </div>
+
         <div class="card"><div class="card-h"><div><h3><i class="fa-solid fa-lightbulb" style="color:var(--yellow)"></i> Análisis final</h3><div class="sub">Resumen ejecutivo, sugerencias y alertas — Nacional</div></div></div><div class="card-body">
           <div class="ia-report" id="nac-ia-r"></div>
           <div class="grid-2" style="margin-top:16px">
@@ -96,6 +111,9 @@
             <div><h4 class="ia-sub"><i class="fa-solid fa-bell" style="color:var(--red)"></i> Alertas</h4><div class="ia-report" id="nac-ia-a">—</div></div>
           </div>
         </div></div>
+
+        <div class="detalle-toggle-row"><button class="ins-reset detalle-toggle" id="nac-detalle-toggle"><i class="fa-solid fa-table-list"></i> Ver detalle nacional</button></div>
+        <div class="card" id="nac-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle nacional</h3><div class="sub" id="nac-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="nac-table"></table></div></div></div>
       </section>
 
       <!-- ===== RECIBIDO CALLE 51 ===== -->
@@ -169,7 +187,7 @@
 /* ===== Shell: navegación lateral, reloj "en vivo", sidebar responsive ===== */
 const PAGES={
   'inst-nacional':['Gestión Nacional','Entregas, novedades y cumplimiento por ciudad'],
-  'inst-recibido':['Recibido Calle 51','Guías recibidas — motorizado y carry'],
+  'inst-recibido':['Calle 51','Guías recibidas — motorizado y carry'],
   'inst-percapita':['Per Cápita Institucional','Costo operativo por entrega — por punto, ciudad y mes']
 };
 function switchView(v){
@@ -195,7 +213,7 @@ document.getElementById('refreshBtn').addEventListener('click',()=>location.relo
 <!-- UI compartida: filtros multi-selección + expandir/contraer gráficas -->
 <script src="assets/ui.js?v=4"></script>
 <!-- Motor de datos Institucional (carga la hoja al entrar) -->
-<script src="assets/institucional.js?v=4"></script>
+<script src="assets/institucional.js?v=5"></script>
 <script>if(window.ensureInst)ensureInst();</script>
 </body>
 </html>

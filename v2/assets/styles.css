@@ -164,6 +164,23 @@ body::after{
 .seg-btn:hover{color:var(--text)}
 .seg-btn.active{background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;box-shadow:var(--glow-blue)}
 
+/* Subpestañas (ej. Cantidad / Novedades / Tiempos dentro de una vista) —
+   estilo de subrayado, deliberadamente distinto al seg-toggle en pastilla
+   que se usa para filtros de ciudad, para que no se vean duplicados. */
+.subtabs{display:flex;gap:24px;border-bottom:1px solid var(--border);overflow-x:auto}
+.subtab-btn{background:none;border:none;padding:10px 2px 12px;margin-bottom:-1px;color:var(--text-soft);font-family:var(--font-b);font-weight:600;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;position:relative;white-space:nowrap;transition:.2s}
+.subtab-btn i{font-size:12px}
+.subtab-btn:hover{color:var(--text-dim)}
+.subtab-btn.active{color:#fff}
+.subtab-btn.active::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2.5px;border-radius:2px;background:linear-gradient(90deg,var(--blue),#60a5fa)}
+.subtab-panel{display:none}
+.subtab-panel.active{display:flex;flex-direction:column;gap:22px}
+
+/* Detalle opcional (tabla grande) oculto por defecto, con botón al final */
+.detalle-toggle-row{display:flex;justify-content:center}
+.detalle-toggle{background:rgba(37,99,235,.1);border-color:rgba(37,99,235,.3);color:#93c5fd}
+.detalle-toggle:hover{background:rgba(37,99,235,.18)}
+
 /* Gráficas */
 .grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:22px}
 .chart-wrap{position:relative;height:280px;margin-top:8px}

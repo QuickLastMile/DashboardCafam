@@ -14,6 +14,7 @@ let NAC=[],NOVNAC=[],RECI=[],PCAP=[];
 let instCharts={},instLoaded=false,instLoading=false;
 let recVeh='';
 let nacCity='';
+let nacTab='cantidad';
 
 /* ---------- Utilidades ---------- */
 const COLORS={blue:'#2563EB',green:'#22C55E',yellow:'#EAB308',red:'#EF4444',gray:'#94A3B8',purple:'#A855F7'};
@@ -350,6 +351,21 @@ document.querySelectorAll('.nav-item[data-view^="inst-"]').forEach(n=>n.addEvent
 // Nacional (los MultiSelect ya re-renderizan solos al cambiar — ver onChange en setOptions)
 const nacR=document.getElementById('nac-reset');if(nacR)nacR.addEventListener('click',()=>{nacCity='';['nac-fMes','nac-dia-city','nac-dia-mes','nac-sem-city','nac-sem-mes','nac-novmes-mes','nac-novciu-city','nac-hdia-city','nac-hdia-mes'].forEach(id=>MultiSelect.clear(id));renderNacional();});
 document.querySelectorAll('#nac-cityseg .seg-btn').forEach(b=>b.addEventListener('click',()=>{nacCity=b.dataset.city||'';renderNacional();}));
+function switchNacTab(tab){
+  nacTab=tab;
+  document.querySelectorAll('#nac-subtabs .subtab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.subtab-panel').forEach(p=>p.classList.toggle('active',p.id==='nac-tab-'+tab));
+  setTimeout(()=>Object.values(instCharts).forEach(c=>{try{c.resize();}catch(e){}}),50);
+}
+document.querySelectorAll('#nac-subtabs .subtab-btn').forEach(b=>b.addEventListener('click',()=>switchNacTab(b.dataset.tab)));
+const nacDetBtn=document.getElementById('nac-detalle-toggle');
+if(nacDetBtn)nacDetBtn.addEventListener('click',()=>{
+  const card=document.getElementById('nac-detalle-card');
+  const opening=card.style.display==='none';
+  card.style.display=opening?'':'none';
+  nacDetBtn.innerHTML=opening?'<i class="fa-solid fa-chevron-up"></i> Ocultar detalle nacional':'<i class="fa-solid fa-table-list"></i> Ver detalle nacional';
+  if(opening)card.scrollIntoView({behavior:'smooth',block:'start'});
+});
 // Recibido
 const recR=document.getElementById('rec-reset');if(recR)recR.addEventListener('click',()=>{['rec-fMes','rec-fTipo','rec-dia-mes','rec-sem-mes','rec-tipo-mes'].forEach(id=>MultiSelect.clear(id));renderRecibido();});
 document.querySelectorAll('#rec-toggle .seg-btn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#rec-toggle .seg-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');recVeh=b.dataset.veh;renderRecibido();}));
