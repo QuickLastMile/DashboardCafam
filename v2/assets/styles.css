@@ -100,10 +100,9 @@ body::after{
 .card-h .sub{font-size:11.5px;color:var(--text-soft);margin-top:2px}
 .card-body{padding:18px 20px}
 
-/* KPI grid */
-.kpi-grid{display:flex;flex-wrap:wrap;gap:10px}
-.kpi-grid>.kpi{flex:1 1 15%;min-width:150px}
-@media(max-width:520px){.kpi-grid>.kpi{flex-basis:100%}}
+/* KPI grid — grid (no flex) para que una tarjeta sobrante en la última fila
+   no se estire a ocupar toda la fila: solo llena su propia columna. */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .kpi{padding:13px 14px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--border);backdrop-filter:blur(14px);position:relative;overflow:hidden;opacity:0;transform:translateY(16px);animation:fadeUp .5s ease forwards}
 .kpi:hover{transform:translateY(-2px);transition:transform .3s;border-color:var(--border-strong)}
 .kpi .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
@@ -123,7 +122,7 @@ body::after{
 .ins-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:18px}
 .ins-bar .fld{display:flex;flex-direction:column;gap:5px}
 .ins-bar label{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-soft);font-weight:600}
-.ins-bar select,.ins-bar input{background:var(--surface-solid);border:1px solid var(--border-strong);color:var(--text);border-radius:10px;padding:9px 12px;font-family:var(--font-b);font-size:13px;min-width:150px;outline:none}
+.ins-bar select,.ins-bar input:not([type=checkbox]){background:var(--surface-solid);border:1px solid var(--border-strong);color:var(--text);border-radius:10px;padding:9px 12px;font-family:var(--font-b);font-size:13px;min-width:150px;outline:none}
 .ins-bar select:focus,.ins-bar input:focus{border-color:var(--blue)}
 .ins-reset{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5;padding:10px 15px;border-radius:10px;cursor:pointer;font-weight:600;font-size:12.5px}
 .ins-reset:hover{background:rgba(239,68,68,.2)}
@@ -134,17 +133,18 @@ body::after{
 .cf-sel:focus,.cf-sel:hover{border-color:var(--blue)}
 
 /* ---------- MultiSelect (filtro de selección múltiple) ---------- */
-.msel{position:relative;min-width:150px}
-.msel.sm{min-width:130px}
+.msel{position:relative;min-width:150px;max-width:190px}
+.msel.sm{min-width:120px;max-width:150px}
 .msel-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface-solid);border:1px solid var(--border-strong);color:var(--text);border-radius:10px;padding:9px 12px;font-family:var(--font-b);font-size:13px;cursor:pointer;text-align:left}
 .msel.sm .msel-btn{padding:6px 10px;font-size:12px;border-radius:9px}
 .msel-btn:hover{border-color:var(--blue)}
 .msel-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .msel-btn i{font-size:10px;color:var(--text-soft);transition:transform .2s;flex-shrink:0}
 .msel.open .msel-btn i{transform:rotate(180deg)}
-.msel-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;min-width:180px;max-height:260px;overflow:auto;background:var(--surface-solid);border:1px solid var(--border-strong);border-radius:12px;padding:6px;box-shadow:var(--shadow);z-index:120}
+.msel-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;width:max-content;min-width:100%;max-width:220px;max-height:230px;overflow:auto;background:var(--surface-solid);border:1px solid var(--border-strong);border-radius:12px;padding:5px;box-shadow:var(--shadow);z-index:120}
+.msel.sm .msel-panel{max-width:180px}
 .msel.open .msel-panel{display:block}
-.msel-opt,.msel-all{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:8px;font-size:12.5px;cursor:pointer;white-space:nowrap;color:var(--text)}
+.msel-opt,.msel-all{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;font-size:12.5px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
 .msel-opt:hover,.msel-all:hover{background:rgba(148,163,184,.08)}
 .msel-all{border-bottom:1px solid var(--border);margin-bottom:4px;padding-bottom:9px;font-weight:600;color:var(--text-dim)}
 .msel input[type=checkbox]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer;flex-shrink:0}

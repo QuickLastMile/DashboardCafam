@@ -13,6 +13,7 @@ const INST_CFG={
 let NAC=[],NOVNAC=[],RECI=[],PCAP=[];
 let instCharts={},instLoaded=false,instLoading=false;
 let recVeh='';
+let nacCity='';
 
 /* ---------- Utilidades ---------- */
 const COLORS={blue:'#2563EB',green:'#22C55E',yellow:'#EAB308',red:'#EF4444',gray:'#94A3B8',purple:'#A855F7'};
@@ -187,12 +188,11 @@ async function ensureInst(){
 function renderNacional(){
   if(!NAC.length)return;
   const allCities=uniq(NAC.map(r=>r.city)),allMeses=sortMes(uniq(NAC.map(r=>r.mes)));
-  MultiSelect.setOptions('nac-fCity',allCities,{placeholder:'Todas',onChange:renderNacional});
   MultiSelect.setOptions('nac-fMes',allMeses,{placeholder:'Todos',onChange:renderNacional});
   ['nac-dia-city','nac-sem-city','nac-novciu-city','nac-hdia-city'].forEach(id=>MultiSelect.setOptions(id,allCities,{placeholder:'Ciudad: todas',sm:true,onChange:renderNacional}));
   ['nac-dia-mes','nac-sem-mes','nac-novmes-mes','nac-hdia-mes'].forEach(id=>MultiSelect.setOptions(id,allMeses,{placeholder:'Mes: todos',sm:true,onChange:renderNacional}));
-  const city=ms('nac-fCity'),mes=ms('nac-fMes');
-  document.querySelectorAll('#nac-cityseg .seg-btn').forEach(b=>b.classList.toggle('active',(b.dataset.city||'')===(city.length===1?city[0]:'')));
+  const city=nacCity?[nacCity]:[],mes=ms('nac-fMes');
+  document.querySelectorAll('#nac-cityseg .seg-btn').forEach(b=>b.classList.toggle('active',(b.dataset.city||'')===nacCity));
   const ciuRow=document.getElementById('nac-ciudad-row');if(ciuRow)ciuRow.style.display=city.length?'none':'';
   const D=NAC.filter(r=>(!city.length||city.includes(r.city))&&(!mes.length||mes.includes(r.mes)));
   const ef=D.reduce((a,r)=>a+r.efectivo,0),nv=D.reduce((a,r)=>a+r.novedad,0),tot=D.reduce((a,r)=>a+r.total,0);
@@ -348,8 +348,8 @@ document.querySelectorAll('.nav-item[data-view^="inst-"]').forEach(n=>n.addEvent
   setTimeout(()=>Object.values(instCharts).forEach(c=>{try{c.resize();}catch(e){}}),60);
 }));
 // Nacional (los MultiSelect ya re-renderizan solos al cambiar — ver onChange en setOptions)
-const nacR=document.getElementById('nac-reset');if(nacR)nacR.addEventListener('click',()=>{['nac-fCity','nac-fMes','nac-dia-city','nac-dia-mes','nac-sem-city','nac-sem-mes','nac-novmes-mes','nac-novciu-city','nac-hdia-city','nac-hdia-mes'].forEach(id=>MultiSelect.clear(id));renderNacional();});
-document.querySelectorAll('#nac-cityseg .seg-btn').forEach(b=>b.addEventListener('click',()=>{MultiSelect.setSelected('nac-fCity',b.dataset.city?[b.dataset.city]:[]);renderNacional();}));
+const nacR=document.getElementById('nac-reset');if(nacR)nacR.addEventListener('click',()=>{nacCity='';['nac-fMes','nac-dia-city','nac-dia-mes','nac-sem-city','nac-sem-mes','nac-novmes-mes','nac-novciu-city','nac-hdia-city','nac-hdia-mes'].forEach(id=>MultiSelect.clear(id));renderNacional();});
+document.querySelectorAll('#nac-cityseg .seg-btn').forEach(b=>b.addEventListener('click',()=>{nacCity=b.dataset.city||'';renderNacional();}));
 // Recibido
 const recR=document.getElementById('rec-reset');if(recR)recR.addEventListener('click',()=>{['rec-fMes','rec-fTipo','rec-dia-mes','rec-sem-mes','rec-tipo-mes'].forEach(id=>MultiSelect.clear(id));renderRecibido();});
 document.querySelectorAll('#rec-toggle .seg-btn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#rec-toggle .seg-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');recVeh=b.dataset.veh;renderRecibido();}));
