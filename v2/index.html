@@ -14,7 +14,7 @@
 <!-- Iconos -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-<link rel="stylesheet" href="assets/styles.css?v=6">
+<link rel="stylesheet" href="assets/styles.css?v=7">
 </head>
 <body>
 <div class="app">
@@ -56,16 +56,18 @@
 
       <!-- ===== NACIONAL ===== -->
       <section class="view active" id="inst-nacional">
-        <div class="ins-bar">
-          <div class="fld"><label>Mes</label><div class="msel" id="nac-fMes"></div></div>
-          <button class="ins-reset" id="nac-reset"><i class="fa-solid fa-rotate-left"></i> Limpiar</button>
-          <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="nac-stamp">--</span></span></div>
-        </div>
-        <div class="seg-toggle sm" id="nac-cityseg">
-          <button class="seg-btn active" data-city=""><i class="fa-solid fa-layer-group"></i> Todas</button>
-          <button class="seg-btn" data-city="Bucaramanga"><i class="fa-solid fa-location-dot"></i> Bucaramanga</button>
-          <button class="seg-btn" data-city="Cúcuta"><i class="fa-solid fa-location-dot"></i> Cúcuta</button>
-          <button class="seg-btn" data-city="Santa Marta"><i class="fa-solid fa-location-dot"></i> Santa Marta</button>
+        <div class="view-filters" id="nac-filters">
+          <div class="ins-bar">
+            <div class="fld"><label>Mes</label><div class="msel" id="nac-fMes"></div></div>
+            <button class="ins-reset" id="nac-reset"><i class="fa-solid fa-rotate-left"></i> Limpiar</button>
+            <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="nac-stamp">--</span></span></div>
+          </div>
+          <div class="seg-toggle sm" id="nac-cityseg">
+            <button class="seg-btn active" data-city=""><i class="fa-solid fa-layer-group"></i> Todas</button>
+            <button class="seg-btn" data-city="Bucaramanga"><i class="fa-solid fa-location-dot"></i> Bucaramanga</button>
+            <button class="seg-btn" data-city="Cúcuta"><i class="fa-solid fa-location-dot"></i> Cúcuta</button>
+            <button class="seg-btn" data-city="Santa Marta"><i class="fa-solid fa-location-dot"></i> Santa Marta</button>
+          </div>
         </div>
         <div class="kpi-grid" id="nac-kpi"></div>
 
@@ -88,11 +90,10 @@
         </div>
 
         <div class="subtab-panel" id="nac-tab-novedades">
-          <div class="card"><div class="card-h"><div><h3>Novedades por mes y ciudad</h3><div class="sub">Comparativo mensual entre ciudades</div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="nac-nvmes"></canvas></div></div></div>
-          <div class="card"><div class="card-h"><div><h3>Tipo de novedad por mes</h3><div class="sub">Barras horizontales para lectura clara del texto</div></div>
-            <div class="cf-bar"><div class="msel sm" id="nac-novmes-mes"></div></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="nac-novmes"></canvas></div></div></div>
-          <div class="card"><div class="card-h"><div><h3>Tipo de novedad por ciudad</h3><div class="sub">Barras horizontales</div></div>
+          <div class="card"><div class="card-h"><div><h3>Tipo de novedad</h3><div class="sub">Barras horizontales — por ciudad</div></div>
             <div class="cf-bar"><div class="msel sm" id="nac-novciu-city"></div></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="nac-novciu"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Novedades por ciudad</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="nac-novciu-dn"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Novedades por mes y ciudad</h3><div class="sub">Comparativo mensual entre ciudades</div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="nac-nvmes"></canvas></div></div></div>
         </div>
 
         <div class="subtab-panel" id="nac-tab-tiempos">
@@ -104,30 +105,24 @@
           </div>
         </div>
 
-        <div class="card"><div class="card-h"><div><h3><i class="fa-solid fa-lightbulb" style="color:var(--yellow)"></i> Análisis final</h3><div class="sub">Resumen ejecutivo, sugerencias y alertas — Nacional</div></div></div><div class="card-body">
-          <div class="ia-report" id="nac-ia-r"></div>
-          <div class="grid-2" style="margin-top:16px">
-            <div><h4 class="ia-sub"><i class="fa-solid fa-clipboard-check" style="color:var(--green)"></i> Sugerencias</h4><div class="ia-report" id="nac-ia-s">—</div></div>
-            <div><h4 class="ia-sub"><i class="fa-solid fa-bell" style="color:var(--red)"></i> Alertas</h4><div class="ia-report" id="nac-ia-a">—</div></div>
-          </div>
-        </div></div>
-
         <div class="detalle-toggle-row"><button class="ins-reset detalle-toggle" id="nac-detalle-toggle"><i class="fa-solid fa-table-list"></i> Ver detalle nacional</button></div>
         <div class="card" id="nac-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle nacional</h3><div class="sub" id="nac-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="nac-table"></table></div></div></div>
       </section>
 
       <!-- ===== CALLE 51 (hoja "CALLE 51": Gestión Moto + Carry, Novedades) ===== -->
       <section class="view" id="inst-recibido">
-        <div class="ins-bar">
-          <div class="fld"><label>Mes</label><div class="msel" id="c51-fMes"></div></div>
-          <div class="fld"><label>Convenio</label><div class="msel" id="c51-fTipo"></div></div>
-          <button class="ins-reset" id="c51-reset"><i class="fa-solid fa-rotate-left"></i> Limpiar</button>
-          <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="c51-stamp">--</span></span></div>
-        </div>
-        <div class="seg-toggle sm" id="c51-vehseg">
-          <button class="seg-btn active" data-veh=""><i class="fa-solid fa-layer-group"></i> Todo</button>
-          <button class="seg-btn" data-veh="MOTO"><i class="fa-solid fa-motorcycle"></i> Moto</button>
-          <button class="seg-btn" data-veh="CARRY"><i class="fa-solid fa-truck"></i> Carry</button>
+        <div class="view-filters" id="rec-filters">
+          <div class="ins-bar">
+            <div class="fld"><label>Mes</label><div class="msel" id="c51-fMes"></div></div>
+            <div class="fld"><label>Convenio</label><div class="msel" id="c51-fTipo"></div></div>
+            <button class="ins-reset" id="c51-reset"><i class="fa-solid fa-rotate-left"></i> Limpiar</button>
+            <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="c51-stamp">--</span></span></div>
+          </div>
+          <div class="seg-toggle sm" id="c51-vehseg">
+            <button class="seg-btn active" data-veh=""><i class="fa-solid fa-layer-group"></i> Todo</button>
+            <button class="seg-btn" data-veh="MOTO"><i class="fa-solid fa-motorcycle"></i> Moto</button>
+            <button class="seg-btn" data-veh="CARRY"><i class="fa-solid fa-truck"></i> Carry</button>
+          </div>
         </div>
         <div class="kpi-grid" id="c51-kpi"></div>
 
@@ -162,23 +157,18 @@
           <div class="card" id="cn-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle novedades</h3><div class="sub" id="cn-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="cn-table"></table></div></div></div>
         </div>
 
-        <div class="card"><div class="card-h"><div><h3><i class="fa-solid fa-lightbulb" style="color:var(--yellow)"></i> Análisis final</h3><div class="sub">Resumen ejecutivo, sugerencias y alertas — Calle 51</div></div></div><div class="card-body">
-          <div class="ia-report" id="rec-ia-r"></div>
-          <div class="grid-2" style="margin-top:16px">
-            <div><h4 class="ia-sub"><i class="fa-solid fa-clipboard-check" style="color:var(--green)"></i> Sugerencias</h4><div class="ia-report" id="rec-ia-s">—</div></div>
-            <div><h4 class="ia-sub"><i class="fa-solid fa-bell" style="color:var(--red)"></i> Alertas</h4><div class="ia-report" id="rec-ia-a">—</div></div>
-          </div>
-        </div></div>
       </section>
 
       <!-- ===== PER CÁPITA (costo operativo por entrega) ===== -->
       <section class="view" id="inst-percapita">
-        <div class="ins-bar">
-          <div class="fld"><label>Mes</label><div class="msel" id="ipc-fMes"></div></div>
-          <div class="fld"><label>Ciudad</label><div class="msel" id="ipc-fCiudad"></div></div>
-          <div class="fld"><label>Punto</label><div class="msel" id="ipc-fDrog"></div></div>
-          <button class="ins-reset" id="ipc-reset"><i class="fa-solid fa-rotate-left"></i> Limpiar</button>
-          <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="ipc-stamp">--</span></span></div>
+        <div class="view-filters" id="ipc-filters">
+          <div class="ins-bar">
+            <div class="fld"><label>Mes</label><div class="msel" id="ipc-fMes"></div></div>
+            <div class="fld"><label>Ciudad</label><div class="msel" id="ipc-fCiudad"></div></div>
+            <div class="fld"><label>Punto</label><div class="msel" id="ipc-fDrog"></div></div>
+            <button class="ins-reset" id="ipc-reset"><i class="fa-solid fa-rotate-left"></i> Limpiar</button>
+            <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="ipc-stamp">--</span></span></div>
+          </div>
         </div>
         <div class="kpi-grid" id="ipc-kpi"></div>
         <div class="grid-2">
@@ -194,7 +184,6 @@
           <div class="card"><div class="card-h"><div><h3>Entregas por ciudad</h3><div class="sub">Distribución de la operación</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="ipc-entciudad"></canvas></div></div></div>
         </div>
         <div class="card"><div class="card-h"><div><h3>Detalle por punto</h3><div class="sub" id="ipc-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="ipc-table"></table></div></div></div>
-        <div class="card"><div class="card-h"><div><h3><i class="fa-solid fa-lightbulb" style="color:var(--yellow)"></i> Análisis de per cápita</h3><div class="sub">Alertas y oportunidades de costo</div></div></div><div class="card-body"><div class="ia-report" id="ipc-ia"></div></div></div>
       </section>
 
     </div>
@@ -233,9 +222,9 @@ document.getElementById('refreshBtn').addEventListener('click',()=>location.relo
 </script>
 
 <!-- UI compartida: filtros multi-selección + expandir/contraer gráficas -->
-<script src="assets/ui.js?v=4"></script>
+<script src="assets/ui.js?v=5"></script>
 <!-- Motor de datos Institucional (carga la hoja al entrar) -->
-<script src="assets/institucional.js?v=7"></script>
+<script src="assets/institucional.js?v=8"></script>
 <script>if(window.ensureInst)ensureInst();</script>
 </body>
 </html>

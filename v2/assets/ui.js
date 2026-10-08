@@ -81,7 +81,7 @@ document.addEventListener('change',function(e){
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAll();});
 
 /* ---------- Expandir / contraer gráficas ---------- */
-let backdrop=null,expandedCard=null,expandedAnchor=null;
+let backdrop=null,expandedCard=null,expandedAnchor=null,expandedFilters=null,expandedFiltersAnchor=null;
 function ensureBackdrop(){
   if(backdrop)return backdrop;
   backdrop=document.createElement('div');backdrop.className='chart-backdrop';
@@ -98,12 +98,21 @@ function collapseCurrent(){
   card.classList.remove('expanded');
   ensureBackdrop().classList.remove('show');
   const btn=card.querySelector('.chart-expand-btn i');if(btn){btn.classList.remove('fa-compress');btn.classList.add('fa-expand');}
+  if(expandedFilters&&expandedFiltersAnchor&&expandedFiltersAnchor.parentNode){
+    expandedFilters.classList.remove('in-expanded');
+    expandedFiltersAnchor.parentNode.replaceChild(expandedFilters,expandedFiltersAnchor);
+  }
+  expandedFilters=null;expandedFiltersAnchor=null;
   if(anchor&&anchor.parentNode)anchor.parentNode.replaceChild(card,anchor);
   expandedCard=null;expandedAnchor=null;
   setTimeout(()=>resizeChartsIn(card),50);
 }
 function expand(card){
   if(expandedCard&&expandedCard!==card)collapseCurrent();
+  /* Capturar la vista ANTES de mover la tarjeta — una vez portada a
+     <body> ya no tiene un ancestro .view del que colgar los filtros. */
+  const view=card.closest('.view');
+  const filters=view?view.querySelector('.view-filters'):null;
   /* Portal: mover la tarjeta a <body> evita que un ancestro con animación
      (transform) la atrape como "containing block" y rompa position:fixed. */
   const anchor=document.createComment('expanded-card-anchor');
@@ -113,6 +122,18 @@ function expand(card){
   card.classList.add('expanded');
   ensureBackdrop().classList.add('show');
   const btn=card.querySelector('.chart-expand-btn i');if(btn){btn.classList.remove('fa-expand');btn.classList.add('fa-compress');}
+  /* Traer los filtros de la vista (mes/ciudad/vehículo) dentro de la
+     tarjeta expandida, justo debajo del título, para poder ajustarlos
+     sin salir del modo ampliado. */
+  if(filters){
+    const fAnchor=document.createComment('expanded-filters-anchor');
+    filters.parentNode.insertBefore(fAnchor,filters);
+    const h=card.querySelector('.card-h');
+    if(h&&h.nextSibling)h.parentNode.insertBefore(filters,h.nextSibling);
+    else card.insertBefore(filters,card.firstChild);
+    filters.classList.add('in-expanded');
+    expandedFilters=filters;expandedFiltersAnchor=fAnchor;
+  }
   expandedCard=card;
   setTimeout(()=>resizeChartsIn(card),50);
 }

@@ -207,6 +207,12 @@ body::after{
 .ia-report li{margin:5px 0}
 
 .ind-loading{padding:60px 20px;text-align:center;color:var(--text-soft);font-size:14px}
+.chart-empty-note{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--text-soft);font-size:13px;line-height:1.5}
+
+/* Filtros movidos dentro de una tarjeta expandida */
+.view-filters.in-expanded{margin:14px 20px 4px;padding-top:6px;border-top:1px solid var(--border)}
+.view-filters.in-expanded .ins-bar{margin-bottom:12px}
+.view-filters.in-expanded .seg-toggle{margin-bottom:0}
 
 @media(max-width:1100px){.grid-2{grid-template-columns:1fr}}
 @media(max-width:820px){
