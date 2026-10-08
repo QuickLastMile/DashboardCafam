@@ -14,7 +14,7 @@
 <!-- Iconos -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-<link rel="stylesheet" href="assets/styles.css?v=8">
+<link rel="stylesheet" href="assets/styles.css?v=9">
 </head>
 <body>
 <div class="app">
@@ -30,6 +30,7 @@
     <div class="nav-item active" data-view="inst-nacional"><i class="fa-solid fa-map-location-dot"></i><span class="nav-label">Nacional</span></div>
     <div class="nav-item" data-view="inst-recibido"><i class="fa-solid fa-box-archive"></i><span class="nav-label">Calle 51</span></div>
     <div class="nav-item" data-view="inst-percapita"><i class="fa-solid fa-coins"></i><span class="nav-label">Per Cápita</span></div>
+    <div class="nav-item" data-view="inst-planta"><i class="fa-solid fa-people-group"></i><span class="nav-label">Planta</span></div>
 
     <div class="nav-foot">
       <div class="av"><img src="https://i.ibb.co/KjmjjvNZ/Captura-de-pantalla-2025-09-15-161315.jpg" alt=""></div>
@@ -186,6 +187,18 @@
         <div class="card"><div class="card-h"><div><h3>Detalle por punto</h3><div class="sub" id="ipc-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="ipc-table"></table></div></div></div>
       </section>
 
+      <!-- ===== PLANTA (hoja "PLANTA": plantilla fija + historial de cambios) ===== -->
+      <section class="view" id="inst-planta">
+        <div class="kpi-grid" id="pl-kpi"></div>
+        <div class="grid-2">
+          <div class="card"><div class="card-h"><div><h3>Personal por punto</h3><div class="sub">Plantilla fija actual</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="pl-chart"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Distribución por ciudad</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="pl-ciudad"></canvas></div></div></div>
+        </div>
+        <div class="card"><div class="card-h"><div><h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--yellow)"></i> Historial de cambios</h3><div class="sub">Modificaciones a la plantilla a lo largo del tiempo</div></div></div><div class="card-body">
+          <div class="pl-timeline" id="pl-timeline"></div>
+        </div></div>
+      </section>
+
     </div>
   </div>
 </div>
@@ -199,7 +212,8 @@
 const PAGES={
   'inst-nacional':['Gestión Nacional','Entregas, novedades y cumplimiento por ciudad'],
   'inst-recibido':['Calle 51','Gestión de entrega y novedades — Moto y Carry'],
-  'inst-percapita':['Per Cápita Institucional','Costo operativo por entrega — por punto, ciudad y mes']
+  'inst-percapita':['Per Cápita Institucional','Costo operativo por entrega — por punto, ciudad y mes'],
+  'inst-planta':['Planta','Plantilla fija por ciudad y punto — historial de cambios']
 };
 function switchView(v){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===v));
@@ -224,7 +238,7 @@ document.getElementById('refreshBtn').addEventListener('click',()=>location.relo
 <!-- UI compartida: filtros multi-selección + expandir/contraer gráficas -->
 <script src="assets/ui.js?v=5"></script>
 <!-- Motor de datos Institucional (carga la hoja al entrar) -->
-<script src="assets/institucional.js?v=8"></script>
+<script src="assets/institucional.js?v=9"></script>
 <script>if(window.ensureInst)ensureInst();</script>
 </body>
 </html>

@@ -11,7 +11,7 @@ const INST_CFG={
 };
 
 /* ---------- Estado ---------- */
-let NAC=[],NOVNAC=[],GMOTO=[],GCARRY=[],NOVC51=[],RECDET=[],PCAP=[];
+let NAC=[],NOVNAC=[],GMOTO=[],GCARRY=[],NOVC51=[],RECDET=[],PCAP=[],PLANTA=[],PLHIST=[];
 let instCharts={},instLoaded=false,instLoading=false;
 let nacCity='';
 let nacTab='cantidad';
@@ -43,6 +43,7 @@ const setHTML=(id,html)=>{const e=document.getElementById(id);if(e)e.innerHTML=h
 const MES_ORDER=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
 const sortMes=arr=>[...arr].sort((a,b)=>MES_ORDER.indexOf(a)-MES_ORDER.indexOf(b));
 const CITY_COLOR={'Bucaramanga':'#2563EB','Cúcuta':'#22C55E','Santa Marta':'#EAB308'};
+const tcase=s=>s?String(s).toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase()):'';
 function parseD(s){const m=String(s).match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);if(!m)return null;let y=+m[3];if(y<100)y+=2000;return new Date(y,+m[2]-1,+m[1]);}
 function isoWeek(dt){const d=new Date(Date.UTC(dt.getFullYear(),dt.getMonth(),dt.getDate()));const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);const ys=new Date(Date.UTC(d.getUTCFullYear(),0,1));return Math.ceil(((d-ys)/86400000+1)/7);}
 const weekKey=dt=>dt.getFullYear()+'-S'+String(isoWeek(dt)).padStart(2,'0');
@@ -143,6 +144,47 @@ function parseNovC51(rows){
   return out;
 }
 
+/* ---------- PLANTA (plantilla fija + historial de cambios, bloques lado a lado) ---------- */
+const PLANTA_CITY_COLOR={'Santa Marta':'#EAB308','Cucuta':'#22C55E','Bucaramanga':'#2563EB','Bogota':'#A855F7'};
+function plantaChangeType(text){
+  const t=String(text||'').toUpperCase();
+  if(/RETIRA|NO SE SIGUE|REDUCE|DISMINUYE|BAJA/.test(t))return 'down';
+  if(/INCREMENTO|AUMENTA|INGRESA|SUMA/.test(t))return 'up';
+  return 'info';
+}
+function parsePlanta(rows){
+  const actual=[],hist=[];
+  for(let i=1;i<rows.length;i++){const r=rows[i];if(!r)continue;
+    const ciudad=String(r[0]||'').trim(),punto=String(r[1]||'').trim(),cant=num(r[2]);
+    if(ciudad||punto)actual.push({ciudad:tcase(ciudad),punto:tcase(punto),cant});
+    const anio=String(r[4]||'').trim(),mes=String(r[5]||'').trim(),fecha=String(r[6]||'').trim(),mod=String(r[7]||'').trim();
+    if(fecha&&mod){const d=parseD(fecha);hist.push({anio,mes:tcase(mes),fecha,mod,_d:+(d||0)});}
+  }
+  return {actual,hist};
+}
+function renderPlanta(){
+  if(!PLANTA.length){const k=document.getElementById('pl-kpi');if(k)k.innerHTML='<div class="ind-loading">Sin datos — verifica la hoja "PLANTA".</div>';return;}
+  const total=PLANTA.reduce((a,r)=>a+r.cant,0);
+  const ciudades=uniq(PLANTA.map(r=>r.ciudad));
+  const histSorted=[...PLHIST].sort((a,b)=>b._d-a._d);
+  kpiCards('pl-kpi',[
+    {l:'Personal total',v:total,ic:'fa-people-group',c:'blue'},
+    {l:'Ciudades',v:ciudades.length,ic:'fa-city',c:'purple'},
+    {l:'Puntos',v:PLANTA.length,ic:'fa-location-dot',c:'green'},
+    {l:'Último cambio',txt:histSorted[0]?histSorted[0].fecha:'—',ic:'fa-clock-rotate-left',c:'yellow'}
+  ]);
+  const byPunto=[...PLANTA].sort((a,b)=>b.cant-a.cant);
+  mkChart('pl-chart',{type:'bar',data:{labels:byPunto.map(r=>r.punto),datasets:[{data:byPunto.map(r=>r.cant),backgroundColor:byPunto.map(r=>PLANTA_CITY_COLOR[r.ciudad]||CO.gray),borderRadius:6}]},options:{...BC.base,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.parsed.x+' personas — '+byPunto[c.dataIndex].ciudad}}},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
+  const byCiudad=sortObj(groupSum(PLANTA,r=>r.ciudad,r=>r.cant));
+  mkChart('pl-ciudad',{type:'doughnut',data:{labels:Object.keys(byCiudad),datasets:[{data:Object.values(byCiudad),backgroundColor:Object.keys(byCiudad).map(c=>PLANTA_CITY_COLOR[c]||CO.gray),borderColor:'#0b1120',borderWidth:2}]},options:{...BC.base,plugins:{legend:legBase}}});
+  const tl=document.getElementById('pl-timeline');
+  if(tl)tl.innerHTML=histSorted.length?histSorted.map(h=>{
+    const type=plantaChangeType(h.mod);
+    const icon=type==='up'?'fa-arrow-up':type==='down'?'fa-arrow-down':'fa-circle-info';
+    return `<div class="pl-item"><div class="pl-dot ${type}"><i class="fa-solid ${icon}"></i></div><div class="pl-date">${h.fecha} · ${h.mes} ${h.anio}</div><div class="pl-text">${h.mod}</div></div>`;
+  }).join(''):'<div class="ind-loading">Sin historial registrado.</div>';
+}
+
 /* ---------- PER CÁPITA (costo operativo por entrega) ---------- */
 function copNumI(x){var s=String(x==null?'':x).replace(/[^0-9]/g,'');return s?parseInt(s,10):0;}
 function parsePercap(raw){return (raw||[]).map(function(r){
@@ -208,19 +250,21 @@ async function ensureInst(){
   instLoading=true;
   ['nac-count','c51-count','cn-count'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='Cargando datos de Google Sheets…';});
   try{
-    const [cn,nn,c51,rd,pc]=await Promise.all([
+    const [cn,nn,c51,rd,pc,pl]=await Promise.all([
       fetchInst('CANT NACIONAL',false),
       fetchInst('NOVEDADES NACIONAL',false),
       fetchInst('CALLE 51',false),
       fetchInst('RECIBIDO CALLE 51',true).catch(()=>[]),
-      fetchInst('PER CAPITA',true).catch(()=>[])
+      fetchInst('PER CAPITA',true).catch(()=>[]),
+      fetchInst('PLANTA',false).catch(()=>[])
     ]);
     NAC=parseNacional(cn);NOVNAC=parseNovNac(nn);
     GMOTO=parseGestVeh(c51,0);GCARRY=parseGestVeh(c51,9);NOVC51=parseNovC51(c51);
     RECDET=parseRecDet(rd);
     PCAP=parsePercap(pc);
+    const plp=parsePlanta(pl);PLANTA=plp.actual;PLHIST=plp.hist;
     instLoaded=true;
-    renderNacional();renderC51();renderPercap();
+    renderNacional();renderC51();renderPercap();renderPlanta();
     setTimeout(()=>Object.values(instCharts).forEach(ch=>{try{ch.resize();}catch(e){}}),160);
   }catch(e){console.warn('Institucional: fallo de carga',e);const el=document.getElementById('nac-count');if(el)el.textContent='Error al conectar con Google Sheets (verifica que la hoja sea pública: "Cualquiera con el enlace · Lector").';}
   instLoading=false;
@@ -417,7 +461,7 @@ function wireSubtabs(groupSel,panelPrefix,onSwitch){
     setTimeout(()=>Object.values(instCharts).forEach(c=>{try{c.resize();}catch(e){}}),50);
   }));
 }
-const INST_RENDER={'inst-nacional':renderNacional,'inst-recibido':renderC51,'inst-percapita':renderPercap};
+const INST_RENDER={'inst-nacional':renderNacional,'inst-recibido':renderC51,'inst-percapita':renderPercap,'inst-planta':renderPlanta};
 document.querySelectorAll('.nav-item[data-view^="inst-"]').forEach(n=>n.addEventListener('click',()=>{
   ensureInst();
   if(!instLoaded)return;
