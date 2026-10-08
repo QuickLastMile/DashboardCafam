@@ -51,6 +51,8 @@ body::after{
 .brand .name{font-family:var(--font-d);font-weight:700;font-size:17px;letter-spacing:-.3px;white-space:nowrap}
 .brand .name span{display:block;font-family:var(--font-b);font-weight:500;font-size:11px;color:var(--text-soft);letter-spacing:.5px}
 .sidebar.collapsed .brand .name,.sidebar.collapsed .nav-label,.sidebar.collapsed .nav-foot{display:none}
+.sidebar.collapsed .brand{justify-content:center;padding:6px 0 18px}
+.sidebar.collapsed .brand .logo{width:40px;height:40px;padding:4px}
 
 .nav-section{font-size:10.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--text-soft);padding:14px 12px 6px;font-weight:600}
 .sidebar.collapsed .nav-section{text-align:center;font-size:0}
