@@ -11,7 +11,7 @@ const INST_CFG={
 };
 
 /* ---------- Estado ---------- */
-let NAC=[],NOVNAC=[],GMOTO=[],GCARRY=[],NOVC51=[],RECDET=[],PCAP=[],PLANTA=[],PLHIST=[];
+let NAC=[],NOVNAC=[],GMOTO=[],GCARRY=[],NOVC51=[],RECDET=[],PCAP=[],PLANTA=[],PLHIST=[],CELTA=[],CELTANOV=[];
 let instCharts={},instLoaded=false,instLoading=false;
 let nacCity='';
 let nacTab='cantidad';
@@ -175,6 +175,72 @@ function renderPlanta(){
   const cEl=document.getElementById('pl-count');if(cEl)cEl.textContent=histSorted.length+' registros';
 }
 
+/* ---------- CELTA-FLORESTA (cantidad diaria + novedades por tipo/mes) ---------- */
+function parseCeltaFloresta(rows){
+  const cant=[],nov=[];
+  const header=rows[0]||[];
+  const meses=header.slice(8).map(m=>String(m||'').trim().toUpperCase()).filter(Boolean);
+  for(let i=1;i<rows.length;i++){const r=rows[i];if(!r)continue;
+    const fecha=String(r[1]||'').trim();
+    if(/\d{1,2}\/\d{1,2}\/\d{2,4}/.test(fecha)){
+      const d=parseD(fecha);
+      cant.push({mes:String(r[0]||'').trim().toUpperCase(),fecha,efectivo:num(r[2]),novedad:num(r[3]),total:num(r[4]),
+        horaH:parseHora(r[5]),_d:+(d||0),week:d?weekKey(d):''});
+    }
+    const novTipo=String(r[7]||'').trim();
+    if(novTipo)meses.forEach((m,j)=>{const val=num(r[8+j]);if(val)nov.push({novedad:novTipo,mes:m,count:val});});
+  }
+  return {cant,nov};
+}
+function renderCelta(){
+  if(!CELTA.length){const k=document.getElementById('cf-kpi');if(k)k.innerHTML='<div class="ind-loading">Sin datos — verifica la hoja "CELTA-FLORESTA".</div>';return;}
+  const allMeses=sortMes(uniq(CELTA.map(r=>r.mes)));
+  MultiSelect.setOptions('cf-fMes',allMeses,{placeholder:'Todos',onChange:renderCelta});
+  const mes=ms('cf-fMes');
+  const D=CELTA.filter(r=>!mes.length||mes.includes(r.mes));
+  const ef=D.reduce((a,r)=>a+r.efectivo,0),nv=D.reduce((a,r)=>a+r.novedad,0),tot=D.reduce((a,r)=>a+r.total,0);
+  const cumpl=tot?ef/tot*100:0;
+  const porFecha=groupSum(D,r=>r.fecha,r=>r.efectivo);
+  const pico=Object.entries(porFecha).sort((a,b)=>b[1]-a[1])[0]||['—',0];
+  const horasD=D.filter(r=>r.horaH!=null).map(r=>r.horaH);
+  const avgHora=horasD.length?horasD.reduce((a,b)=>a+b,0)/horasD.length:null;
+  kpiCards('cf-kpi',[
+    {l:'Total efectivo',v:ef,ic:'fa-circle-check',c:'green'},
+    {l:'Total novedades',v:nv,ic:'fa-triangle-exclamation',c:'red'},
+    {l:'Total general',v:tot,ic:'fa-boxes-stacked',c:'blue'},
+    {l:'% Cumplimiento',v:cumpl,suf:'%',dec:1,ic:'fa-gauge-high',c:cumpl>=90?'green':cumpl>=80?'yellow':'red',t:cumpl>=90?'Óptimo':'Revisar',up:cumpl>=90?1:0},
+    {l:'Hora promedio gral.',txt:hhmm(avgHora),ic:'fa-clock',c:'yellow',t:'Hora militar (24h)',up:1},
+    {l:'Día pico',v:pico[1],suf:' ent',ic:'fa-arrow-up-right-dots',c:'green',t:pico[0],up:1}
+  ]);
+  const mesesAll=sortMes(uniq(CELTA.map(r=>r.mes)));
+  const sumM=(m,f)=>CELTA.filter(r=>r.mes===m).reduce((a,r)=>a+r[f],0);
+  mkChart('cf-mes',{type:'bar',data:{labels:mesesAll,datasets:[
+    {label:'Efectivo',data:mesesAll.map(m=>sumM(m,'efectivo')),backgroundColor:CO.green,borderRadius:6,maxBarThickness:44},
+    {label:'Novedad',data:mesesAll.map(m=>sumM(m,'novedad')),backgroundColor:CO.red,borderRadius:6,maxBarThickness:44}
+  ]},options:{...BC.base,plugins:{legend:legBase},scales:{x:BC.grid,y:BC.grid}}});
+  const fechas=uniq(D.map(r=>r.fecha)).sort((a,b)=>(parseD(a)||0)-(parseD(b)||0));
+  mkChart('cf-dia',{type:'line',data:{labels:fechas,datasets:[{label:'Efectivo',data:fechas.map(f=>porFecha[f]),borderColor:CO.blue,backgroundColor:gradFill('#2563EB'),fill:true,tension:.3,borderWidth:2.2,pointRadius:1.5}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  mkChart('cf-sem',{type:'bar',data:{labels:DOW_LBL,datasets:[{label:'Total',data:byDow(D,r=>r.total),backgroundColor:CO.purple,borderRadius:7,maxBarThickness:54}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  const novD=CELTANOV.filter(r=>!mes.length||mes.includes(r.mes));
+  const byNov=sortObj(groupSum(novD,r=>r.novedad,r=>r.count));
+  const topNov=Object.entries(byNov);
+  mkChart('cf-novtipo',{type:'bar',data:{labels:topNov.map(e=>e[0]),datasets:[{data:topNov.map(e=>e[1]),backgroundColor:palette(topNov.length),borderRadius:6}]},options:{...BC.base,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
+  const byMesNov=mesesAll.map(m=>CELTANOV.filter(r=>r.mes===m).reduce((a,r)=>a+r.count,0));
+  mkChart('cf-novmes',{type:'bar',data:{labels:mesesAll,datasets:[{data:byMesNov,backgroundColor:CO.red,borderRadius:8,maxBarThickness:60}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  const horaTip={callbacks:{label:c=>' '+hhmm(c.parsed.y!=null?c.parsed.y:c.parsed)}};
+  const horaY={...BC.grid,ticks:{...(BC.grid.ticks||{}),callback:v=>hhmm(v)}};
+  const Dh=D.filter(r=>r.horaH!=null);
+  const hfechas=uniq(Dh.map(r=>r.fecha)).sort((a,b)=>(parseD(a)||0)-(parseD(b)||0));
+  const hpd=groupAvg(Dh,r=>r.fecha,r=>r.horaH);
+  mkChart('cf-hdia',{type:'line',data:{labels:hfechas,datasets:[{label:'Hora promedio',data:hfechas.map(f=>hpd[f]!=null?+hpd[f].toFixed(3):null),borderColor:CO.yellow,backgroundColor:gradFill('#EAB308'),fill:true,tension:.35,borderWidth:2.4,pointRadius:2,spanGaps:true}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:horaTip},scales:{x:BC.grid,y:horaY}}});
+  const hpm=groupAvg(CELTA.filter(r=>r.horaH!=null),r=>r.mes,r=>r.horaH);
+  mkChart('cf-hmes',{type:'bar',data:{labels:mesesAll,datasets:[{data:mesesAll.map(m=>hpm[m]!=null?+hpm[m].toFixed(3):null),backgroundColor:CO.yellow,borderRadius:6,maxBarThickness:50}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:horaTip},scales:{x:BC.grid,y:horaY}}});
+  renderTable('cf-table',['FECHA','MES','EFECTIVO','NOVEDAD','TOTAL','HORA PROM.','% CUMPL'],
+    [...D].sort((a,b)=>(b._d||0)-(a._d||0)).slice(0,500).map(r=>[r.fecha,r.mes,r.efectivo,r.novedad,r.total,hhmm(r.horaH),cumplPill(r.total?+(r.efectivo/r.total*100).toFixed(0):0)]));
+  const cEl=document.getElementById('cf-count');if(cEl)cEl.textContent=D.length.toLocaleString('es')+' registros'+(D.length>500?' (mostrando 500)':'');
+  const sEl=document.getElementById('cf-stamp');if(sEl)sEl.textContent=stampNow();
+}
+
 /* ---------- PER CÁPITA (costo operativo por entrega) ---------- */
 function copNumI(x){var s=String(x==null?'':x).replace(/[^0-9]/g,'');return s?parseInt(s,10):0;}
 function parsePercap(raw){return (raw||[]).map(function(r){
@@ -240,21 +306,23 @@ async function ensureInst(){
   instLoading=true;
   ['nac-count','c51-count','cn-count'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='Cargando datos de Google Sheets…';});
   try{
-    const [cn,nn,c51,rd,pc,pl]=await Promise.all([
+    const [cn,nn,c51,rd,pc,pl,cf]=await Promise.all([
       fetchInst('CANT NACIONAL',false),
       fetchInst('NOVEDADES NACIONAL',false),
       fetchInst('CALLE 51',false),
       fetchInst('RECIBIDO CALLE 51',true).catch(()=>[]),
       fetchInst('PER CAPITA',true).catch(()=>[]),
-      fetchInst('PLANTA',false).catch(()=>[])
+      fetchInst('PLANTA',false).catch(()=>[]),
+      fetchInst('CELTA-FLORESTA',false).catch(()=>[])
     ]);
     NAC=parseNacional(cn);NOVNAC=parseNovNac(nn);
     GMOTO=parseGestVeh(c51,0);GCARRY=parseGestVeh(c51,9);NOVC51=parseNovC51(c51);
     RECDET=parseRecDet(rd);
     PCAP=parsePercap(pc);
     const plp=parsePlanta(pl);PLANTA=plp.actual;PLHIST=plp.hist;
+    const cfp=parseCeltaFloresta(cf);CELTA=cfp.cant;CELTANOV=cfp.nov;
     instLoaded=true;
-    renderNacional();renderC51();renderPercap();renderPlanta();
+    renderNacional();renderC51();renderPercap();renderPlanta();renderCelta();
     setTimeout(()=>Object.values(instCharts).forEach(ch=>{try{ch.resize();}catch(e){}}),160);
   }catch(e){console.warn('Institucional: fallo de carga',e);const el=document.getElementById('nac-count');if(el)el.textContent='Error al conectar con Google Sheets (verifica que la hoja sea pública: "Cualquiera con el enlace · Lector").';}
   instLoading=false;
@@ -451,7 +519,7 @@ function wireSubtabs(groupSel,panelPrefix,onSwitch){
     setTimeout(()=>Object.values(instCharts).forEach(c=>{try{c.resize();}catch(e){}}),50);
   }));
 }
-const INST_RENDER={'inst-nacional':renderNacional,'inst-recibido':renderC51,'inst-percapita':renderPercap,'inst-planta':renderPlanta};
+const INST_RENDER={'inst-nacional':renderNacional,'inst-recibido':renderC51,'inst-percapita':renderPercap,'inst-planta':renderPlanta,'inst-celta':renderCelta};
 document.querySelectorAll('.nav-item[data-view^="inst-"]').forEach(n=>n.addEventListener('click',()=>{
   ensureInst();
   if(!instLoaded)return;
@@ -472,6 +540,10 @@ wireDetalleToggle('c51-detalle-toggle','c51-detalle-card','Calle 51');
 wireDetalleToggle('cn-detalle-toggle','cn-detalle-card','novedades');
 // Per Cápita
 const ipcR=document.getElementById('ipc-reset');if(ipcR)ipcR.addEventListener('click',()=>{['ipc-fMes','ipc-fCiudad','ipc-fDrog'].forEach(id=>MultiSelect.clear(id));renderPercap();});
+// Celta-Floresta
+const cfR=document.getElementById('cf-reset');if(cfR)cfR.addEventListener('click',()=>{MultiSelect.clear('cf-fMes');renderCelta();});
+wireSubtabs('#cf-subtabs','cf-tab-',()=>{});
+wireDetalleToggle('cf-detalle-toggle','cf-detalle-card','Celta-Floresta');
 
 window.ensureInst=ensureInst;
 })();

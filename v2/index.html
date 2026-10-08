@@ -31,6 +31,7 @@
     <div class="nav-item" data-view="inst-recibido"><i class="fa-solid fa-box-archive"></i><span class="nav-label">Calle 51</span></div>
     <div class="nav-item" data-view="inst-percapita"><i class="fa-solid fa-coins"></i><span class="nav-label">Per Cápita</span></div>
     <div class="nav-item" data-view="inst-planta"><i class="fa-solid fa-people-group"></i><span class="nav-label">Planta</span></div>
+    <div class="nav-item" data-view="inst-celta"><i class="fa-solid fa-warehouse"></i><span class="nav-label">Celta-Floresta</span></div>
 
     <div class="nav-foot">
       <div class="av"><img src="https://i.ibb.co/KjmjjvNZ/Captura-de-pantalla-2025-09-15-161315.jpg" alt=""></div>
@@ -197,6 +198,43 @@
         <div class="card"><div class="card-h"><div><h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--yellow)"></i> Historial de cambios</h3><div class="sub" id="pl-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="pl-table"></table></div></div></div>
       </section>
 
+      <!-- ===== CELTA-FLORESTA (hoja "CELTA-FLORESTA") ===== -->
+      <section class="view" id="inst-celta">
+        <div class="view-filters" id="cf-filters">
+          <div class="ins-bar">
+            <div class="fld"><label>Mes</label><div class="msel" id="cf-fMes"></div></div>
+            <button class="ins-reset" id="cf-reset"><i class="fa-solid fa-rotate-left"></i> Limpiar</button>
+            <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="cf-stamp">--</span></span></div>
+          </div>
+        </div>
+        <div class="kpi-grid" id="cf-kpi"></div>
+
+        <div class="subtabs" id="cf-subtabs">
+          <button class="subtab-btn active" data-tab="cantidad"><i class="fa-solid fa-box"></i> Cantidad</button>
+          <button class="subtab-btn" data-tab="novedades"><i class="fa-solid fa-triangle-exclamation"></i> Novedades</button>
+          <button class="subtab-btn" data-tab="tiempos"><i class="fa-solid fa-clock"></i> Tiempos · hora promedio</button>
+        </div>
+
+        <div class="subtab-panel active" id="cf-tab-cantidad">
+          <div class="card"><div class="card-h"><div><h3>Efectivo y novedad por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="cf-mes"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Cantidad por día — tendencia</h3><div class="sub">Volumen diario de entregas efectivas</div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="cf-dia"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Cantidad por día de la semana</h3><div class="sub">Para identificar el día más movido</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="cf-sem"></canvas></div></div></div>
+        </div>
+
+        <div class="subtab-panel" id="cf-tab-novedades">
+          <div class="card"><div class="card-h"><div><h3>Tipo de novedad</h3><div class="sub">Barras horizontales para lectura clara</div></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="cf-novtipo"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Novedades por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="cf-novmes"></canvas></div></div></div>
+        </div>
+
+        <div class="subtab-panel" id="cf-tab-tiempos">
+          <div class="card"><div class="card-h"><div><h3>Hora promedio por día</h3><div class="sub">Formato militar (24h)</div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="cf-hdia"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Hora promedio por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="cf-hmes"></canvas></div></div></div>
+        </div>
+
+        <div class="detalle-toggle-row"><button class="ins-reset detalle-toggle" id="cf-detalle-toggle"><i class="fa-solid fa-table-list"></i> Ver detalle Celta-Floresta</button></div>
+        <div class="card" id="cf-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle Celta-Floresta</h3><div class="sub" id="cf-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="cf-table"></table></div></div></div>
+      </section>
+
     </div>
   </div>
 </div>
@@ -211,7 +249,8 @@ const PAGES={
   'inst-nacional':['Gestión Nacional','Entregas, novedades y cumplimiento por ciudad'],
   'inst-recibido':['Calle 51','Gestión de entrega y novedades — Moto y Carry'],
   'inst-percapita':['Per Cápita Institucional','Costo operativo por entrega — por punto, ciudad y mes'],
-  'inst-planta':['Planta','Plantilla fija por ciudad y punto — historial de cambios']
+  'inst-planta':['Planta','Plantilla fija por ciudad y punto — historial de cambios'],
+  'inst-celta':['Celta-Floresta','Gestión de entrega y novedades — punto Celta-Floresta']
 };
 function switchView(v){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===v));
@@ -236,7 +275,7 @@ document.getElementById('refreshBtn').addEventListener('click',()=>location.relo
 <!-- UI compartida: filtros multi-selección + expandir/contraer gráficas -->
 <script src="assets/ui.js?v=5"></script>
 <!-- Motor de datos Institucional (carga la hoja al entrar) -->
-<script src="assets/institucional.js?v=10"></script>
+<script src="assets/institucional.js?v=11"></script>
 <script>if(window.ensureInst)ensureInst();</script>
 </body>
 </html>
