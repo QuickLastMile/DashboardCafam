@@ -1,8 +1,9 @@
 /* ===================== MOTOR CAFAM INSTITUCIONAL =====================
    Fuente: Google Sheet en vivo (hojas CANT NACIONAL, NOVEDADES NACIONAL,
-   RECIBIDO CALLE 51, PER CAPITA). Vistas activas: Nacional, Recibido
-   Calle 51, Per Cápita. Las demás (Novedades Calle 51, Gestión,
-   Pendiente Cross, Resumen IA) se agregarán cuando se reconstruyan. */
+   CALLE 51, PER CAPITA). Vistas activas: Nacional, Calle 51, Per Cápita.
+   La hoja "CALLE 51" trae 3 tablas una al lado de otra: GESTIÓN DE
+   ENTREGA MOTO, GESTIÓN DE ENTREGA CARRY y NOVEDADES CALLE 51 CARRY -
+   MOTO (reemplaza la vieja hoja "RECIBIDO CALLE 51", ya no se usa). */
 (function(){
 const INST_CFG={
   sheetId:'1vQlOjv1jBl06nWzYkNt7opdSa6ZrMgPMDonlbnvlCcU',
@@ -10,11 +11,12 @@ const INST_CFG={
 };
 
 /* ---------- Estado ---------- */
-let NAC=[],NOVNAC=[],RECI=[],PCAP=[];
+let NAC=[],NOVNAC=[],GMOTO=[],GCARRY=[],NOVC51=[],PCAP=[];
 let instCharts={},instLoaded=false,instLoading=false;
-let recVeh='';
 let nacCity='';
 let nacTab='cantidad';
+let cnVeh='';
+let recTab='moto';
 
 /* ---------- Utilidades ---------- */
 const COLORS={blue:'#2563EB',green:'#22C55E',yellow:'#EAB308',red:'#EF4444',gray:'#94A3B8',purple:'#A855F7'};
@@ -93,12 +95,30 @@ function parseNovNac(rows){
   });
   return out;
 }
-function parseRecibido(raw){return raw.map(r=>{
-  const fecha=(r.FECHA||'').trim();const d=parseD(fecha);
-  return {mes:(r.MES||'').trim().toUpperCase(),fecha,tipo:(r.TIPO||'').trim(),guia:(r['GUÍA']||'').toString().trim(),
-    diaSem:(r['DÍA SEMANA']||'').trim(),vehiculo:(r.VEHICULO||'').trim().toUpperCase(),total:num(r.TOTAL)||1,
-    _d:+(d||0),week:d?weekKey(d):''};
-}).filter(r=>r.fecha);}
+/* ---------- CALLE 51 (Gestión Moto / Carry + Novedades, bloques lado a lado) ---------- */
+function pct(x){return parseFloat(String(x==null?'':x).replace('%',''))||0;}
+function parseGestVeh(rows,off){
+  const out=[];
+  for(let i=1;i<rows.length;i++){const r=rows[i];if(!r)continue;
+    const fecha=String(r[off]||'').trim();
+    if(!/\d{1,2}\/\d{1,2}\/\d{2,4}/.test(fecha))continue;
+    const d=parseD(fecha);
+    out.push({fecha,efectivo:num(r[off+1]),novedad:num(r[off+2]),total:num(r[off+3]),
+      pct:pct(r[off+4]),mes:String(r[off+5]||'').trim().toUpperCase(),tipo:String(r[off+6]||'').trim(),
+      _d:+(d||0),week:d?weekKey(d):''});
+  }
+  return out;
+}
+function parseNovC51(rows){
+  const out=[];
+  for(let i=1;i<rows.length;i++){const r=rows[i];if(!r)continue;
+    const mes=String(r[17]||'').trim().toUpperCase();
+    if(!mes)continue;
+    out.push({mes,novedad:String(r[18]||'').trim(),cant:num(r[19]),tipo:String(r[20]||'').trim(),
+      vehiculo:String(r[21]||'').trim().toUpperCase()});
+  }
+  return out;
+}
 
 /* ---------- PER CÁPITA (costo operativo por entrega) ---------- */
 function copNumI(x){var s=String(x==null?'':x).replace(/[^0-9]/g,'');return s?parseInt(s,10):0;}
@@ -169,17 +189,19 @@ function renderPercap(){
 async function ensureInst(){
   if(instLoaded||instLoading)return;
   instLoading=true;
-  ['nac-count','rec-count'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='Cargando datos de Google Sheets…';});
+  ['nac-count','cm-count','cc-count','cn-count'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='Cargando datos de Google Sheets…';});
   try{
-    const [cn,nn,rc,pc]=await Promise.all([
+    const [cn,nn,c51,pc]=await Promise.all([
       fetchInst('CANT NACIONAL',false),
       fetchInst('NOVEDADES NACIONAL',false),
-      fetchInst('RECIBIDO CALLE 51',true),
+      fetchInst('CALLE 51',false),
       fetchInst('PER CAPITA',true).catch(()=>[])
     ]);
-    NAC=parseNacional(cn);NOVNAC=parseNovNac(nn);RECI=parseRecibido(rc);PCAP=parsePercap(pc);
+    NAC=parseNacional(cn);NOVNAC=parseNovNac(nn);
+    GMOTO=parseGestVeh(c51,0);GCARRY=parseGestVeh(c51,9);NOVC51=parseNovC51(c51);
+    PCAP=parsePercap(pc);
     instLoaded=true;
-    renderNacional();renderRecibido();renderPercap();
+    renderNacional();renderCM();renderCC();renderCN();renderPercap();
     setTimeout(()=>Object.values(instCharts).forEach(ch=>{try{ch.resize();}catch(e){}}),160);
   }catch(e){console.warn('Institucional: fallo de carga',e);const el=document.getElementById('nac-count');if(el)el.textContent='Error al conectar con Google Sheets (verifica que la hoja sea pública: "Cualquiera con el enlace · Lector").';}
   instLoading=false;
@@ -263,41 +285,78 @@ function renderNacional(){
   const sEl=document.getElementById('nac-stamp');if(sEl)sEl.textContent=stampNow();
 }
 
-/* ---------- RECIBIDO CALLE 51 ---------- */
-function renderRecibido(){
-  if(!RECI.length)return;
-  const allMeses=sortMes(uniq(RECI.map(r=>r.mes)));
-  MultiSelect.setOptions('rec-fMes',allMeses,{placeholder:'Todos',onChange:renderRecibido});
-  MultiSelect.setOptions('rec-fTipo',uniq(RECI.map(r=>r.tipo)),{placeholder:'Todos',onChange:renderRecibido});
-  ['rec-dia-mes','rec-sem-mes','rec-tipo-mes'].forEach(id=>MultiSelect.setOptions(id,allMeses,{placeholder:'Mes: todos',sm:true,onChange:renderRecibido}));
-  const mes=ms('rec-fMes'),tipo=ms('rec-fTipo');
-  const D=RECI.filter(r=>(!recVeh||r.vehiculo===recVeh)&&(!mes.length||mes.includes(r.mes))&&(!tipo.length||tipo.includes(r.tipo)));
-  const Bveh=RECI.filter(r=>(!recVeh||r.vehiculo===recVeh)&&(!tipo.length||tipo.includes(r.tipo)));
-  const Bmt=RECI.filter(r=>(!mes.length||mes.includes(r.mes))&&(!tipo.length||tipo.includes(r.tipo)));
-  const dias=uniq(D.map(r=>r.fecha)).length;
-  kpiCards('rec-kpi',[
-    {l:'Total guías',v:D.length,ic:'fa-barcode',c:'blue'},
-    {l:'Tipos',v:uniq(D.map(r=>r.tipo)).length,ic:'fa-tags',c:'purple'},
-    {l:'Días',v:dias,ic:'fa-calendar-day',c:'yellow'},
-    {l:'Promedio/día',v:dias?D.length/dias:0,dec:1,ic:'fa-chart-simple',c:'green'},
-    {l:'Motorizado',v:Bmt.filter(r=>r.vehiculo==='MOTORIZADO').length,ic:'fa-motorcycle',c:'blue'},
-    {l:'Carry',v:Bmt.filter(r=>r.vehiculo==='CARRY').length,ic:'fa-truck',c:'green'}
+/* ---------- CALLE 51: Gestión Moto / Carry (misma forma de datos) ---------- */
+function renderGestVeh(data,ids,label,renderFn){
+  if(!data.length){const k=document.getElementById(ids.kpi);if(k)k.innerHTML='<div class="ind-loading">Sin datos de '+label+' — verifica la hoja "CALLE 51".</div>';return;}
+  const allMeses=sortMes(uniq(data.map(r=>r.mes)));
+  MultiSelect.setOptions(ids.fMes,allMeses,{placeholder:'Todos',onChange:renderFn});
+  MultiSelect.setOptions(ids.fTipo,uniq(data.map(r=>r.tipo)),{placeholder:'Todos',onChange:renderFn});
+  const mes=ms(ids.fMes),tipo=ms(ids.fTipo);
+  const D=data.filter(r=>(!mes.length||mes.includes(r.mes))&&(!tipo.length||tipo.includes(r.tipo)));
+  const ef=D.reduce((a,r)=>a+r.efectivo,0),nv=D.reduce((a,r)=>a+r.novedad,0),tot=D.reduce((a,r)=>a+r.total,0);
+  const cumplProm=D.length?D.reduce((a,r)=>a+r.pct,0)/D.length:0;
+  kpiCards(ids.kpi,[
+    {l:'Total efectivo',v:ef,ic:'fa-circle-check',c:'green'},
+    {l:'Total novedades',v:nv,ic:'fa-triangle-exclamation',c:'red'},
+    {l:'Total general',v:tot,ic:'fa-boxes-stacked',c:'blue'},
+    {l:'% Cumpl. promedio',v:cumplProm,suf:'%',dec:1,ic:'fa-gauge-high',c:cumplProm>=90?'green':cumplProm>=80?'yellow':'red',t:cumplProm>=90?'Óptimo':'Revisar',up:cumplProm>=90?1:0},
+    {l:'Días registrados',v:D.length,ic:'fa-calendar-day',c:'yellow'},
+    {l:'Convenios',v:uniq(D.map(r=>r.tipo)).length,ic:'fa-handshake',c:'purple'}
   ]);
-  const pm=groupCount(D,r=>r.mes);const meses=sortMes(Object.keys(pm));
-  mkChart('rec-mes',{type:'bar',data:{labels:meses,datasets:[{data:meses.map(m=>pm[m]),backgroundColor:CO.blue,borderRadius:8,maxBarThickness:60}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
-  const diaMes=pick(ms('rec-dia-mes'),mes);const Ddia=Bveh.filter(r=>!diaMes.length||diaMes.includes(r.mes));
-  const fechas=uniq(Ddia.map(r=>r.fecha)).sort((a,b)=>(parseD(a)||0)-(parseD(b)||0));const pf=groupCount(Ddia,r=>r.fecha);
-  mkChart('rec-dia',{type:'line',data:{labels:fechas,datasets:[{label:'Guías',data:fechas.map(f=>pf[f]),borderColor:CO.green,backgroundColor:gradFill('#22C55E'),fill:true,tension:.35,borderWidth:2.4,pointRadius:2}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
-  const semMes=pick(ms('rec-sem-mes'),mes);const Dsem=Bveh.filter(r=>!semMes.length||semMes.includes(r.mes));
-  mkChart('rec-sem',{type:'bar',data:{labels:DOW_LBL,datasets:[{label:'Guías',data:byDow(Dsem),backgroundColor:CO.purple,borderRadius:7,maxBarThickness:54}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
-  const tipoMes=pick(ms('rec-tipo-mes'),mes);const Dtipo=Bveh.filter(r=>!tipoMes.length||tipoMes.includes(r.mes));
-  const pt=sortObj(groupCount(Dtipo,r=>r.tipo));
-  mkChart('rec-tipo',{type:'bar',data:{labels:Object.keys(pt),datasets:[{data:Object.values(pt),backgroundColor:palette(Object.keys(pt).length),borderRadius:6}]},options:{...BC.base,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
-  renderTable('rec-table',['MES','FECHA','TIPO','GUÍA','DÍA SEMANA','VEHÍCULO'],
-    [...D].sort((a,b)=>(b._d||0)-(a._d||0)).slice(0,500).map(r=>[r.mes,r.fecha,r.tipo,r.guia,r.diaSem,r.vehiculo]));
-  const cEl=document.getElementById('rec-count');if(cEl)cEl.textContent=D.length.toLocaleString('es')+' guías'+(D.length>500?' (mostrando 500)':'');
+  const mesesAll=sortMes(uniq(data.map(r=>r.mes)));
+  const base=data.filter(r=>!tipo.length||tipo.includes(r.tipo));
+  const sumM=(m,f)=>base.filter(r=>r.mes===m).reduce((a,r)=>a+r[f],0);
+  mkChart(ids.mes,{type:'bar',data:{labels:mesesAll,datasets:[
+    {label:'Efectivo',data:mesesAll.map(m=>sumM(m,'efectivo')),backgroundColor:CO.green,borderRadius:6,maxBarThickness:44},
+    {label:'Novedad',data:mesesAll.map(m=>sumM(m,'novedad')),backgroundColor:CO.red,borderRadius:6,maxBarThickness:44}
+  ]},options:{...BC.base,plugins:{legend:legBase},scales:{x:BC.grid,y:BC.grid}}});
+  const avgPctM=m=>{const dd=base.filter(r=>r.mes===m);return dd.length?dd.reduce((a,r)=>a+r.pct,0)/dd.length:0;};
+  mkChart(ids.cumpl,{type:'line',data:{labels:mesesAll,datasets:[{label:'% Cumplimiento',data:mesesAll.map(m=>+avgPctM(m).toFixed(1)),borderColor:CO.green,backgroundColor:gradFill('#22C55E'),fill:true,tension:.35,borderWidth:2.4,pointRadius:3}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:{...BC.grid,suggestedMax:100}}}});
+  const byTipo=sortObj(groupSum(D,r=>r.tipo,r=>r.total));
+  mkChart(ids.tipo,{type:'bar',data:{labels:Object.keys(byTipo),datasets:[{data:Object.values(byTipo),backgroundColor:palette(Object.keys(byTipo).length),borderRadius:6}]},options:{...BC.base,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
+  renderTable(ids.table,['FECHA','MES','TIPO','EFECTIVO','NOVEDAD','TOTAL','% CUMPL'],
+    [...D].sort((a,b)=>(b._d||0)-(a._d||0)).slice(0,500).map(r=>[r.fecha,r.mes,r.tipo,r.efectivo,r.novedad,r.total,cumplPill(Math.round(r.pct))]));
+  const cEl=document.getElementById(ids.count);if(cEl)cEl.textContent=D.length.toLocaleString('es')+' registros'+(D.length>500?' (mostrando 500)':'');
+  const sEl=document.getElementById(ids.stamp);if(sEl)sEl.textContent=stampNow();
+}
+function renderCM(){renderGestVeh(GMOTO,{fMes:'cm-fMes',fTipo:'cm-fTipo',kpi:'cm-kpi',mes:'cm-mes',cumpl:'cm-cumpl',tipo:'cm-tipo',table:'cm-table',count:'cm-count',stamp:'cm-stamp'},'Moto',renderCM);}
+function renderCC(){renderGestVeh(GCARRY,{fMes:'cc-fMes',fTipo:'cc-fTipo',kpi:'cc-kpi',mes:'cc-mes',cumpl:'cc-cumpl',tipo:'cc-tipo',table:'cc-table',count:'cc-count',stamp:'cc-stamp'},'Carry',renderCC);}
+
+/* ---------- CALLE 51: Novedades (carry + moto) ---------- */
+function renderCN(){
+  if(!NOVC51.length)return;
+  const allMeses=sortMes(uniq(NOVC51.map(r=>r.mes)));
+  MultiSelect.setOptions('cn-fMes',allMeses,{placeholder:'Todos',onChange:renderCN});
+  MultiSelect.setOptions('cn-fTipo',uniq(NOVC51.map(r=>r.tipo)),{placeholder:'Todos',onChange:renderCN});
+  document.querySelectorAll('#cn-vehseg .seg-btn').forEach(b=>b.classList.toggle('active',(b.dataset.veh||'')===cnVeh));
+  const mes=ms('cn-fMes'),tipo=ms('cn-fTipo');
+  const D=NOVC51.filter(r=>(!cnVeh||r.vehiculo===cnVeh)&&(!mes.length||mes.includes(r.mes))&&(!tipo.length||tipo.includes(r.tipo)));
+  const total=D.reduce((a,r)=>a+r.cant,0);
+  const moto=D.filter(r=>r.vehiculo==='MOTO').reduce((a,r)=>a+r.cant,0);
+  const carry=D.filter(r=>r.vehiculo==='CARRY').reduce((a,r)=>a+r.cant,0);
+  kpiCards('cn-kpi',[
+    {l:'Total novedades',v:total,ic:'fa-triangle-exclamation',c:'red'},
+    {l:'Tipos de novedad',v:uniq(D.map(r=>r.novedad)).length,ic:'fa-tags',c:'purple'},
+    {l:'Moto',v:moto,ic:'fa-motorcycle',c:'blue'},
+    {l:'Carry',v:carry,ic:'fa-truck',c:'green'},
+    {l:'Convenios',v:uniq(D.map(r=>r.tipo)).length,ic:'fa-handshake',c:'yellow'}
+  ]);
+  const byNov=sortObj(groupSum(D,r=>r.novedad,r=>r.cant));
+  const topNov=Object.entries(byNov).slice(0,14);
+  mkChart('cn-tipo',{type:'bar',data:{labels:topNov.map(e=>e[0]),datasets:[{data:topNov.map(e=>e[1]),backgroundColor:palette(topNov.length),borderRadius:6}]},options:{...BC.base,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
+  const Dveh=NOVC51.filter(r=>(!mes.length||mes.includes(r.mes))&&(!tipo.length||tipo.includes(r.tipo)));
+  const vehCount={MOTO:Dveh.filter(r=>r.vehiculo==='MOTO').reduce((a,r)=>a+r.cant,0),CARRY:Dveh.filter(r=>r.vehiculo==='CARRY').reduce((a,r)=>a+r.cant,0)};
+  mkChart('cn-veh',{type:'doughnut',data:{labels:['Moto','Carry'],datasets:[{data:[vehCount.MOTO,vehCount.CARRY],backgroundColor:[CO.blue,CO.green],borderColor:'#0b1120',borderWidth:2}]},options:{...BC.base,plugins:{legend:legBase}}});
+  const byConv=sortObj(groupSum(D,r=>r.tipo,r=>r.cant));
+  mkChart('cn-conv',{type:'bar',data:{labels:Object.keys(byConv),datasets:[{data:Object.values(byConv),backgroundColor:palette(Object.keys(byConv).length),borderRadius:6,maxBarThickness:60}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  const mesesAll=sortMes(uniq(NOVC51.map(r=>r.mes)));
+  const byMes=mesesAll.map(m=>NOVC51.filter(r=>r.mes===m&&(!cnVeh||r.vehiculo===cnVeh)&&(!tipo.length||tipo.includes(r.tipo))).reduce((a,r)=>a+r.cant,0));
+  mkChart('cn-mes',{type:'bar',data:{labels:mesesAll,datasets:[{data:byMes,backgroundColor:CO.red,borderRadius:8,maxBarThickness:60}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  renderTable('cn-table',['MES','TIPO DE NOVEDAD','CANTIDAD','CONVENIO','VEHÍCULO'],
+    [...D].sort((a,b)=>b.cant-a.cant).slice(0,500).map(r=>[r.mes,r.novedad,r.cant,r.tipo,r.vehiculo]));
+  const cEl=document.getElementById('cn-count');if(cEl)cEl.textContent=D.length.toLocaleString('es')+' registros'+(D.length>500?' (mostrando 500)':'');
+  const sEl=document.getElementById('cn-stamp');if(sEl)sEl.textContent=stampNow();
   const ia=iaCalle51();setHTML('rec-ia-r',ia.r||'Sin datos.');setHTML('rec-ia-s',ia.s||'—');setHTML('rec-ia-a',ia.a||'—');
-  const sEl=document.getElementById('rec-stamp');if(sEl)sEl.textContent=stampNow();
 }
 
 /* ---------- MOTOR IA (resúmenes ejecutivos de Nacional y Calle 51) ---------- */
@@ -328,19 +387,44 @@ function iaNacional(){
   return{r,s,a};
 }
 function iaCalle51(){
-  const totRec=RECI.length;
-  const topTipo=Object.entries(sortObj(groupCount(RECI,r=>r.tipo)))[0]||['—',0];
-  const mot=RECI.filter(r=>r.vehiculo==='MOTORIZADO').length,car=RECI.filter(r=>r.vehiculo==='CARRY').length;
+  if(!GMOTO.length&&!GCARRY.length)return{r:'<p>Sin datos de Calle 51.</p>',s:'',a:''};
+  const sum=(arr,f)=>arr.reduce((a,r)=>a+r[f],0);
+  const avgPct=arr=>arr.length?arr.reduce((a,r)=>a+r.pct,0)/arr.length:0;
+  const efM=sum(GMOTO,'efectivo'),nvM=sum(GMOTO,'novedad'),cM=avgPct(GMOTO);
+  const efC=sum(GCARRY,'efectivo'),nvC=sum(GCARRY,'novedad'),cC=avgPct(GCARRY);
+  const topNov=Object.entries(sortObj(groupSum(NOVC51,r=>r.novedad,r=>r.cant)))[0]||['—',0];
+  const peor=cM<=cC?{l:'Moto',v:cM}:{l:'Carry',v:cC};
   const r=`<h4>Resumen ejecutivo · Calle 51</h4>
-    <p>Se recibieron <b>${totRec.toLocaleString('es')}</b> guías (${mot.toLocaleString('es')} motorizado, ${car.toLocaleString('es')} carry). Tipo de guía dominante: <b>${topTipo[0]}</b>.</p>`;
+    <p><b>Moto:</b> ${efM.toLocaleString('es')} efectivos, ${nvM.toLocaleString('es')} novedades, cumplimiento promedio <b style="color:${cM>=90?'#4ade80':cM>=80?'#facc15':'#f87171'}">${cM.toFixed(1)}%</b>. <b>Carry:</b> ${efC.toLocaleString('es')} efectivos, ${nvC.toLocaleString('es')} novedades, cumplimiento promedio <b style="color:${cC>=90?'#4ade80':cC>=80?'#facc15':'#f87171'}">${cC.toFixed(1)}%</b>.</p>
+    <p>La novedad más frecuente entre ambos vehículos es <b>${topNov[0]}</b> (${topNov[1]} casos).</p>`;
   const s=`<ul>
-    <li>Balancear la carga entre motorizado (${mot.toLocaleString('es')}) y carry (${car.toLocaleString('es')}) según volumen por zona.</li></ul>`;
-  const a=`<ul><li><span class="pill pill-g">OK</span> Recepción de guías dentro de los parámetros normales.</li></ul>`;
+    <li>Reforzar <b>${peor.l}</b>, el que tiene menor cumplimiento (${peor.v.toFixed(1)}%).</li>
+    <li>Atacar la causa raíz de <b>${topNov[0]}</b>, la novedad más frecuente.</li></ul>`;
+  const a=`<ul>${peor.v<80?`<li><span class="pill pill-r">Crítico</span> ${peor.l} con cumplimiento bajo 80%.</li>`:'<li><span class="pill pill-g">OK</span> Ambos vehículos dentro de parámetros.</li>'}</ul>`;
   return{r,s,a};
 }
 
 /* ---------- Wiring ---------- */
-const INST_RENDER={'inst-nacional':renderNacional,'inst-recibido':renderRecibido,'inst-percapita':renderPercap};
+function wireDetalleToggle(btnId,cardId,label){
+  const btn=document.getElementById(btnId);if(!btn)return;
+  btn.addEventListener('click',()=>{
+    const card=document.getElementById(cardId);
+    const opening=card.style.display==='none';
+    card.style.display=opening?'':'none';
+    btn.innerHTML=opening?'<i class="fa-solid fa-chevron-up"></i> Ocultar detalle '+label:'<i class="fa-solid fa-table-list"></i> Ver detalle '+label;
+    if(opening)card.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+}
+function wireSubtabs(groupSel,panelPrefix,onSwitch){
+  document.querySelectorAll(groupSel+' .subtab-btn').forEach(b=>b.addEventListener('click',()=>{
+    const tab=b.dataset.tab;
+    document.querySelectorAll(groupSel+' .subtab-btn').forEach(x=>x.classList.toggle('active',x===b));
+    document.querySelectorAll('[id^="'+panelPrefix+'"]').forEach(p=>p.classList.toggle('active',p.id===panelPrefix+tab));
+    if(onSwitch)onSwitch(tab);
+    setTimeout(()=>Object.values(instCharts).forEach(c=>{try{c.resize();}catch(e){}}),50);
+  }));
+}
+const INST_RENDER={'inst-nacional':renderNacional,'inst-recibido':()=>{renderCM();renderCC();renderCN();},'inst-percapita':renderPercap};
 document.querySelectorAll('.nav-item[data-view^="inst-"]').forEach(n=>n.addEventListener('click',()=>{
   ensureInst();
   if(!instLoaded)return;
@@ -351,24 +435,17 @@ document.querySelectorAll('.nav-item[data-view^="inst-"]').forEach(n=>n.addEvent
 // Nacional (los MultiSelect ya re-renderizan solos al cambiar — ver onChange en setOptions)
 const nacR=document.getElementById('nac-reset');if(nacR)nacR.addEventListener('click',()=>{nacCity='';['nac-fMes','nac-dia-city','nac-dia-mes','nac-sem-city','nac-sem-mes','nac-novmes-mes','nac-novciu-city','nac-hdia-city','nac-hdia-mes'].forEach(id=>MultiSelect.clear(id));renderNacional();});
 document.querySelectorAll('#nac-cityseg .seg-btn').forEach(b=>b.addEventListener('click',()=>{nacCity=b.dataset.city||'';renderNacional();}));
-function switchNacTab(tab){
-  nacTab=tab;
-  document.querySelectorAll('#nac-subtabs .subtab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
-  document.querySelectorAll('.subtab-panel').forEach(p=>p.classList.toggle('active',p.id==='nac-tab-'+tab));
-  setTimeout(()=>Object.values(instCharts).forEach(c=>{try{c.resize();}catch(e){}}),50);
-}
-document.querySelectorAll('#nac-subtabs .subtab-btn').forEach(b=>b.addEventListener('click',()=>switchNacTab(b.dataset.tab)));
-const nacDetBtn=document.getElementById('nac-detalle-toggle');
-if(nacDetBtn)nacDetBtn.addEventListener('click',()=>{
-  const card=document.getElementById('nac-detalle-card');
-  const opening=card.style.display==='none';
-  card.style.display=opening?'':'none';
-  nacDetBtn.innerHTML=opening?'<i class="fa-solid fa-chevron-up"></i> Ocultar detalle nacional':'<i class="fa-solid fa-table-list"></i> Ver detalle nacional';
-  if(opening)card.scrollIntoView({behavior:'smooth',block:'start'});
-});
-// Recibido
-const recR=document.getElementById('rec-reset');if(recR)recR.addEventListener('click',()=>{['rec-fMes','rec-fTipo','rec-dia-mes','rec-sem-mes','rec-tipo-mes'].forEach(id=>MultiSelect.clear(id));renderRecibido();});
-document.querySelectorAll('#rec-toggle .seg-btn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#rec-toggle .seg-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');recVeh=b.dataset.veh;renderRecibido();}));
+wireSubtabs('#nac-subtabs','nac-tab-',tab=>{nacTab=tab;});
+wireDetalleToggle('nac-detalle-toggle','nac-detalle-card','nacional');
+// Calle 51 — Moto / Carry / Novedades
+const cmR=document.getElementById('cm-reset');if(cmR)cmR.addEventListener('click',()=>{['cm-fMes','cm-fTipo'].forEach(id=>MultiSelect.clear(id));renderCM();});
+const ccR=document.getElementById('cc-reset');if(ccR)ccR.addEventListener('click',()=>{['cc-fMes','cc-fTipo'].forEach(id=>MultiSelect.clear(id));renderCC();});
+const cnR=document.getElementById('cn-reset');if(cnR)cnR.addEventListener('click',()=>{['cn-fMes','cn-fTipo'].forEach(id=>MultiSelect.clear(id));renderCN();});
+document.querySelectorAll('#cn-vehseg .seg-btn').forEach(b=>b.addEventListener('click',()=>{cnVeh=b.dataset.veh||'';renderCN();}));
+wireSubtabs('#rec-subtabs','rec-tab-',tab=>{recTab=tab;});
+wireDetalleToggle('cm-detalle-toggle','cm-detalle-card','Moto');
+wireDetalleToggle('cc-detalle-toggle','cc-detalle-card','Carry');
+wireDetalleToggle('cn-detalle-toggle','cn-detalle-card','novedades');
 // Per Cápita
 const ipcR=document.getElementById('ipc-reset');if(ipcR)ipcR.addEventListener('click',()=>{['ipc-fMes','ipc-fCiudad','ipc-fDrog'].forEach(id=>MultiSelect.clear(id));renderPercap();});
 
