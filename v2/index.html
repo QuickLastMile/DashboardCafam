@@ -116,65 +116,43 @@
         <div class="card" id="nac-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle nacional</h3><div class="sub" id="nac-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="nac-table"></table></div></div></div>
       </section>
 
-      <!-- ===== CALLE 51 (hoja "CALLE 51": Gestión Moto, Gestión Carry, Novedades) ===== -->
+      <!-- ===== CALLE 51 (hoja "CALLE 51": Gestión Moto + Carry, Novedades) ===== -->
       <section class="view" id="inst-recibido">
+        <div class="ins-bar">
+          <div class="fld"><label>Mes</label><div class="msel" id="c51-fMes"></div></div>
+          <div class="fld"><label>Convenio</label><div class="msel" id="c51-fTipo"></div></div>
+          <button class="ins-reset" id="c51-reset"><i class="fa-solid fa-rotate-left"></i> Limpiar</button>
+          <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="c51-stamp">--</span></span></div>
+        </div>
+        <div class="seg-toggle sm" id="c51-vehseg">
+          <button class="seg-btn active" data-veh=""><i class="fa-solid fa-layer-group"></i> Todo</button>
+          <button class="seg-btn" data-veh="MOTO"><i class="fa-solid fa-motorcycle"></i> Moto</button>
+          <button class="seg-btn" data-veh="CARRY"><i class="fa-solid fa-truck"></i> Carry</button>
+        </div>
+        <div class="kpi-grid" id="c51-kpi"></div>
+
         <div class="subtabs" id="rec-subtabs">
-          <button class="subtab-btn active" data-tab="moto"><i class="fa-solid fa-motorcycle"></i> Moto</button>
-          <button class="subtab-btn" data-tab="carry"><i class="fa-solid fa-truck"></i> Carry</button>
+          <button class="subtab-btn active" data-tab="cantidad"><i class="fa-solid fa-box"></i> Cantidad</button>
           <button class="subtab-btn" data-tab="novedades"><i class="fa-solid fa-triangle-exclamation"></i> Novedades</button>
         </div>
 
-        <!-- ----- MOTO ----- -->
-        <div class="subtab-panel active" id="rec-tab-moto">
-          <div class="ins-bar">
-            <div class="fld"><label>Mes</label><div class="msel" id="cm-fMes"></div></div>
-            <div class="fld"><label>Convenio</label><div class="msel" id="cm-fTipo"></div></div>
-            <button class="ins-reset" id="cm-reset"><i class="fa-solid fa-rotate-left"></i> Limpiar</button>
-            <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="cm-stamp">--</span></span></div>
-          </div>
-          <div class="kpi-grid" id="cm-kpi"></div>
-          <div class="card"><div class="card-h"><div><h3>Efectivo y novedad por mes</h3><div class="sub">Gestión de entrega — Moto</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="cm-mes"></canvas></div></div></div>
+        <!-- ----- CANTIDAD ----- -->
+        <div class="subtab-panel active" id="rec-tab-cantidad">
+          <div class="card"><div class="card-h"><div><h3>Efectivo y novedad por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="c51-mes"></canvas></div></div></div>
           <div class="grid-2">
-            <div class="card"><div class="card-h"><div><h3>% de cumplimiento por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="cm-cumpl"></canvas></div></div></div>
-            <div class="card"><div class="card-h"><div><h3>Entregas por convenio</h3><div class="sub">Distribución por tipo</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="cm-tipo"></canvas></div></div></div>
+            <div class="card"><div class="card-h"><div><h3>% de cumplimiento por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="c51-cumpl"></canvas></div></div></div>
+            <div class="card"><div class="card-h"><div><h3>Entregas por convenio</h3><div class="sub">Distribución por tipo — hoja CALLE 51</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="c51-tipo"></canvas></div></div></div>
           </div>
-          <div class="detalle-toggle-row"><button class="ins-reset detalle-toggle" id="cm-detalle-toggle"><i class="fa-solid fa-table-list"></i> Ver detalle Moto</button></div>
-          <div class="card" id="cm-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle Moto</h3><div class="sub" id="cm-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="cm-table"></table></div></div></div>
-        </div>
-
-        <!-- ----- CARRY ----- -->
-        <div class="subtab-panel" id="rec-tab-carry">
-          <div class="ins-bar">
-            <div class="fld"><label>Mes</label><div class="msel" id="cc-fMes"></div></div>
-            <div class="fld"><label>Convenio</label><div class="msel" id="cc-fTipo"></div></div>
-            <button class="ins-reset" id="cc-reset"><i class="fa-solid fa-rotate-left"></i> Limpiar</button>
-            <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="cc-stamp">--</span></span></div>
-          </div>
-          <div class="kpi-grid" id="cc-kpi"></div>
-          <div class="card"><div class="card-h"><div><h3>Efectivo y novedad por mes</h3><div class="sub">Gestión de entrega — Carry</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="cc-mes"></canvas></div></div></div>
-          <div class="grid-2">
-            <div class="card"><div class="card-h"><div><h3>% de cumplimiento por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="cc-cumpl"></canvas></div></div></div>
-            <div class="card"><div class="card-h"><div><h3>Entregas por convenio</h3><div class="sub">Distribución por tipo</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="cc-tipo"></canvas></div></div></div>
-          </div>
-          <div class="detalle-toggle-row"><button class="ins-reset detalle-toggle" id="cc-detalle-toggle"><i class="fa-solid fa-table-list"></i> Ver detalle Carry</button></div>
-          <div class="card" id="cc-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle Carry</h3><div class="sub" id="cc-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="cc-table"></table></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Cantidad por día — tendencia</h3><div class="sub">Volumen diario (efectivo + novedad)</div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="c51-dia"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Cantidad por día de la semana</h3><div class="sub">Para identificar el día más movido</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="c51-sem"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Guías por tipo de convenio</h3><div class="sub">Detalle guía a guía — hoja RECIBIDO CALLE 51</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="c51-tipodet"></canvas></div></div></div>
+          <div class="detalle-toggle-row"><button class="ins-reset detalle-toggle" id="c51-detalle-toggle"><i class="fa-solid fa-table-list"></i> Ver detalle Calle 51</button></div>
+          <div class="card" id="c51-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle Calle 51</h3><div class="sub" id="c51-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="c51-table"></table></div></div></div>
         </div>
 
         <!-- ----- NOVEDADES (carry + moto) ----- -->
         <div class="subtab-panel" id="rec-tab-novedades">
-          <div class="ins-bar">
-            <div class="fld"><label>Mes</label><div class="msel" id="cn-fMes"></div></div>
-            <div class="fld"><label>Convenio</label><div class="msel" id="cn-fTipo"></div></div>
-            <button class="ins-reset" id="cn-reset"><i class="fa-solid fa-rotate-left"></i> Limpiar</button>
-            <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="cn-stamp">--</span></span></div>
-          </div>
-          <div class="seg-toggle sm" id="cn-vehseg">
-            <button class="seg-btn active" data-veh=""><i class="fa-solid fa-layer-group"></i> Ambos</button>
-            <button class="seg-btn" data-veh="MOTO"><i class="fa-solid fa-motorcycle"></i> Moto</button>
-            <button class="seg-btn" data-veh="CARRY"><i class="fa-solid fa-truck"></i> Carry</button>
-          </div>
-          <div class="kpi-grid" id="cn-kpi"></div>
-          <div class="card"><div class="card-h"><div><h3>Tipo de novedad</h3><div class="sub">Barras horizontales para lectura clara</div></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="cn-tipo"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Tipo de novedad</h3><div class="sub">En "Todo" se diferencia Moto vs Carry</div></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="cn-tipo"></canvas></div></div></div>
           <div class="grid-2">
             <div class="card"><div class="card-h"><div><h3>Novedades por vehículo</h3><div class="sub">Moto vs Carry</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="cn-veh"></canvas></div></div></div>
             <div class="card"><div class="card-h"><div><h3>Novedades por convenio</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="cn-conv"></canvas></div></div></div>
@@ -257,7 +235,7 @@ document.getElementById('refreshBtn').addEventListener('click',()=>location.relo
 <!-- UI compartida: filtros multi-selección + expandir/contraer gráficas -->
 <script src="assets/ui.js?v=4"></script>
 <!-- Motor de datos Institucional (carga la hoja al entrar) -->
-<script src="assets/institucional.js?v=6"></script>
+<script src="assets/institucional.js?v=7"></script>
 <script>if(window.ensureInst)ensureInst();</script>
 </body>
 </html>

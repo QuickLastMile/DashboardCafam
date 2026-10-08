@@ -11,12 +11,12 @@ const INST_CFG={
 };
 
 /* ---------- Estado ---------- */
-let NAC=[],NOVNAC=[],GMOTO=[],GCARRY=[],NOVC51=[],PCAP=[];
+let NAC=[],NOVNAC=[],GMOTO=[],GCARRY=[],NOVC51=[],RECDET=[],PCAP=[];
 let instCharts={},instLoaded=false,instLoading=false;
 let nacCity='';
 let nacTab='cantidad';
-let cnVeh='';
-let recTab='moto';
+let c51Veh='';
+let recTab='cantidad';
 
 /* ---------- Utilidades ---------- */
 const COLORS={blue:'#2563EB',green:'#22C55E',yellow:'#EAB308',red:'#EF4444',gray:'#94A3B8',purple:'#A855F7'};
@@ -109,6 +109,14 @@ function parseGestVeh(rows,off){
   }
   return out;
 }
+/* Detalle guía a guía — hoja "RECIBIDO CALLE 51" (más fino que la hoja
+   "CALLE 51": trae el convenio TIPO por cada guía individual). */
+function parseRecDet(raw){return (raw||[]).map(function(r){
+  const fecha=(r.FECHA||'').trim();const d=parseD(fecha);
+  return {fecha,mes:(r.MES||'').trim().toUpperCase(),tipo:(r.TIPO||'').trim(),
+    guia:(r['GUÍA']||'').toString().trim(),vehiculo:(r.VEHICULO||'').trim().toUpperCase(),
+    total:num(r.TOTAL)||1,_d:+(d||0)};
+}).filter(function(x){return x.fecha;});}
 function parseNovC51(rows){
   const out=[];
   for(let i=1;i<rows.length;i++){const r=rows[i];if(!r)continue;
@@ -189,19 +197,21 @@ function renderPercap(){
 async function ensureInst(){
   if(instLoaded||instLoading)return;
   instLoading=true;
-  ['nac-count','cm-count','cc-count','cn-count'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='Cargando datos de Google Sheets…';});
+  ['nac-count','c51-count','cn-count'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='Cargando datos de Google Sheets…';});
   try{
-    const [cn,nn,c51,pc]=await Promise.all([
+    const [cn,nn,c51,rd,pc]=await Promise.all([
       fetchInst('CANT NACIONAL',false),
       fetchInst('NOVEDADES NACIONAL',false),
       fetchInst('CALLE 51',false),
+      fetchInst('RECIBIDO CALLE 51',true).catch(()=>[]),
       fetchInst('PER CAPITA',true).catch(()=>[])
     ]);
     NAC=parseNacional(cn);NOVNAC=parseNovNac(nn);
     GMOTO=parseGestVeh(c51,0);GCARRY=parseGestVeh(c51,9);NOVC51=parseNovC51(c51);
+    RECDET=parseRecDet(rd);
     PCAP=parsePercap(pc);
     instLoaded=true;
-    renderNacional();renderCM();renderCC();renderCN();renderPercap();
+    renderNacional();renderC51();renderPercap();
     setTimeout(()=>Object.values(instCharts).forEach(ch=>{try{ch.resize();}catch(e){}}),160);
   }catch(e){console.warn('Institucional: fallo de carga',e);const el=document.getElementById('nac-count');if(el)el.textContent='Error al conectar con Google Sheets (verifica que la hoja sea pública: "Cualquiera con el enlace · Lector").';}
   instLoading=false;
@@ -230,7 +240,6 @@ function renderNacional(){
     {l:'Total general',v:tot,ic:'fa-boxes-stacked',c:'blue'},
     {l:'% Cumplimiento',v:cumpl,suf:'%',dec:1,ic:'fa-gauge-high',c:cumpl>=90?'green':cumpl>=80?'yellow':'red',t:cumpl>=90?'Óptimo':'Revisar',up:cumpl>=90?1:0},
     {l:'Hora promedio gral.',txt:hhmm(avgHora),ic:'fa-clock',c:'yellow',t:'Hora militar (24h)',up:1},
-    {l:'Ciudades',v:uniq(D.map(r=>r.city)).length,ic:'fa-city',c:'purple'},
     {l:'Día pico',v:pico[1],suf:' ent',ic:'fa-arrow-up-right-dots',c:'green',t:pico[0],up:1}
   ]);
   const cities=city.length?city:uniq(NAC.map(r=>r.city));
@@ -285,17 +294,20 @@ function renderNacional(){
   const sEl=document.getElementById('nac-stamp');if(sEl)sEl.textContent=stampNow();
 }
 
-/* ---------- CALLE 51: Gestión Moto / Carry (misma forma de datos) ---------- */
-function renderGestVeh(data,ids,label,renderFn){
-  if(!data.length){const k=document.getElementById(ids.kpi);if(k)k.innerHTML='<div class="ind-loading">Sin datos de '+label+' — verifica la hoja "CALLE 51".</div>';return;}
-  const allMeses=sortMes(uniq(data.map(r=>r.mes)));
-  MultiSelect.setOptions(ids.fMes,allMeses,{placeholder:'Todos',onChange:renderFn});
-  MultiSelect.setOptions(ids.fTipo,uniq(data.map(r=>r.tipo)),{placeholder:'Todos',onChange:renderFn});
-  const mes=ms(ids.fMes),tipo=ms(ids.fTipo);
-  const D=data.filter(r=>(!mes.length||mes.includes(r.mes))&&(!tipo.length||tipo.includes(r.tipo)));
+/* ---------- CALLE 51 ---------- */
+function renderC51(){
+  if(!GMOTO.length&&!GCARRY.length){const k=document.getElementById('c51-kpi');if(k)k.innerHTML='<div class="ind-loading">Sin datos — verifica la hoja "CALLE 51".</div>';return;}
+  const ALLG=[...GMOTO.map(r=>({...r,vehiculo:'MOTO'})),...GCARRY.map(r=>({...r,vehiculo:'CARRY'}))];
+  const allMeses=sortMes(uniq(ALLG.map(r=>r.mes)));
+  MultiSelect.setOptions('c51-fMes',allMeses,{placeholder:'Todos',onChange:renderC51});
+  MultiSelect.setOptions('c51-fTipo',uniq(ALLG.map(r=>r.tipo)),{placeholder:'Todos',onChange:renderC51});
+  document.querySelectorAll('#c51-vehseg .seg-btn').forEach(b=>b.classList.toggle('active',(b.dataset.veh||'')===c51Veh));
+  const mes=ms('c51-fMes'),tipo=ms('c51-fTipo');
+  const baseVeh=c51Veh?ALLG.filter(r=>r.vehiculo===c51Veh):ALLG;
+  const D=baseVeh.filter(r=>(!mes.length||mes.includes(r.mes))&&(!tipo.length||tipo.includes(r.tipo)));
   const ef=D.reduce((a,r)=>a+r.efectivo,0),nv=D.reduce((a,r)=>a+r.novedad,0),tot=D.reduce((a,r)=>a+r.total,0);
   const cumplProm=D.length?D.reduce((a,r)=>a+r.pct,0)/D.length:0;
-  kpiCards(ids.kpi,[
+  kpiCards('c51-kpi',[
     {l:'Total efectivo',v:ef,ic:'fa-circle-check',c:'green'},
     {l:'Total novedades',v:nv,ic:'fa-triangle-exclamation',c:'red'},
     {l:'Total general',v:tot,ic:'fa-boxes-stacked',c:'blue'},
@@ -303,55 +315,74 @@ function renderGestVeh(data,ids,label,renderFn){
     {l:'Días registrados',v:D.length,ic:'fa-calendar-day',c:'yellow'},
     {l:'Convenios',v:uniq(D.map(r=>r.tipo)).length,ic:'fa-handshake',c:'purple'}
   ]);
-  const mesesAll=sortMes(uniq(data.map(r=>r.mes)));
-  const base=data.filter(r=>!tipo.length||tipo.includes(r.tipo));
-  const sumM=(m,f)=>base.filter(r=>r.mes===m).reduce((a,r)=>a+r[f],0);
-  mkChart(ids.mes,{type:'bar',data:{labels:mesesAll,datasets:[
+  renderC51Cantidad(ALLG,baseVeh,D,mes,tipo);
+  renderCN(mes,tipo);
+  const sEl=document.getElementById('c51-stamp');if(sEl)sEl.textContent=stampNow();
+}
+function renderC51Cantidad(ALLG,baseVeh,D,mes,tipo){
+  const mesesAll=sortMes(uniq(ALLG.map(r=>r.mes)));
+  const filteredByTipo=baseVeh.filter(r=>!tipo.length||tipo.includes(r.tipo));
+  const sumM=(m,f)=>filteredByTipo.filter(r=>r.mes===m).reduce((a,r)=>a+r[f],0);
+  mkChart('c51-mes',{type:'bar',data:{labels:mesesAll,datasets:[
     {label:'Efectivo',data:mesesAll.map(m=>sumM(m,'efectivo')),backgroundColor:CO.green,borderRadius:6,maxBarThickness:44},
     {label:'Novedad',data:mesesAll.map(m=>sumM(m,'novedad')),backgroundColor:CO.red,borderRadius:6,maxBarThickness:44}
   ]},options:{...BC.base,plugins:{legend:legBase},scales:{x:BC.grid,y:BC.grid}}});
-  const avgPctM=m=>{const dd=base.filter(r=>r.mes===m);return dd.length?dd.reduce((a,r)=>a+r.pct,0)/dd.length:0;};
-  mkChart(ids.cumpl,{type:'line',data:{labels:mesesAll,datasets:[{label:'% Cumplimiento',data:mesesAll.map(m=>+avgPctM(m).toFixed(1)),borderColor:CO.green,backgroundColor:gradFill('#22C55E'),fill:true,tension:.35,borderWidth:2.4,pointRadius:3}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:{...BC.grid,suggestedMax:100}}}});
+  const avgPctM=m=>{const dd=filteredByTipo.filter(r=>r.mes===m);return dd.length?dd.reduce((a,r)=>a+r.pct,0)/dd.length:0;};
+  mkChart('c51-cumpl',{type:'line',data:{labels:mesesAll,datasets:[{label:'% Cumplimiento',data:mesesAll.map(m=>+avgPctM(m).toFixed(1)),borderColor:CO.green,backgroundColor:gradFill('#22C55E'),fill:true,tension:.35,borderWidth:2.4,pointRadius:3}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:{...BC.grid,suggestedMax:100}}}});
   const byTipo=sortObj(groupSum(D,r=>r.tipo,r=>r.total));
-  mkChart(ids.tipo,{type:'bar',data:{labels:Object.keys(byTipo),datasets:[{data:Object.values(byTipo),backgroundColor:palette(Object.keys(byTipo).length),borderRadius:6}]},options:{...BC.base,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
-  renderTable(ids.table,['FECHA','MES','TIPO','EFECTIVO','NOVEDAD','TOTAL','% CUMPL'],
-    [...D].sort((a,b)=>(b._d||0)-(a._d||0)).slice(0,500).map(r=>[r.fecha,r.mes,r.tipo,r.efectivo,r.novedad,r.total,cumplPill(Math.round(r.pct))]));
-  const cEl=document.getElementById(ids.count);if(cEl)cEl.textContent=D.length.toLocaleString('es')+' registros'+(D.length>500?' (mostrando 500)':'');
-  const sEl=document.getElementById(ids.stamp);if(sEl)sEl.textContent=stampNow();
+  mkChart('c51-tipo',{type:'bar',data:{labels:Object.keys(byTipo),datasets:[{data:Object.values(byTipo),backgroundColor:palette(Object.keys(byTipo).length),borderRadius:6}]},options:{...BC.base,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
+  const porFecha=groupSum(D,r=>r.fecha,r=>r.total);
+  const fechas=uniq(D.map(r=>r.fecha)).sort((a,b)=>(parseD(a)||0)-(parseD(b)||0));
+  mkChart('c51-dia',{type:'line',data:{labels:fechas,datasets:[{label:'Total',data:fechas.map(f=>porFecha[f]),borderColor:CO.blue,backgroundColor:gradFill('#2563EB'),fill:true,tension:.3,borderWidth:2.2,pointRadius:1.5}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  mkChart('c51-sem',{type:'bar',data:{labels:DOW_LBL,datasets:[{label:'Total',data:byDow(D,r=>r.total),backgroundColor:CO.purple,borderRadius:7,maxBarThickness:54}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  const RDbase=c51Veh?RECDET.filter(r=>r.vehiculo===c51Veh):RECDET;
+  const RDf=RDbase.filter(r=>(!mes.length||mes.includes(r.mes))&&(!tipo.length||tipo.includes(r.tipo)));
+  const byTipoDet=sortObj(groupCount(RDf,r=>r.tipo));
+  if(Object.keys(byTipoDet).length){
+    mkChart('c51-tipodet',{type:'bar',data:{labels:Object.keys(byTipoDet),datasets:[{data:Object.values(byTipoDet),backgroundColor:palette(Object.keys(byTipoDet).length),borderRadius:6}]},options:{...BC.base,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
+  }else if(instCharts['c51-tipodet']){instCharts['c51-tipodet'].destroy();delete instCharts['c51-tipodet'];}
+  renderTable('c51-table',['FECHA','MES','TIPO','VEHÍCULO','EFECTIVO','NOVEDAD','TOTAL','% CUMPL'],
+    [...D].sort((a,b)=>(b._d||0)-(a._d||0)).slice(0,500).map(r=>[r.fecha,r.mes,r.tipo,r.vehiculo,r.efectivo,r.novedad,r.total,cumplPill(Math.round(r.pct))]));
+  const cEl=document.getElementById('c51-count');if(cEl)cEl.textContent=D.length.toLocaleString('es')+' registros'+(D.length>500?' (mostrando 500)':'');
 }
-function renderCM(){renderGestVeh(GMOTO,{fMes:'cm-fMes',fTipo:'cm-fTipo',kpi:'cm-kpi',mes:'cm-mes',cumpl:'cm-cumpl',tipo:'cm-tipo',table:'cm-table',count:'cm-count',stamp:'cm-stamp'},'Moto',renderCM);}
-function renderCC(){renderGestVeh(GCARRY,{fMes:'cc-fMes',fTipo:'cc-fTipo',kpi:'cc-kpi',mes:'cc-mes',cumpl:'cc-cumpl',tipo:'cc-tipo',table:'cc-table',count:'cc-count',stamp:'cc-stamp'},'Carry',renderCC);}
 
-/* ---------- CALLE 51: Novedades (carry + moto) ---------- */
-function renderCN(){
+/* ---------- CALLE 51: Novedades (carry + moto) — comparte filtros con Cantidad ---------- */
+function renderCN(mes,tipo){
   if(!NOVC51.length)return;
-  const allMeses=sortMes(uniq(NOVC51.map(r=>r.mes)));
-  MultiSelect.setOptions('cn-fMes',allMeses,{placeholder:'Todos',onChange:renderCN});
-  MultiSelect.setOptions('cn-fTipo',uniq(NOVC51.map(r=>r.tipo)),{placeholder:'Todos',onChange:renderCN});
-  document.querySelectorAll('#cn-vehseg .seg-btn').forEach(b=>b.classList.toggle('active',(b.dataset.veh||'')===cnVeh));
-  const mes=ms('cn-fMes'),tipo=ms('cn-fTipo');
-  const D=NOVC51.filter(r=>(!cnVeh||r.vehiculo===cnVeh)&&(!mes.length||mes.includes(r.mes))&&(!tipo.length||tipo.includes(r.tipo)));
-  const total=D.reduce((a,r)=>a+r.cant,0);
-  const moto=D.filter(r=>r.vehiculo==='MOTO').reduce((a,r)=>a+r.cant,0);
-  const carry=D.filter(r=>r.vehiculo==='CARRY').reduce((a,r)=>a+r.cant,0);
-  kpiCards('cn-kpi',[
-    {l:'Total novedades',v:total,ic:'fa-triangle-exclamation',c:'red'},
-    {l:'Tipos de novedad',v:uniq(D.map(r=>r.novedad)).length,ic:'fa-tags',c:'purple'},
-    {l:'Moto',v:moto,ic:'fa-motorcycle',c:'blue'},
-    {l:'Carry',v:carry,ic:'fa-truck',c:'green'},
-    {l:'Convenios',v:uniq(D.map(r=>r.tipo)).length,ic:'fa-handshake',c:'yellow'}
-  ]);
-  const byNov=sortObj(groupSum(D,r=>r.novedad,r=>r.cant));
-  const topNov=Object.entries(byNov).slice(0,14);
-  mkChart('cn-tipo',{type:'bar',data:{labels:topNov.map(e=>e[0]),datasets:[{data:topNov.map(e=>e[1]),backgroundColor:palette(topNov.length),borderRadius:6}]},options:{...BC.base,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
-  const Dveh=NOVC51.filter(r=>(!mes.length||mes.includes(r.mes))&&(!tipo.length||tipo.includes(r.tipo)));
-  const vehCount={MOTO:Dveh.filter(r=>r.vehiculo==='MOTO').reduce((a,r)=>a+r.cant,0),CARRY:Dveh.filter(r=>r.vehiculo==='CARRY').reduce((a,r)=>a+r.cant,0)};
+  const D=NOVC51.filter(r=>(!c51Veh||r.vehiculo===c51Veh)&&(!mes.length||mes.includes(r.mes))&&(!tipo.length||tipo.includes(r.tipo)));
+  const showSplit=!c51Veh; // "Todo" -> diferenciar Moto vs Carry en vez de mezclar
+  const byNovTotal=sortObj(groupSum(D,r=>r.novedad,r=>r.cant));
+  const topNov=Object.keys(byNovTotal).slice(0,12);
+  if(showSplit){
+    mkChart('cn-tipo',{type:'bar',data:{labels:topNov,datasets:[
+      {label:'Moto',data:topNov.map(n=>D.filter(r=>r.novedad===n&&r.vehiculo==='MOTO').reduce((a,r)=>a+r.cant,0)),backgroundColor:CO.blue,borderRadius:5,stack:'s'},
+      {label:'Carry',data:topNov.map(n=>D.filter(r=>r.novedad===n&&r.vehiculo==='CARRY').reduce((a,r)=>a+r.cant,0)),backgroundColor:CO.green,borderRadius:5,stack:'s'}
+    ]},options:{...BC.base,indexAxis:'y',plugins:{legend:legBase},scales:{x:{...BC.grid,stacked:true},y:{...BC.grid,stacked:true,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
+  }else{
+    mkChart('cn-tipo',{type:'bar',data:{labels:topNov,datasets:[{data:topNov.map(n=>byNovTotal[n]),backgroundColor:palette(topNov.length),borderRadius:6}]},options:{...BC.base,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
+  }
+  const vehCount={MOTO:D.filter(r=>r.vehiculo==='MOTO').reduce((a,r)=>a+r.cant,0),CARRY:D.filter(r=>r.vehiculo==='CARRY').reduce((a,r)=>a+r.cant,0)};
   mkChart('cn-veh',{type:'doughnut',data:{labels:['Moto','Carry'],datasets:[{data:[vehCount.MOTO,vehCount.CARRY],backgroundColor:[CO.blue,CO.green],borderColor:'#0b1120',borderWidth:2}]},options:{...BC.base,plugins:{legend:legBase}}});
-  const byConv=sortObj(groupSum(D,r=>r.tipo,r=>r.cant));
-  mkChart('cn-conv',{type:'bar',data:{labels:Object.keys(byConv),datasets:[{data:Object.values(byConv),backgroundColor:palette(Object.keys(byConv).length),borderRadius:6,maxBarThickness:60}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  const byConvTotal=sortObj(groupSum(D,r=>r.tipo,r=>r.cant));
+  const convLabels=Object.keys(byConvTotal);
+  if(showSplit){
+    mkChart('cn-conv',{type:'bar',data:{labels:convLabels,datasets:[
+      {label:'Moto',data:convLabels.map(t=>D.filter(r=>r.tipo===t&&r.vehiculo==='MOTO').reduce((a,r)=>a+r.cant,0)),backgroundColor:CO.blue,borderRadius:6,stack:'s',maxBarThickness:60},
+      {label:'Carry',data:convLabels.map(t=>D.filter(r=>r.tipo===t&&r.vehiculo==='CARRY').reduce((a,r)=>a+r.cant,0)),backgroundColor:CO.green,borderRadius:6,stack:'s',maxBarThickness:60}
+    ]},options:{...BC.base,plugins:{legend:legBase},scales:{x:{...BC.grid,stacked:true},y:{...BC.grid,stacked:true}}}});
+  }else{
+    mkChart('cn-conv',{type:'bar',data:{labels:convLabels,datasets:[{data:Object.values(byConvTotal),backgroundColor:palette(convLabels.length),borderRadius:6,maxBarThickness:60}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  }
   const mesesAll=sortMes(uniq(NOVC51.map(r=>r.mes)));
-  const byMes=mesesAll.map(m=>NOVC51.filter(r=>r.mes===m&&(!cnVeh||r.vehiculo===cnVeh)&&(!tipo.length||tipo.includes(r.tipo))).reduce((a,r)=>a+r.cant,0));
-  mkChart('cn-mes',{type:'bar',data:{labels:mesesAll,datasets:[{data:byMes,backgroundColor:CO.red,borderRadius:8,maxBarThickness:60}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  const baseMes=NOVC51.filter(r=>(!c51Veh||r.vehiculo===c51Veh)&&(!tipo.length||tipo.includes(r.tipo)));
+  if(showSplit){
+    mkChart('cn-mes',{type:'bar',data:{labels:mesesAll,datasets:[
+      {label:'Moto',data:mesesAll.map(m=>baseMes.filter(r=>r.mes===m&&r.vehiculo==='MOTO').reduce((a,r)=>a+r.cant,0)),backgroundColor:CO.blue,borderRadius:6,maxBarThickness:40},
+      {label:'Carry',data:mesesAll.map(m=>baseMes.filter(r=>r.mes===m&&r.vehiculo==='CARRY').reduce((a,r)=>a+r.cant,0)),backgroundColor:CO.green,borderRadius:6,maxBarThickness:40}
+    ]},options:{...BC.base,plugins:{legend:legBase},scales:{x:BC.grid,y:BC.grid}}});
+  }else{
+    mkChart('cn-mes',{type:'bar',data:{labels:mesesAll,datasets:[{data:mesesAll.map(m=>baseMes.filter(r=>r.mes===m).reduce((a,r)=>a+r.cant,0)),backgroundColor:CO.red,borderRadius:8,maxBarThickness:60}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  }
   renderTable('cn-table',['MES','TIPO DE NOVEDAD','CANTIDAD','CONVENIO','VEHÍCULO'],
     [...D].sort((a,b)=>b.cant-a.cant).slice(0,500).map(r=>[r.mes,r.novedad,r.cant,r.tipo,r.vehiculo]));
   const cEl=document.getElementById('cn-count');if(cEl)cEl.textContent=D.length.toLocaleString('es')+' registros'+(D.length>500?' (mostrando 500)':'');
@@ -424,7 +455,7 @@ function wireSubtabs(groupSel,panelPrefix,onSwitch){
     setTimeout(()=>Object.values(instCharts).forEach(c=>{try{c.resize();}catch(e){}}),50);
   }));
 }
-const INST_RENDER={'inst-nacional':renderNacional,'inst-recibido':()=>{renderCM();renderCC();renderCN();},'inst-percapita':renderPercap};
+const INST_RENDER={'inst-nacional':renderNacional,'inst-recibido':renderC51,'inst-percapita':renderPercap};
 document.querySelectorAll('.nav-item[data-view^="inst-"]').forEach(n=>n.addEventListener('click',()=>{
   ensureInst();
   if(!instLoaded)return;
@@ -438,13 +469,10 @@ document.querySelectorAll('#nac-cityseg .seg-btn').forEach(b=>b.addEventListener
 wireSubtabs('#nac-subtabs','nac-tab-',tab=>{nacTab=tab;});
 wireDetalleToggle('nac-detalle-toggle','nac-detalle-card','nacional');
 // Calle 51 — Moto / Carry / Novedades
-const cmR=document.getElementById('cm-reset');if(cmR)cmR.addEventListener('click',()=>{['cm-fMes','cm-fTipo'].forEach(id=>MultiSelect.clear(id));renderCM();});
-const ccR=document.getElementById('cc-reset');if(ccR)ccR.addEventListener('click',()=>{['cc-fMes','cc-fTipo'].forEach(id=>MultiSelect.clear(id));renderCC();});
-const cnR=document.getElementById('cn-reset');if(cnR)cnR.addEventListener('click',()=>{['cn-fMes','cn-fTipo'].forEach(id=>MultiSelect.clear(id));renderCN();});
-document.querySelectorAll('#cn-vehseg .seg-btn').forEach(b=>b.addEventListener('click',()=>{cnVeh=b.dataset.veh||'';renderCN();}));
+const c51R=document.getElementById('c51-reset');if(c51R)c51R.addEventListener('click',()=>{c51Veh='';['c51-fMes','c51-fTipo'].forEach(id=>MultiSelect.clear(id));renderC51();});
+document.querySelectorAll('#c51-vehseg .seg-btn').forEach(b=>b.addEventListener('click',()=>{c51Veh=b.dataset.veh||'';renderC51();}));
 wireSubtabs('#rec-subtabs','rec-tab-',tab=>{recTab=tab;});
-wireDetalleToggle('cm-detalle-toggle','cm-detalle-card','Moto');
-wireDetalleToggle('cc-detalle-toggle','cc-detalle-card','Carry');
+wireDetalleToggle('c51-detalle-toggle','c51-detalle-card','Calle 51');
 wireDetalleToggle('cn-detalle-toggle','cn-detalle-card','novedades');
 // Per Cápita
 const ipcR=document.getElementById('ipc-reset');if(ipcR)ipcR.addEventListener('click',()=>{['ipc-fMes','ipc-fCiudad','ipc-fDrog'].forEach(id=>MultiSelect.clear(id));renderPercap();});
