@@ -146,12 +146,6 @@ function parseNovC51(rows){
 
 /* ---------- PLANTA (plantilla fija + historial de cambios, bloques lado a lado) ---------- */
 const PLANTA_CITY_COLOR={'Santa Marta':'#EAB308','Cucuta':'#22C55E','Bucaramanga':'#2563EB','Bogota':'#A855F7'};
-function plantaChangeType(text){
-  const t=String(text||'').toUpperCase();
-  if(/RETIRA|NO SE SIGUE|REDUCE|DISMINUYE|BAJA/.test(t))return 'down';
-  if(/INCREMENTO|AUMENTA|INGRESA|SUMA/.test(t))return 'up';
-  return 'info';
-}
 function parsePlanta(rows){
   const actual=[],hist=[];
   for(let i=1;i<rows.length;i++){const r=rows[i];if(!r)continue;
@@ -177,12 +171,8 @@ function renderPlanta(){
   mkChart('pl-chart',{type:'bar',data:{labels:byPunto.map(r=>r.punto),datasets:[{data:byPunto.map(r=>r.cant),backgroundColor:byPunto.map(r=>PLANTA_CITY_COLOR[r.ciudad]||CO.gray),borderRadius:6}]},options:{...BC.base,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.parsed.x+' personas — '+byPunto[c.dataIndex].ciudad}}},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
   const byCiudad=sortObj(groupSum(PLANTA,r=>r.ciudad,r=>r.cant));
   mkChart('pl-ciudad',{type:'doughnut',data:{labels:Object.keys(byCiudad),datasets:[{data:Object.values(byCiudad),backgroundColor:Object.keys(byCiudad).map(c=>PLANTA_CITY_COLOR[c]||CO.gray),borderColor:'#0b1120',borderWidth:2}]},options:{...BC.base,plugins:{legend:legBase}}});
-  const tl=document.getElementById('pl-timeline');
-  if(tl)tl.innerHTML=histSorted.length?histSorted.map(h=>{
-    const type=plantaChangeType(h.mod);
-    const icon=type==='up'?'fa-arrow-up':type==='down'?'fa-arrow-down':'fa-circle-info';
-    return `<div class="pl-item"><div class="pl-dot ${type}"><i class="fa-solid ${icon}"></i></div><div class="pl-date">${h.fecha} · ${h.mes} ${h.anio}</div><div class="pl-text">${h.mod}</div></div>`;
-  }).join(''):'<div class="ind-loading">Sin historial registrado.</div>';
+  renderTable('pl-table',['AÑO','MES','FECHA','MODIFICACIÓN'],histSorted.map(h=>[h.anio,h.mes,h.fecha,h.mod]));
+  const cEl=document.getElementById('pl-count');if(cEl)cEl.textContent=histSorted.length+' registros';
 }
 
 /* ---------- PER CÁPITA (costo operativo por entrega) ---------- */

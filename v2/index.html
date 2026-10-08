@@ -14,7 +14,7 @@
 <!-- Iconos -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-<link rel="stylesheet" href="assets/styles.css?v=9">
+<link rel="stylesheet" href="assets/styles.css?v=10">
 </head>
 <body>
 <div class="app">
@@ -194,9 +194,7 @@
           <div class="card"><div class="card-h"><div><h3>Personal por punto</h3><div class="sub">Plantilla fija actual</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="pl-chart"></canvas></div></div></div>
           <div class="card"><div class="card-h"><div><h3>Distribución por ciudad</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="pl-ciudad"></canvas></div></div></div>
         </div>
-        <div class="card"><div class="card-h"><div><h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--yellow)"></i> Historial de cambios</h3><div class="sub">Modificaciones a la plantilla a lo largo del tiempo</div></div></div><div class="card-body">
-          <div class="pl-timeline" id="pl-timeline"></div>
-        </div></div>
+        <div class="card"><div class="card-h"><div><h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--yellow)"></i> Historial de cambios</h3><div class="sub" id="pl-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="pl-table"></table></div></div></div>
       </section>
 
     </div>
@@ -238,7 +236,7 @@ document.getElementById('refreshBtn').addEventListener('click',()=>location.relo
 <!-- UI compartida: filtros multi-selección + expandir/contraer gráficas -->
 <script src="assets/ui.js?v=5"></script>
 <!-- Motor de datos Institucional (carga la hoja al entrar) -->
-<script src="assets/institucional.js?v=9"></script>
+<script src="assets/institucional.js?v=10"></script>
 <script>if(window.ensureInst)ensureInst();</script>
 </body>
 </html>
