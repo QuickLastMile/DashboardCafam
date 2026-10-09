@@ -26,12 +26,24 @@
       <div class="name">QUICK<span>Operations Intelligence</span></div>
     </div>
 
-    <div class="nav-section">Cafam Institucional</div>
-    <div class="nav-item active" data-view="inst-nacional"><i class="fa-solid fa-map-location-dot"></i><span class="nav-label">Nacional</span></div>
-    <div class="nav-item" data-view="inst-recibido"><i class="fa-solid fa-box-archive"></i><span class="nav-label">Calle 51</span></div>
-    <div class="nav-item" data-view="inst-percapita"><i class="fa-solid fa-coins"></i><span class="nav-label">Per Cápita</span></div>
-    <div class="nav-item" data-view="inst-celta"><i class="fa-solid fa-warehouse"></i><span class="nav-label">Celta-Floresta</span></div>
-    <div class="nav-item" data-view="inst-planta"><i class="fa-solid fa-people-group"></i><span class="nav-label">Planta</span></div>
+    <div class="proj-switch" id="projSwitch">
+      <button class="proj-btn active" data-project="institucional"><i class="fa-solid fa-building-columns"></i><span class="nav-label">Institucional</span></button>
+      <button class="proj-btn" data-project="comercial"><i class="fa-solid fa-store"></i><span class="nav-label">Comercial</span></button>
+    </div>
+
+    <div class="nav-group" data-project="institucional">
+      <div class="nav-section">Cafam Institucional</div>
+      <div class="nav-item active" data-view="inst-nacional"><i class="fa-solid fa-map-location-dot"></i><span class="nav-label">Nacional</span></div>
+      <div class="nav-item" data-view="inst-recibido"><i class="fa-solid fa-box-archive"></i><span class="nav-label">Calle 51</span></div>
+      <div class="nav-item" data-view="inst-percapita"><i class="fa-solid fa-coins"></i><span class="nav-label">Per Cápita</span></div>
+      <div class="nav-item" data-view="inst-celta"><i class="fa-solid fa-warehouse"></i><span class="nav-label">Celta-Floresta</span></div>
+      <div class="nav-item" data-view="inst-planta"><i class="fa-solid fa-people-group"></i><span class="nav-label">Planta</span></div>
+    </div>
+
+    <div class="nav-group" data-project="comercial" hidden>
+      <div class="nav-section">Cafam Comercial</div>
+      <div class="nav-item" data-view="com-nacional"><i class="fa-solid fa-chart-column"></i><span class="nav-label">Nacional</span></div>
+    </div>
 
     <div class="nav-foot">
       <div class="av"><img src="https://i.ibb.co/KjmjjvNZ/Captura-de-pantalla-2025-09-15-161315.jpg" alt=""></div>
@@ -235,6 +247,44 @@
         <div class="card" id="cf-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle Celta-Floresta</h3><div class="sub" id="cf-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="cf-table"></table></div></div></div>
       </section>
 
+      <!-- ===== COMERCIAL · NACIONAL (borrador — mismo patrón que Institucional > Nacional, para validar) ===== -->
+      <section class="view" id="com-nacional">
+        <div class="view-filters" id="com-filters">
+          <div class="ins-bar">
+            <div class="fld"><label>Mes</label><div class="msel" id="com-fMes"></div></div>
+            <div class="fld"><label>Ciudad</label><div class="msel" id="com-fCiudad"></div></div>
+            <button class="ins-reset" id="com-reset"><i class="fa-solid fa-rotate-left"></i> Limpiar</button>
+            <div style="margin-left:auto"><span class="live-pill"><span class="live-dot"></span> <span id="com-stamp">--</span></span></div>
+          </div>
+        </div>
+        <div class="kpi-grid" id="com-kpi"></div>
+
+        <div class="subtabs" id="com-subtabs">
+          <button class="subtab-btn active" data-tab="cantidad"><i class="fa-solid fa-box"></i> Cantidad</button>
+          <button class="subtab-btn" data-tab="novedades"><i class="fa-solid fa-triangle-exclamation"></i> Novedades</button>
+          <button class="subtab-btn" data-tab="tiempos"><i class="fa-solid fa-clock"></i> Tiempos</button>
+        </div>
+
+        <div class="subtab-panel active" id="com-tab-cantidad">
+          <div class="card"><div class="card-h"><div><h3>Entregado y novedad por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-mes"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Cantidad por día — tendencia</h3><div class="sub">Volumen diario entregado</div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="com-dia"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Cantidad por día de la semana</h3><div class="sub">Para identificar el día más movido</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-sem"></canvas></div></div></div>
+        </div>
+
+        <div class="subtab-panel" id="com-tab-novedades">
+          <div class="card"><div class="card-h"><div><h3>Tipo de novedad</h3><div class="sub">Barras horizontales para lectura clara</div></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="com-novtipo"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Novedades por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-novmes"></canvas></div></div></div>
+        </div>
+
+        <div class="subtab-panel" id="com-tab-tiempos">
+          <div class="card"><div class="card-h"><div><h3>Tiempo total promedio por día</h3><div class="sub">Creación → cierre del servicio</div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="com-hdia"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Tiempo total promedio por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-hmes"></canvas></div></div></div>
+        </div>
+
+        <div class="detalle-toggle-row"><button class="ins-reset detalle-toggle" id="com-detalle-toggle"><i class="fa-solid fa-table-list"></i> Ver detalle Comercial</button></div>
+        <div class="card" id="com-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle Comercial</h3><div class="sub" id="com-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="com-table"></table></div></div></div>
+      </section>
+
     </div>
   </div>
 </div>
@@ -250,7 +300,8 @@ const PAGES={
   'inst-recibido':['Calle 51','Gestión de entrega y novedades — Moto y Carry'],
   'inst-percapita':['Per Cápita Institucional','Costo operativo por entrega — por punto, ciudad y mes'],
   'inst-planta':['Planta','Plantilla fija por ciudad y punto — historial de cambios'],
-  'inst-celta':['Celta-Floresta','Gestión de entrega y novedades — punto Celta-Floresta']
+  'inst-celta':['Celta-Floresta','Gestión de entrega y novedades — punto Celta-Floresta'],
+  'com-nacional':['Comercial · Nacional','Entregas, novedades y tiempos — borrador para validar']
 };
 function switchView(v){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===v));
@@ -261,6 +312,15 @@ function switchView(v){
   document.getElementById('overlay').classList.remove('show');
 }
 document.querySelectorAll('.nav-item[data-view]').forEach(n=>n.addEventListener('click',()=>switchView(n.dataset.view)));
+/* ----- Selector de proyecto: Institucional / Comercial ----- */
+function switchProject(p){
+  document.querySelectorAll('.proj-btn').forEach(b=>b.classList.toggle('active',b.dataset.project===p));
+  document.querySelectorAll('.nav-group').forEach(g=>{g.hidden=(g.dataset.project!==p);});
+  const first=document.querySelector('.nav-group[data-project="'+p+'"] .nav-item[data-view]');
+  if(first)switchView(first.dataset.view);
+  if(p==='comercial'&&window.ensureCom)window.ensureCom();
+}
+document.querySelectorAll('.proj-btn').forEach(b=>b.addEventListener('click',()=>switchProject(b.dataset.project)));
 document.getElementById('toggleSidebar').addEventListener('click',()=>{
   const sb=document.getElementById('sidebar');
   if(window.innerWidth<=820){sb.classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
@@ -277,5 +337,7 @@ document.getElementById('refreshBtn').addEventListener('click',()=>location.relo
 <!-- Motor de datos Institucional (carga la hoja al entrar) -->
 <script src="assets/institucional.js?v=11"></script>
 <script>if(window.ensureInst)ensureInst();</script>
+<!-- Motor de datos Comercial (carga al abrir el proyecto Comercial) -->
+<script src="assets/comercial.js?v=1"></script>
 </body>
 </html>

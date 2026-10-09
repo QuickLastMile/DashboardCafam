@@ -56,6 +56,13 @@ body::after{
 
 .nav-section{font-size:10.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--text-soft);padding:14px 12px 6px;font-weight:600}
 .sidebar.collapsed .nav-section{text-align:center;font-size:0}
+.proj-switch{display:flex;gap:6px;padding:4px 2px 14px;border-bottom:1px solid var(--border);margin-bottom:10px}
+.proj-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 4px;border:1px solid var(--border);border-radius:11px;background:rgba(148,163,184,.05);color:var(--text-dim);cursor:pointer;font-family:var(--font-b);font-weight:600;font-size:10.5px;transition:.2s}
+.proj-btn i{font-size:15px}
+.proj-btn:hover{background:rgba(148,163,184,.1);color:var(--text)}
+.proj-btn.active{background:linear-gradient(135deg,rgba(37,99,235,.25),rgba(37,99,235,.05));border-color:rgba(37,99,235,.5);color:#fff;box-shadow:var(--glow-blue)}
+.sidebar.collapsed .proj-switch{flex-direction:column}
+.nav-group[hidden]{display:none}
 .nav-item{
   display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:12px;cursor:pointer;
   color:var(--text-dim);font-weight:500;font-size:14px;position:relative;transition:.2s;white-space:nowrap;

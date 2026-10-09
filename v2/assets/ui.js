@@ -158,4 +158,31 @@ window.initChartExpand=initChartExpand;
 document.addEventListener('DOMContentLoaded',initChartExpand);
 if(document.readyState==='complete'||document.readyState==='interactive')initChartExpand();
 
+/* ---------- Helpers compartidos entre motores (institucional.js, comercial.js, …) ---------- */
+function resizeAllCharts(){
+  Object.values((window.Chart&&Chart.instances)||{}).forEach(c=>{try{c.resize();}catch(e){}});
+}
+function wireSubtabs(groupSel,panelPrefix,onSwitch){
+  document.querySelectorAll(groupSel+' .subtab-btn').forEach(b=>b.addEventListener('click',()=>{
+    const tab=b.dataset.tab;
+    document.querySelectorAll(groupSel+' .subtab-btn').forEach(x=>x.classList.toggle('active',x===b));
+    document.querySelectorAll('[id^="'+panelPrefix+'"]').forEach(p=>p.classList.toggle('active',p.id===panelPrefix+tab));
+    if(onSwitch)onSwitch(tab);
+    setTimeout(resizeAllCharts,50);
+  }));
+}
+function wireDetalleToggle(btnId,cardId,label){
+  const btn=document.getElementById(btnId);if(!btn)return;
+  btn.addEventListener('click',()=>{
+    const card=document.getElementById(cardId);
+    const opening=card.style.display==='none';
+    card.style.display=opening?'':'none';
+    btn.innerHTML=opening?'<i class="fa-solid fa-chevron-up"></i> Ocultar detalle '+label:'<i class="fa-solid fa-table-list"></i> Ver detalle '+label;
+    if(opening)card.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+}
+window.resizeAllCharts=resizeAllCharts;
+window.wireSubtabs=wireSubtabs;
+window.wireDetalleToggle=wireDetalleToggle;
+
 })();

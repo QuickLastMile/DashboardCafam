@@ -500,25 +500,6 @@ function renderCN(mes,tipo){
 }
 
 /* ---------- Wiring ---------- */
-function wireDetalleToggle(btnId,cardId,label){
-  const btn=document.getElementById(btnId);if(!btn)return;
-  btn.addEventListener('click',()=>{
-    const card=document.getElementById(cardId);
-    const opening=card.style.display==='none';
-    card.style.display=opening?'':'none';
-    btn.innerHTML=opening?'<i class="fa-solid fa-chevron-up"></i> Ocultar detalle '+label:'<i class="fa-solid fa-table-list"></i> Ver detalle '+label;
-    if(opening)card.scrollIntoView({behavior:'smooth',block:'start'});
-  });
-}
-function wireSubtabs(groupSel,panelPrefix,onSwitch){
-  document.querySelectorAll(groupSel+' .subtab-btn').forEach(b=>b.addEventListener('click',()=>{
-    const tab=b.dataset.tab;
-    document.querySelectorAll(groupSel+' .subtab-btn').forEach(x=>x.classList.toggle('active',x===b));
-    document.querySelectorAll('[id^="'+panelPrefix+'"]').forEach(p=>p.classList.toggle('active',p.id===panelPrefix+tab));
-    if(onSwitch)onSwitch(tab);
-    setTimeout(()=>Object.values(instCharts).forEach(c=>{try{c.resize();}catch(e){}}),50);
-  }));
-}
 const INST_RENDER={'inst-nacional':renderNacional,'inst-recibido':renderC51,'inst-percapita':renderPercap,'inst-planta':renderPlanta,'inst-celta':renderCelta};
 document.querySelectorAll('.nav-item[data-view^="inst-"]').forEach(n=>n.addEventListener('click',()=>{
   ensureInst();
