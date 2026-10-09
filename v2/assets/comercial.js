@@ -1,19 +1,23 @@
 /* ===================== MOTOR CAFAM COMERCIAL (borrador) =====================
    Fuente: Google Sheet publicado de Comercial (distinto al de Institucional),
-   hojas "cantidad", "novedades" y "tiempos". Es un primer borrador que replica
-   el mismo patrón de Institucional > Nacional (KPIs + subpestañas Cantidad /
-   Novedades / Tiempos) para validar qué conservar, quitar o ajustar antes de
-   sumar el resto (Per Cápita, Ventas, Novedades de Cancelación, Planta). */
+   con las 7 hojas del dashboard anterior: base (roster), cantidad, novedades,
+   tiempos, percapita, ventas y novcancel. Replica el mismo patrón de
+   Institucional (KPIs + subpestañas + filtros multi-selección + detalle
+   oculto) para validar qué conservar, quitar o ajustar en cada una. */
 (function(){
 const COM_CFG={
   base:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQNfxBykrkeBy4J4jvi2-nDNkMfDMbm-jbwgmBz9FjNUIBQGk257yuU1PH_QmXi0rV0AervZoNyJ9XO/pub',
-  cantidad(){return this.base+'?gid=0&single=true&output=csv';},
+  roster(){return this.base+'?gid=1510401293&single=true&output=csv';},
   novedades(){return this.base+'?gid=1091468477&single=true&output=csv';},
-  tiempos(){return this.base+'?gid=1183579745&single=true&output=csv';}
+  cantidad(){return this.base+'?gid=0&single=true&output=csv';},
+  percapita(){return this.base+'?gid=276501764&single=true&output=csv';},
+  tiempos(){return this.base+'?gid=1183579745&single=true&output=csv';},
+  ventas(){return this.base+'?gid=41915920&single=true&output=csv';},
+  novcancel(){return this.base+'?gid=1615312577&single=true&output=csv';}
 };
 
 /* ---------- Estado ---------- */
-let COM_CANT=[],COM_NOV=[],COM_TIEMPOS=[];
+let COM_CANT=[],COM_NOV=[],COM_TIEMPOS=[],COM_BASE=[],COM_PERCAP=[],COM_VENTAS=[],COM_NOVCANCEL=[];
 let comCharts={},comLoaded=false,comLoading=false;
 
 /* ---------- Utilidades (copia local — comercial.js es independiente de institucional.js) ---------- */
@@ -79,13 +83,42 @@ function parseComCantidad(raw){return (raw||[]).map(r=>{
 }).filter(r=>esFecha(r.fecha));}
 function parseComNovedades(raw){return (raw||[]).map(r=>{
   const fecha=(r.FECHA||'').trim();const d=parseD(fecha);
-  return {fecha,mes:String(r.MES||'').trim().toUpperCase(),ciudad:tcase(r.CIUDAD),
+  return {fecha,mes:mesAbr(r.MES),ciudad:tcase(r.CIUDAD),
     tipo:(r.TIPO||'').trim(),drogueria:(r['DROGUERIA NOMBRE CORTO']||'').trim(),_d:+(d||0)};
 }).filter(r=>esFecha(r.fecha)&&r.tipo);}
 function parseComTiempos(raw){return (raw||[]).map(r=>{
   const fecha=(r.fecha_cierre||'').trim();const d=parseD(fecha);
   return {fecha,mes:mesAbr(r.MES),ciudad:tcase(r.CIUDAD),tiempoH:parseHora(r['TIEMPO TOTAL']),_d:+(d||0)};
 }).filter(r=>esFecha(r.fecha));}
+function parseComRoster(raw){return (raw||[]).map(r=>({
+  drogueria:(r['DROGUERIA NOMBRE CORTO']||'').trim(),ciudad:tcase(r.CIUDAD),operacion:tcase(r['OPERACIÓN']),
+  coordinador:tcase(r['COORDINADOR ENCARGADO']),tipoMensajero:tcase(r['TIPO MENSAJERO']),
+  mensajeros:num(r['CANTIDAD MENSAJEROS'])
+})).filter(r=>r.drogueria);}
+function parseComPercap(raw){return (raw||[]).map(r=>({
+  ciudad:tcase(r.CIUDAD),mes:mesAbr(r.MES), // la hoja mezcla "ENE" y "SEPTIEMBRE" según la fila
+  punto:(r['DROGUERIA NOMBRE CORTO']||r.DROUERIA||r.DROGUERIA||'').trim(),
+  entregas:num(r['CANT ENTREGAS']),costo:num(r.COSTO),pc:num(r['PER CAPITA'])
+})).filter(r=>r.punto);}
+function parseComVentas(raw){return (raw||[]).map(r=>{
+  const fecha=(r.fecha_cierre||'').trim();const d=parseD(fecha);
+  return {fecha,mes:mesAbr(r.MES),ciudad:tcase(r.CIUDAD),drogueria:(r['DROGUERIA NOMBRE CORTO']||'').trim(),
+    estado:(r.ESTADO||'').trim(),venta:num(r['TOTAL VENTA']),_d:+(d||0)};
+}).filter(r=>esFecha(r.fecha));}
+const NC_EXCLUDE=new Set(['MES','SEMANA','CIUDAD','TIPO MENSAJERO','DROGUERIA NOMBRE CORTO','TIPO GESTIÓN','TOTAL','DROGUERIA']);
+function parseComNovCancel(raw){
+  const out=[];
+  (raw||[]).forEach(r=>{
+    const mes=mesAbr(r.MES);if(!mes)return;
+    const ciudad=tcase(r.CIUDAD),drogueria=(r['DROGUERIA NOMBRE CORTO']||'').trim();
+    Object.keys(r).forEach(k=>{
+      if(NC_EXCLUDE.has(k))return;
+      const v=num(r[k]);
+      if(v)out.push({mes,ciudad,drogueria,razon:k.trim(),count:v});
+    });
+  });
+  return out;
+}
 
 /* ---------- Render ---------- */
 function renderCom(){
@@ -151,35 +184,168 @@ function renderCom(){
   const sEl=document.getElementById('com-stamp');if(sEl)sEl.textContent=stampNow();
 }
 
+/* ---------- Resumen (hoja "base": roster de droguerías, sin filtros de fecha) ---------- */
+function renderComResumen(){
+  if(!COM_BASE.length){const k=document.getElementById('com-res-kpi');if(k)k.innerHTML='<div class="ind-loading">Sin datos — hoja "base".</div>';return;}
+  const totalMsj=COM_BASE.reduce((a,r)=>a+r.mensajeros,0);
+  const ciudades=uniq(COM_BASE.map(r=>r.ciudad));
+  kpiCards('com-res-kpi',[
+    {l:'Droguerías',v:COM_BASE.length,ic:'fa-store',c:'blue'},
+    {l:'Mensajeros',v:totalMsj,ic:'fa-person-biking',c:'green'},
+    {l:'Ciudades',v:ciudades.length,ic:'fa-city',c:'purple'},
+    {l:'Prom. mensajeros/droguería',v:COM_BASE.length?totalMsj/COM_BASE.length:0,dec:1,ic:'fa-chart-simple',c:'yellow'}
+  ]);
+  const byCiudad=sortObj(groupSum(COM_BASE,r=>r.ciudad,r=>r.mensajeros));
+  mkChart('com-res-ciudad',{type:'bar',data:{labels:Object.keys(byCiudad),datasets:[{data:Object.values(byCiudad),backgroundColor:palette(Object.keys(byCiudad).length),borderRadius:6}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  const byTipo=sortObj(groupCount(COM_BASE,r=>r.tipoMensajero));
+  mkChart('com-res-tipo',{type:'doughnut',data:{labels:Object.keys(byTipo),datasets:[{data:Object.values(byTipo),backgroundColor:palette(Object.keys(byTipo).length),borderColor:'#0b1120',borderWidth:2}]},options:{...BC.base,plugins:{legend:legBase}}});
+  renderTable('com-res-table',['DROGUERÍA','CIUDAD','COORDINADOR','TIPO MENSAJERO','MENSAJEROS','OPERACIÓN'],
+    [...COM_BASE].sort((a,b)=>b.mensajeros-a.mensajeros).map(r=>[r.drogueria,r.ciudad,r.coordinador,r.tipoMensajero,r.mensajeros,r.operacion]));
+  const cEl=document.getElementById('com-res-count');if(cEl)cEl.textContent=COM_BASE.length+' droguerías';
+}
+
+/* ---------- Per Cápita (comparte Mes/Ciudad del filtro superior + Punto propio) ---------- */
+function renderComPercap(){
+  if(!COM_PERCAP.length){const k=document.getElementById('com-ipc-kpi');if(k)k.innerHTML='<div class="ind-loading">Sin datos — hoja "percapita".</div>';return;}
+  const money=n=>'$ '+Math.round(n||0).toLocaleString('es-CO');
+  const mes=ms('com-fMes'),ciudad=ms('com-fCiudad');
+  const baseMC=COM_PERCAP.filter(r=>(!mes.length||mes.includes(r.mes))&&(!ciudad.length||ciudad.includes(r.ciudad)));
+  MultiSelect.setOptions('com-ipc-fDrog',uniq(baseMC.map(r=>r.punto)),{placeholder:'Todos',onChange:renderComPercap});
+  const drog=ms('com-ipc-fDrog');
+  const D=baseMC.filter(r=>!drog.length||drog.includes(r.punto));
+  if(!D.length){
+    const k=document.getElementById('com-ipc-kpi');if(k)k.innerHTML='<div class="ind-loading">Sin datos para este filtro</div>';
+    ['com-ipc-mes','com-ipc-top','com-ipc-drog','com-ipc-ciudad'].forEach(id=>{if(comCharts[id]){comCharts[id].destroy();delete comCharts[id];}});
+    renderTable('com-ipc-table',['PUNTO','CIUDAD','MES','ENTREGAS','COSTO','PER CÁPITA'],[]);
+    return;
+  }
+  const pcP=groupAvg(D,r=>r.punto,r=>r.pc);
+  const entriesP=Object.entries(pcP).sort((a,b)=>b[1]-a[1]);
+  const pcM=groupAvg(D,r=>r.mes,r=>r.pc);
+  const costoCity=groupSum(D,r=>r.ciudad,r=>r.costo),entCity=groupSum(D,r=>r.ciudad,r=>r.entregas);
+  const totalCosto=D.reduce((a,r)=>a+r.costo,0),totalEnt=D.reduce((a,r)=>a+r.entregas,0);
+  const globalPC=totalEnt>0?totalCosto/totalEnt:0;
+  kpiCards('com-ipc-kpi',[
+    {l:'Per cápita global prom.',txt:money(globalPC),ic:'fa-coins',c:'yellow'},
+    {l:'PC más alto',txt:money(entriesP[0]?entriesP[0][1]:0),ic:'fa-arrow-up',c:'red',t:entriesP[0]?entriesP[0][0]:'—',up:0},
+    {l:'PC más bajo',txt:money(entriesP.length?entriesP[entriesP.length-1][1]:0),ic:'fa-arrow-down',c:'green',t:entriesP.length?entriesP[entriesP.length-1][0]:'—',up:1},
+    {l:'Costo total',txt:money(totalCosto),ic:'fa-dollar-sign',c:'purple'},
+    {l:'Total entregas',v:totalEnt,ic:'fa-boxes-stacked',c:'blue'},
+    {l:'Puntos',v:uniq(D.map(r=>r.punto)).length,ic:'fa-store',c:'yellow'}
+  ]);
+  const moneyTipY={callbacks:{label:c=>' '+money(c.parsed.y!=null?c.parsed.y:c.parsed)}};
+  const mesL=sortMes(Object.keys(pcM));
+  mkChart('com-ipc-mes',{type:'line',data:{labels:mesL,datasets:[{label:'Per cápita',data:mesL.map(m=>Math.round(pcM[m])),borderColor:CO.yellow,backgroundColor:gradFill('#EAB308'),fill:true,tension:.35,borderWidth:2.4,pointRadius:3}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:moneyTipY},scales:{x:BC.grid,y:BC.grid}}});
+  const top5=entriesP.slice(0,5);
+  mkChart('com-ipc-top',{type:'bar',data:{labels:top5.map(e=>e[0]),datasets:[{data:top5.map(e=>Math.round(e[1])),backgroundColor:CO.red,borderRadius:6}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:moneyTipY},scales:{x:BC.grid,y:BC.grid}}});
+  const drogArr=entriesP.slice(0,16);
+  mkChart('com-ipc-drog',{type:'bar',data:{labels:drogArr.map(e=>e[0]),datasets:[{data:drogArr.map(e=>Math.round(e[1])),backgroundColor:palette(drogArr.length),borderRadius:6}]},options:{...BC.base,indexAxis:'y',plugins:{legend:{display:false},tooltip:moneyTipY},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
+  const cityArr=Object.entries(costoCity).sort((a,b)=>b[1]-a[1]);
+  mkChart('com-ipc-ciudad',{type:'bar',data:{labels:cityArr.map(e=>e[0]),datasets:[{data:cityArr.map(e=>e[1]),backgroundColor:palette(cityArr.length),borderRadius:6}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:moneyTipY},scales:{x:BC.grid,y:BC.grid}}});
+  renderTable('com-ipc-table',['PUNTO','CIUDAD','MES','ENTREGAS','COSTO','PER CÁPITA'],
+    D.slice().sort((a,b)=>b.pc-a.pc).slice(0,500).map(r=>[r.punto,r.ciudad,r.mes,r.entregas.toLocaleString('es-CO'),money(r.costo),money(r.pc)]));
+  const cEl=document.getElementById('com-ipc-count');if(cEl)cEl.textContent=D.length.toLocaleString('es')+' registros'+(D.length>500?' (mostrando 500)':'');
+}
+
+/* ---------- Ventas (comparte Mes/Ciudad del filtro superior) ---------- */
+function renderComVentas(){
+  if(!COM_VENTAS.length){const k=document.getElementById('com-vt-kpi');if(k)k.innerHTML='<div class="ind-loading">Sin datos — hoja "ventas".</div>';return;}
+  const money=n=>'$ '+Math.round(n||0).toLocaleString('es-CO');
+  const mes=ms('com-fMes'),ciudad=ms('com-fCiudad');
+  const D=COM_VENTAS.filter(r=>(!mes.length||mes.includes(r.mes))&&(!ciudad.length||ciudad.includes(r.ciudad)));
+  const total=D.reduce((a,r)=>a+r.venta,0);
+  const porFecha=groupSum(D,r=>r.fecha,r=>r.venta);
+  const dias=Object.keys(porFecha).length;
+  const mejor=Object.entries(porFecha).sort((a,b)=>b[1]-a[1])[0]||['—',0];
+  kpiCards('com-vt-kpi',[
+    {l:'Venta total',txt:money(total),ic:'fa-dollar-sign',c:'green'},
+    {l:'Venta promedio/día',txt:money(dias?total/dias:0),ic:'fa-chart-simple',c:'blue'},
+    {l:'Transacciones',v:D.length,ic:'fa-receipt',c:'purple'},
+    {l:'Mejor día',txt:money(mejor[1]),ic:'fa-arrow-up-right-dots',c:'yellow',t:mejor[0],up:1}
+  ]);
+  const baseCity=ciudad.length?COM_VENTAS.filter(r=>ciudad.includes(r.ciudad)):COM_VENTAS;
+  const mesesAll=sortMes(uniq(baseCity.map(r=>r.mes)));
+  const moneyTipY={callbacks:{label:c=>' '+money(c.parsed.y!=null?c.parsed.y:c.parsed)}};
+  mkChart('com-vt-mes',{type:'bar',data:{labels:mesesAll,datasets:[{data:mesesAll.map(m=>baseCity.filter(r=>r.mes===m).reduce((a,r)=>a+r.venta,0)),backgroundColor:CO.green,borderRadius:6,maxBarThickness:44}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:moneyTipY},scales:{x:BC.grid,y:BC.grid}}});
+  const fechas=uniq(D.map(r=>r.fecha)).sort((a,b)=>(parseD(a)||0)-(parseD(b)||0));
+  mkChart('com-vt-dia',{type:'line',data:{labels:fechas,datasets:[{label:'Venta',data:fechas.map(f=>porFecha[f]),borderColor:CO.blue,backgroundColor:gradFill('#2563EB'),fill:true,tension:.25,borderWidth:1.6,pointRadius:0}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:moneyTipY},scales:{x:{...BC.grid,ticks:{...(BC.grid.ticks||{}),maxTicksLimit:12}},y:BC.grid}}});
+  const byCiudad=sortObj(groupSum(D,r=>r.ciudad,r=>r.venta));
+  mkChart('com-vt-ciudad',{type:'bar',data:{labels:Object.keys(byCiudad),datasets:[{data:Object.values(byCiudad),backgroundColor:palette(Object.keys(byCiudad).length),borderRadius:6}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:moneyTipY},scales:{x:BC.grid,y:BC.grid}}});
+  renderTable('com-vt-table',['FECHA','MES','CIUDAD','DROGUERÍA','ESTADO','VENTA'],
+    [...D].sort((a,b)=>(b._d||0)-(a._d||0)).slice(0,500).map(r=>[r.fecha,r.mes,r.ciudad,r.drogueria,r.estado,money(r.venta)]));
+  const cEl=document.getElementById('com-vt-count');if(cEl)cEl.textContent=D.length.toLocaleString('es')+' registros'+(D.length>500?' (mostrando 500)':'');
+}
+
+/* ---------- Nov. Cancelación (comparte Mes/Ciudad del filtro superior) ---------- */
+function renderComNovCancel(){
+  if(!COM_NOVCANCEL.length){const k=document.getElementById('com-nc-kpi');if(k)k.innerHTML='<div class="ind-loading">Sin datos — hoja "novcancel".</div>';return;}
+  const mes=ms('com-fMes'),ciudad=ms('com-fCiudad');
+  const D=COM_NOVCANCEL.filter(r=>(!mes.length||mes.includes(r.mes))&&(!ciudad.length||ciudad.includes(r.ciudad)));
+  const total=D.reduce((a,r)=>a+r.count,0);
+  const byRazonTotal=sortObj(groupSum(D,r=>r.razon,r=>r.count));
+  const topRazon=Object.entries(byRazonTotal)[0]||['—',0];
+  kpiCards('com-nc-kpi',[
+    {l:'Total cancelaciones',v:total,ic:'fa-ban',c:'red'},
+    {l:'Razón más frecuente',txt:topRazon[0],ic:'fa-circle-exclamation',c:'yellow'},
+    {l:'Ciudades',v:uniq(D.map(r=>r.ciudad)).length,ic:'fa-city',c:'purple'}
+  ]);
+  const topRazones=Object.entries(byRazonTotal).slice(0,16);
+  mkChart('com-nc-tipo',{type:'bar',data:{labels:topRazones.map(e=>e[0]),datasets:[{data:topRazones.map(e=>e[1]),backgroundColor:palette(topRazones.length),borderRadius:6}]},options:{...BC.base,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
+  const baseCity=ciudad.length?COM_NOVCANCEL.filter(r=>ciudad.includes(r.ciudad)):COM_NOVCANCEL;
+  const mesesAll=sortMes(uniq(baseCity.map(r=>r.mes)));
+  mkChart('com-nc-mes',{type:'bar',data:{labels:mesesAll,datasets:[{data:mesesAll.map(m=>baseCity.filter(r=>r.mes===m).reduce((a,r)=>a+r.count,0)),backgroundColor:CO.red,borderRadius:8,maxBarThickness:50}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  const byCiudad=sortObj(groupSum(D,r=>r.ciudad,r=>r.count));
+  mkChart('com-nc-ciudad',{type:'bar',data:{labels:Object.keys(byCiudad),datasets:[{data:Object.values(byCiudad),backgroundColor:palette(Object.keys(byCiudad).length),borderRadius:6}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  renderTable('com-nc-table',['MES','CIUDAD','DROGUERÍA','RAZÓN','CANTIDAD'],
+    [...D].sort((a,b)=>b.count-a.count).slice(0,500).map(r=>[r.mes,r.ciudad,r.drogueria,r.razon,r.count]));
+  const cEl=document.getElementById('com-nc-count');if(cEl)cEl.textContent=D.length.toLocaleString('es')+' registros'+(D.length>500?' (mostrando 500)':'');
+}
+
 async function ensureCom(){
   if(comLoaded||comLoading)return;
   comLoading=true;
-  const k=document.getElementById('com-kpi');if(k)k.innerHTML='<div class="ind-loading">Cargando datos de Comercial — son más de 25.000 registros, puede tardar unos segundos…</div>';
+  const k=document.getElementById('com-kpi');if(k)k.innerHTML='<div class="ind-loading">Cargando datos de Comercial — son más de 65.000 registros en 7 hojas, puede tardar unos segundos…</div>';
   try{
-    const [cant,nov,tiempos]=await Promise.all([
+    const [roster,cant,nov,tiempos,percap,ventas,novcancel]=await Promise.all([
+      fetchCom(COM_CFG.roster()),
       fetchCom(COM_CFG.cantidad()),
       fetchCom(COM_CFG.novedades()),
-      fetchCom(COM_CFG.tiempos())
+      fetchCom(COM_CFG.tiempos()),
+      fetchCom(COM_CFG.percapita()),
+      fetchCom(COM_CFG.ventas()),
+      fetchCom(COM_CFG.novcancel())
     ]);
+    COM_BASE=parseComRoster(roster);
     COM_CANT=parseComCantidad(cant);
     COM_NOV=parseComNovedades(nov);
     COM_TIEMPOS=parseComTiempos(tiempos);
+    COM_PERCAP=parseComPercap(percap);
+    COM_VENTAS=parseComVentas(ventas);
+    COM_NOVCANCEL=parseComNovCancel(novcancel);
     comLoaded=true;
-    renderCom();
+    renderComAll();
     setTimeout(()=>{if(window.resizeAllCharts)resizeAllCharts();},160);
   }catch(e){console.warn('Comercial: fallo de carga',e);const k2=document.getElementById('com-kpi');if(k2)k2.innerHTML='<div class="ind-loading">Error al conectar con el Google Sheet de Comercial.</div>';}
   comLoading=false;
+}
+function renderComAll(){
+  renderCom();renderComResumen();renderComPercap();renderComVentas();renderComNovCancel();
 }
 
 /* ---------- Wiring ---------- */
 document.querySelector('.nav-item[data-view="com-nacional"]')?.addEventListener('click',()=>{
   ensureCom();
-  if(comLoaded){try{renderCom();}catch(e){console.warn('re-render Comercial',e);}}
+  if(comLoaded){try{renderComAll();}catch(e){console.warn('re-render Comercial',e);}}
   setTimeout(()=>{if(window.resizeAllCharts)resizeAllCharts();},60);
 });
-const comR=document.getElementById('com-reset');if(comR)comR.addEventListener('click',()=>{['com-fMes','com-fCiudad'].forEach(id=>MultiSelect.clear(id));renderCom();});
+const comR=document.getElementById('com-reset');if(comR)comR.addEventListener('click',()=>{['com-fMes','com-fCiudad','com-ipc-fDrog'].forEach(id=>MultiSelect.clear(id));renderComAll();});
 if(window.wireSubtabs)wireSubtabs('#com-subtabs','com-tab-',()=>{});
-if(window.wireDetalleToggle)wireDetalleToggle('com-detalle-toggle','com-detalle-card','Comercial');
+if(window.wireDetalleToggle){
+  wireDetalleToggle('com-detalle-toggle','com-detalle-card','Cantidad');
+  wireDetalleToggle('com-ipc-detalle-toggle','com-ipc-detalle-card','Per Cápita');
+  wireDetalleToggle('com-vt-detalle-toggle','com-vt-detalle-card','Ventas');
+  wireDetalleToggle('com-nc-detalle-toggle','com-nc-detalle-card','Nov. Cancelación');
+}
 
 window.ensureCom=ensureCom;
 })();

@@ -260,29 +260,83 @@
         <div class="kpi-grid" id="com-kpi"></div>
 
         <div class="subtabs" id="com-subtabs">
-          <button class="subtab-btn active" data-tab="cantidad"><i class="fa-solid fa-box"></i> Cantidad</button>
+          <button class="subtab-btn active" data-tab="resumen"><i class="fa-solid fa-store"></i> Resumen</button>
+          <button class="subtab-btn" data-tab="cantidad"><i class="fa-solid fa-box"></i> Cantidad</button>
           <button class="subtab-btn" data-tab="novedades"><i class="fa-solid fa-triangle-exclamation"></i> Novedades</button>
           <button class="subtab-btn" data-tab="tiempos"><i class="fa-solid fa-clock"></i> Tiempos</button>
+          <button class="subtab-btn" data-tab="percapita"><i class="fa-solid fa-coins"></i> Per Cápita</button>
+          <button class="subtab-btn" data-tab="ventas"><i class="fa-solid fa-dollar-sign"></i> Ventas</button>
+          <button class="subtab-btn" data-tab="novcancel"><i class="fa-solid fa-ban"></i> Nov. Cancelación</button>
         </div>
 
-        <div class="subtab-panel active" id="com-tab-cantidad">
+        <!-- ----- RESUMEN (hoja "base": roster de droguerías) ----- -->
+        <div class="subtab-panel active" id="com-tab-resumen">
+          <div class="kpi-grid" id="com-res-kpi"></div>
+          <div class="grid-2">
+            <div class="card"><div class="card-h"><div><h3>Mensajeros por ciudad</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-res-ciudad"></canvas></div></div></div>
+            <div class="card"><div class="card-h"><div><h3>Droguerías por tipo de mensajero</h3><div class="sub">Planta fija vs. colaborativo</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-res-tipo"></canvas></div></div></div>
+          </div>
+          <div class="card"><div class="card-h"><div><h3>Droguerías</h3><div class="sub" id="com-res-count">0 droguerías</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="com-res-table"></table></div></div></div>
+        </div>
+
+        <!-- ----- CANTIDAD ----- -->
+        <div class="subtab-panel" id="com-tab-cantidad">
           <div class="card"><div class="card-h"><div><h3>Entregado y novedad por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-mes"></canvas></div></div></div>
           <div class="card"><div class="card-h"><div><h3>Cantidad por día — tendencia</h3><div class="sub">Volumen diario entregado</div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="com-dia"></canvas></div></div></div>
           <div class="card"><div class="card-h"><div><h3>Cantidad por día de la semana</h3><div class="sub">Para identificar el día más movido</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-sem"></canvas></div></div></div>
+          <div class="detalle-toggle-row"><button class="ins-reset detalle-toggle" id="com-detalle-toggle"><i class="fa-solid fa-table-list"></i> Ver detalle Cantidad</button></div>
+          <div class="card" id="com-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle Cantidad</h3><div class="sub" id="com-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="com-table"></table></div></div></div>
         </div>
 
+        <!-- ----- NOVEDADES ----- -->
         <div class="subtab-panel" id="com-tab-novedades">
           <div class="card"><div class="card-h"><div><h3>Tipo de novedad</h3><div class="sub">Barras horizontales para lectura clara</div></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="com-novtipo"></canvas></div></div></div>
           <div class="card"><div class="card-h"><div><h3>Novedades por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-novmes"></canvas></div></div></div>
         </div>
 
+        <!-- ----- TIEMPOS ----- -->
         <div class="subtab-panel" id="com-tab-tiempos">
           <div class="card"><div class="card-h"><div><h3>Tiempo total promedio por día</h3><div class="sub">Creación → cierre del servicio</div></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="com-hdia"></canvas></div></div></div>
           <div class="card"><div class="card-h"><div><h3>Tiempo total promedio por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-hmes"></canvas></div></div></div>
         </div>
 
-        <div class="detalle-toggle-row"><button class="ins-reset detalle-toggle" id="com-detalle-toggle"><i class="fa-solid fa-table-list"></i> Ver detalle Comercial</button></div>
-        <div class="card" id="com-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle Comercial</h3><div class="sub" id="com-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="com-table"></table></div></div></div>
+        <!-- ----- PER CÁPITA ----- -->
+        <div class="subtab-panel" id="com-tab-percapita">
+          <div class="ins-bar">
+            <div class="fld"><label>Punto</label><div class="msel" id="com-ipc-fDrog"></div></div>
+          </div>
+          <div class="kpi-grid" id="com-ipc-kpi"></div>
+          <div class="grid-2">
+            <div class="card"><div class="card-h"><div><h3>Per cápita por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-ipc-mes"></canvas></div></div></div>
+            <div class="card"><div class="card-h"><div><h3>Top 5 puntos — per cápita más alto</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-ipc-top"></canvas></div></div></div>
+          </div>
+          <div class="grid-2">
+            <div class="card"><div class="card-h"><div><h3>Per cápita por punto</h3></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="com-ipc-drog"></canvas></div></div></div>
+            <div class="card"><div class="card-h"><div><h3>Costo total por ciudad</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-ipc-ciudad"></canvas></div></div></div>
+          </div>
+          <div class="detalle-toggle-row"><button class="ins-reset detalle-toggle" id="com-ipc-detalle-toggle"><i class="fa-solid fa-table-list"></i> Ver detalle Per Cápita</button></div>
+          <div class="card" id="com-ipc-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle Per Cápita</h3><div class="sub" id="com-ipc-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="com-ipc-table"></table></div></div></div>
+        </div>
+
+        <!-- ----- VENTAS ----- -->
+        <div class="subtab-panel" id="com-tab-ventas">
+          <div class="kpi-grid" id="com-vt-kpi"></div>
+          <div class="card"><div class="card-h"><div><h3>Venta por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-vt-mes"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Venta por día — tendencia</h3></div></div><div class="card-body"><div class="chart-wrap xl"><canvas id="com-vt-dia"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Venta por ciudad</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-vt-ciudad"></canvas></div></div></div>
+          <div class="detalle-toggle-row"><button class="ins-reset detalle-toggle" id="com-vt-detalle-toggle"><i class="fa-solid fa-table-list"></i> Ver detalle Ventas</button></div>
+          <div class="card" id="com-vt-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle Ventas</h3><div class="sub" id="com-vt-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="com-vt-table"></table></div></div></div>
+        </div>
+
+        <!-- ----- NOV. CANCELACIÓN ----- -->
+        <div class="subtab-panel" id="com-tab-novcancel">
+          <div class="kpi-grid" id="com-nc-kpi"></div>
+          <div class="card"><div class="card-h"><div><h3>Razones de cancelación</h3><div class="sub">Barras horizontales para lectura clara</div></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="com-nc-tipo"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Cancelaciones por mes</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-nc-mes"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Cancelaciones por ciudad</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-nc-ciudad"></canvas></div></div></div>
+          <div class="detalle-toggle-row"><button class="ins-reset detalle-toggle" id="com-nc-detalle-toggle"><i class="fa-solid fa-table-list"></i> Ver detalle Nov. Cancelación</button></div>
+          <div class="card" id="com-nc-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle Nov. Cancelación</h3><div class="sub" id="com-nc-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="com-nc-table"></table></div></div></div>
+        </div>
       </section>
 
     </div>
@@ -338,6 +392,6 @@ document.getElementById('refreshBtn').addEventListener('click',()=>location.relo
 <script src="assets/institucional.js?v=11"></script>
 <script>if(window.ensureInst)ensureInst();</script>
 <!-- Motor de datos Comercial (carga al abrir el proyecto Comercial) -->
-<script src="assets/comercial.js?v=1"></script>
+<script src="assets/comercial.js?v=2"></script>
 </body>
 </html>
