@@ -120,13 +120,13 @@ function parseComNovCancel(raw){
   return out;
 }
 
-/* ---------- Render ---------- */
-function renderCom(){
+/* ---------- Render: Cantidad (hoja "cantidad", filtro propio Mes/Ciudad) ---------- */
+function renderComCantidad(){
   if(!COM_CANT.length){const k=document.getElementById('com-kpi');if(k)k.innerHTML='<div class="ind-loading">Sin datos — verifica el Google Sheet de Comercial.</div>';return;}
   const allMeses=sortMes(uniq(COM_CANT.map(r=>r.mes)));
   const allCiudades=uniq(COM_CANT.map(r=>r.ciudad)).sort();
-  MultiSelect.setOptions('com-fMes',allMeses,{placeholder:'Todos',onChange:renderCom});
-  MultiSelect.setOptions('com-fCiudad',allCiudades,{placeholder:'Todas',onChange:renderCom});
+  MultiSelect.setOptions('com-fMes',allMeses,{placeholder:'Todos',onChange:renderComCantidad});
+  MultiSelect.setOptions('com-fCiudad',allCiudades,{placeholder:'Todas',onChange:renderComCantidad});
   const mes=ms('com-fMes'),ciudad=ms('com-fCiudad');
   const D=COM_CANT.filter(r=>(!mes.length||mes.includes(r.mes))&&(!ciudad.length||ciudad.includes(r.ciudad)));
   const ent=D.reduce((a,r)=>a+r.entregado,0),nv=D.reduce((a,r)=>a+r.novedad,0),tot=D.reduce((a,r)=>a+r.total,0);
@@ -143,8 +143,6 @@ function renderCom(){
     {l:'Tiempo total prom.',txt:avgT!=null?hhmm(avgT):'—',ic:'fa-stopwatch',c:'yellow'},
     {l:'Día pico',v:pico[1],suf:' ent',ic:'fa-arrow-up-right-dots',c:'green',t:pico[0],up:1}
   ]);
-
-  /* ----- Cantidad ----- */
   const baseCity=ciudad.length?COM_CANT.filter(r=>ciudad.includes(r.ciudad)):COM_CANT;
   const mesesAll=sortMes(uniq(baseCity.map(r=>r.mes)));
   const sumM=(m,f)=>baseCity.filter(r=>r.mes===m).reduce((a,r)=>a+r[f],0);
@@ -155,8 +153,20 @@ function renderCom(){
   const fechas=uniq(D.map(r=>r.fecha)).sort((a,b)=>(parseD(a)||0)-(parseD(b)||0));
   mkChart('com-dia',{type:'line',data:{labels:fechas,datasets:[{label:'Entregado',data:fechas.map(f=>porFecha[f]),borderColor:CO.blue,backgroundColor:gradFill('#2563EB'),fill:true,tension:.25,borderWidth:1.6,pointRadius:0}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:{...BC.grid,ticks:{...(BC.grid.ticks||{}),maxTicksLimit:12}},y:BC.grid}}});
   mkChart('com-sem',{type:'bar',data:{labels:DOW_LBL,datasets:[{label:'Total',data:byDow(D,r=>r.total),backgroundColor:CO.purple,borderRadius:7,maxBarThickness:54}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  renderTable('com-table',['FECHA','MES','CIUDAD','DROGUERÍA','ENTREGADO','NOVEDAD','TOTAL','% CUMPL'],
+    [...D].sort((a,b)=>(b._d||0)-(a._d||0)).slice(0,500).map(r=>[r.fecha,r.mes,r.ciudad,r.drogueria,r.entregado,r.novedad,r.total,cumplPill(r.total?+(r.entregado/r.total*100).toFixed(0):0)]));
+  const cEl=document.getElementById('com-count');if(cEl)cEl.textContent=D.length.toLocaleString('es')+' registros'+(D.length>500?' (mostrando 500)':'');
+  const sEl=document.getElementById('com-stamp');if(sEl)sEl.textContent=stampNow();
+}
 
-  /* ----- Novedades ----- */
+/* ---------- Render: Novedades (hoja "novedades", filtro propio Mes/Ciudad) ---------- */
+function renderComNovedades(){
+  if(!COM_NOV.length)return;
+  const allMeses=sortMes(uniq(COM_NOV.map(r=>r.mes)));
+  const allCiudades=uniq(COM_NOV.map(r=>r.ciudad)).sort();
+  MultiSelect.setOptions('com-nov-fMes',allMeses,{placeholder:'Todos',onChange:renderComNovedades});
+  MultiSelect.setOptions('com-nov-fCiudad',allCiudades,{placeholder:'Todas',onChange:renderComNovedades});
+  const mes=ms('com-nov-fMes'),ciudad=ms('com-nov-fCiudad');
   const novD=COM_NOV.filter(r=>(!mes.length||mes.includes(r.mes))&&(!ciudad.length||ciudad.includes(r.ciudad)));
   const byNov=sortObj(groupCount(novD,r=>r.tipo));
   const topNov=Object.entries(byNov).slice(0,16);
@@ -165,8 +175,18 @@ function renderCom(){
   const mesesNovAll=sortMes(uniq(novBaseCity.map(r=>r.mes)));
   const byMesNov=mesesNovAll.map(m=>novBaseCity.filter(r=>r.mes===m).length);
   mkChart('com-novmes',{type:'bar',data:{labels:mesesNovAll,datasets:[{data:byMesNov,backgroundColor:CO.red,borderRadius:8,maxBarThickness:50}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  const sEl=document.getElementById('com-nov-stamp');if(sEl)sEl.textContent=stampNow();
+}
 
-  /* ----- Tiempos ----- */
+/* ---------- Render: Tiempos (hoja "tiempos", filtro propio Mes/Ciudad) ---------- */
+function renderComTiempos(){
+  if(!COM_TIEMPOS.length)return;
+  const allMeses=sortMes(uniq(COM_TIEMPOS.map(r=>r.mes)));
+  const allCiudades=uniq(COM_TIEMPOS.map(r=>r.ciudad)).sort();
+  MultiSelect.setOptions('com-tie-fMes',allMeses,{placeholder:'Todos',onChange:renderComTiempos});
+  MultiSelect.setOptions('com-tie-fCiudad',allCiudades,{placeholder:'Todas',onChange:renderComTiempos});
+  const mes=ms('com-tie-fMes'),ciudad=ms('com-tie-fCiudad');
+  const DT=COM_TIEMPOS.filter(r=>(!mes.length||mes.includes(r.mes))&&(!ciudad.length||ciudad.includes(r.ciudad))&&r.tiempoH!=null);
   const horaTip={callbacks:{label:c=>' '+hhmm(c.parsed.y!=null?c.parsed.y:c.parsed)}};
   const horaY={...BC.grid,ticks:{...(BC.grid.ticks||{}),callback:v=>hhmm(v)}};
   const hfechas=uniq(DT.map(r=>r.fecha)).sort((a,b)=>(parseD(a)||0)-(parseD(b)||0));
@@ -176,12 +196,7 @@ function renderCom(){
   const mesesAllT=sortMes(uniq(baseCityT.map(r=>r.mes)));
   const hpm=groupAvg(baseCityT,r=>r.mes,r=>r.tiempoH);
   mkChart('com-hmes',{type:'bar',data:{labels:mesesAllT,datasets:[{data:mesesAllT.map(m=>hpm[m]!=null?+hpm[m].toFixed(3):null),backgroundColor:CO.yellow,borderRadius:6,maxBarThickness:50}]},options:{...BC.base,plugins:{legend:{display:false},tooltip:horaTip},scales:{x:BC.grid,y:horaY}}});
-
-  /* ----- Detalle ----- */
-  renderTable('com-table',['FECHA','MES','CIUDAD','DROGUERÍA','ENTREGADO','NOVEDAD','TOTAL','% CUMPL'],
-    [...D].sort((a,b)=>(b._d||0)-(a._d||0)).slice(0,500).map(r=>[r.fecha,r.mes,r.ciudad,r.drogueria,r.entregado,r.novedad,r.total,cumplPill(r.total?+(r.entregado/r.total*100).toFixed(0):0)]));
-  const cEl=document.getElementById('com-count');if(cEl)cEl.textContent=D.length.toLocaleString('es')+' registros'+(D.length>500?' (mostrando 500)':'');
-  const sEl=document.getElementById('com-stamp');if(sEl)sEl.textContent=stampNow();
+  const sEl=document.getElementById('com-tie-stamp');if(sEl)sEl.textContent=stampNow();
 }
 
 /* ---------- Resumen (hoja "base": roster de droguerías, sin filtros de fecha) ---------- */
@@ -208,7 +223,9 @@ function renderComResumen(){
 function renderComPercap(){
   if(!COM_PERCAP.length){const k=document.getElementById('com-ipc-kpi');if(k)k.innerHTML='<div class="ind-loading">Sin datos — hoja "percapita".</div>';return;}
   const money=n=>'$ '+Math.round(n||0).toLocaleString('es-CO');
-  const mes=ms('com-fMes'),ciudad=ms('com-fCiudad');
+  MultiSelect.setOptions('com-ipc-fMes',sortMes(uniq(COM_PERCAP.map(r=>r.mes))),{placeholder:'Todos',onChange:renderComPercap});
+  MultiSelect.setOptions('com-ipc-fCiudad',uniq(COM_PERCAP.map(r=>r.ciudad)).sort(),{placeholder:'Todas',onChange:renderComPercap});
+  const mes=ms('com-ipc-fMes'),ciudad=ms('com-ipc-fCiudad');
   const baseMC=COM_PERCAP.filter(r=>(!mes.length||mes.includes(r.mes))&&(!ciudad.length||ciudad.includes(r.ciudad)));
   MultiSelect.setOptions('com-ipc-fDrog',uniq(baseMC.map(r=>r.punto)),{placeholder:'Todos',onChange:renderComPercap});
   const drog=ms('com-ipc-fDrog');
@@ -245,13 +262,16 @@ function renderComPercap(){
   renderTable('com-ipc-table',['PUNTO','CIUDAD','MES','ENTREGAS','COSTO','PER CÁPITA'],
     D.slice().sort((a,b)=>b.pc-a.pc).slice(0,500).map(r=>[r.punto,r.ciudad,r.mes,r.entregas.toLocaleString('es-CO'),money(r.costo),money(r.pc)]));
   const cEl=document.getElementById('com-ipc-count');if(cEl)cEl.textContent=D.length.toLocaleString('es')+' registros'+(D.length>500?' (mostrando 500)':'');
+  const sEl=document.getElementById('com-ipc-stamp');if(sEl)sEl.textContent=stampNow();
 }
 
 /* ---------- Ventas (comparte Mes/Ciudad del filtro superior) ---------- */
 function renderComVentas(){
   if(!COM_VENTAS.length){const k=document.getElementById('com-vt-kpi');if(k)k.innerHTML='<div class="ind-loading">Sin datos — hoja "ventas".</div>';return;}
   const money=n=>'$ '+Math.round(n||0).toLocaleString('es-CO');
-  const mes=ms('com-fMes'),ciudad=ms('com-fCiudad');
+  MultiSelect.setOptions('com-vt-fMes',sortMes(uniq(COM_VENTAS.map(r=>r.mes))),{placeholder:'Todos',onChange:renderComVentas});
+  MultiSelect.setOptions('com-vt-fCiudad',uniq(COM_VENTAS.map(r=>r.ciudad)).sort(),{placeholder:'Todas',onChange:renderComVentas});
+  const mes=ms('com-vt-fMes'),ciudad=ms('com-vt-fCiudad');
   const D=COM_VENTAS.filter(r=>(!mes.length||mes.includes(r.mes))&&(!ciudad.length||ciudad.includes(r.ciudad)));
   const total=D.reduce((a,r)=>a+r.venta,0);
   const porFecha=groupSum(D,r=>r.fecha,r=>r.venta);
@@ -274,12 +294,15 @@ function renderComVentas(){
   renderTable('com-vt-table',['FECHA','MES','CIUDAD','DROGUERÍA','ESTADO','VENTA'],
     [...D].sort((a,b)=>(b._d||0)-(a._d||0)).slice(0,500).map(r=>[r.fecha,r.mes,r.ciudad,r.drogueria,r.estado,money(r.venta)]));
   const cEl=document.getElementById('com-vt-count');if(cEl)cEl.textContent=D.length.toLocaleString('es')+' registros'+(D.length>500?' (mostrando 500)':'');
+  const sEl=document.getElementById('com-vt-stamp');if(sEl)sEl.textContent=stampNow();
 }
 
 /* ---------- Nov. Cancelación (comparte Mes/Ciudad del filtro superior) ---------- */
 function renderComNovCancel(){
   if(!COM_NOVCANCEL.length){const k=document.getElementById('com-nc-kpi');if(k)k.innerHTML='<div class="ind-loading">Sin datos — hoja "novcancel".</div>';return;}
-  const mes=ms('com-fMes'),ciudad=ms('com-fCiudad');
+  MultiSelect.setOptions('com-nc-fMes',sortMes(uniq(COM_NOVCANCEL.map(r=>r.mes))),{placeholder:'Todos',onChange:renderComNovCancel});
+  MultiSelect.setOptions('com-nc-fCiudad',uniq(COM_NOVCANCEL.map(r=>r.ciudad)).sort(),{placeholder:'Todas',onChange:renderComNovCancel});
+  const mes=ms('com-nc-fMes'),ciudad=ms('com-nc-fCiudad');
   const D=COM_NOVCANCEL.filter(r=>(!mes.length||mes.includes(r.mes))&&(!ciudad.length||ciudad.includes(r.ciudad)));
   const total=D.reduce((a,r)=>a+r.count,0);
   const byRazonTotal=sortObj(groupSum(D,r=>r.razon,r=>r.count));
@@ -299,12 +322,14 @@ function renderComNovCancel(){
   renderTable('com-nc-table',['MES','CIUDAD','DROGUERÍA','RAZÓN','CANTIDAD'],
     [...D].sort((a,b)=>b.count-a.count).slice(0,500).map(r=>[r.mes,r.ciudad,r.drogueria,r.razon,r.count]));
   const cEl=document.getElementById('com-nc-count');if(cEl)cEl.textContent=D.length.toLocaleString('es')+' registros'+(D.length>500?' (mostrando 500)':'');
+  const sEl=document.getElementById('com-nc-stamp');if(sEl)sEl.textContent=stampNow();
 }
 
 async function ensureCom(){
   if(comLoaded||comLoading)return;
   comLoading=true;
-  const k=document.getElementById('com-kpi');if(k)k.innerHTML='<div class="ind-loading">Cargando datos de Comercial — son más de 65.000 registros en 7 hojas, puede tardar unos segundos…</div>';
+  const loadMsg='<div class="ind-loading">Cargando datos de Comercial — son más de 65.000 registros en 7 hojas, puede tardar unos segundos…</div>';
+  ['com-res-kpi','com-kpi'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=loadMsg;});
   try{
     const [roster,cant,nov,tiempos,percap,ventas,novcancel]=await Promise.all([
       fetchCom(COM_CFG.roster()),
@@ -325,21 +350,25 @@ async function ensureCom(){
     comLoaded=true;
     renderComAll();
     setTimeout(()=>{if(window.resizeAllCharts)resizeAllCharts();},160);
-  }catch(e){console.warn('Comercial: fallo de carga',e);const k2=document.getElementById('com-kpi');if(k2)k2.innerHTML='<div class="ind-loading">Error al conectar con el Google Sheet de Comercial.</div>';}
+  }catch(e){console.warn('Comercial: fallo de carga',e);const errMsg='<div class="ind-loading">Error al conectar con el Google Sheet de Comercial.</div>';['com-res-kpi','com-kpi'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=errMsg;});}
   comLoading=false;
 }
 function renderComAll(){
-  renderCom();renderComResumen();renderComPercap();renderComVentas();renderComNovCancel();
+  renderComResumen();renderComCantidad();renderComNovedades();renderComTiempos();renderComPercap();renderComVentas();renderComNovCancel();
 }
 
 /* ---------- Wiring ---------- */
-document.querySelector('.nav-item[data-view="com-nacional"]')?.addEventListener('click',()=>{
+document.querySelectorAll('.nav-item[data-view^="com-"]').forEach(n=>n.addEventListener('click',()=>{
   ensureCom();
   if(comLoaded){try{renderComAll();}catch(e){console.warn('re-render Comercial',e);}}
   setTimeout(()=>{if(window.resizeAllCharts)resizeAllCharts();},60);
-});
-const comR=document.getElementById('com-reset');if(comR)comR.addEventListener('click',()=>{['com-fMes','com-fCiudad','com-ipc-fDrog'].forEach(id=>MultiSelect.clear(id));renderComAll();});
-if(window.wireSubtabs)wireSubtabs('#com-subtabs','com-tab-',()=>{});
+}));
+const comR=document.getElementById('com-reset');if(comR)comR.addEventListener('click',()=>{['com-fMes','com-fCiudad'].forEach(id=>MultiSelect.clear(id));renderComCantidad();});
+const comNovR=document.getElementById('com-nov-reset');if(comNovR)comNovR.addEventListener('click',()=>{['com-nov-fMes','com-nov-fCiudad'].forEach(id=>MultiSelect.clear(id));renderComNovedades();});
+const comTieR=document.getElementById('com-tie-reset');if(comTieR)comTieR.addEventListener('click',()=>{['com-tie-fMes','com-tie-fCiudad'].forEach(id=>MultiSelect.clear(id));renderComTiempos();});
+const comIpcR=document.getElementById('com-ipc-reset');if(comIpcR)comIpcR.addEventListener('click',()=>{['com-ipc-fMes','com-ipc-fCiudad','com-ipc-fDrog'].forEach(id=>MultiSelect.clear(id));renderComPercap();});
+const comVtR=document.getElementById('com-vt-reset');if(comVtR)comVtR.addEventListener('click',()=>{['com-vt-fMes','com-vt-fCiudad'].forEach(id=>MultiSelect.clear(id));renderComVentas();});
+const comNcR=document.getElementById('com-nc-reset');if(comNcR)comNcR.addEventListener('click',()=>{['com-nc-fMes','com-nc-fCiudad'].forEach(id=>MultiSelect.clear(id));renderComNovCancel();});
 if(window.wireDetalleToggle){
   wireDetalleToggle('com-detalle-toggle','com-detalle-card','Cantidad');
   wireDetalleToggle('com-ipc-detalle-toggle','com-ipc-detalle-card','Per Cápita');
