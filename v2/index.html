@@ -49,6 +49,7 @@
       <div class="nav-item" data-view="com-percapita"><i class="fa-solid fa-coins"></i><span class="nav-label">Per Cápita</span></div>
       <div class="nav-item" data-view="com-ventas"><i class="fa-solid fa-dollar-sign"></i><span class="nav-label">Ventas</span></div>
       <div class="nav-item" data-view="com-novcancel"><i class="fa-solid fa-ban"></i><span class="nav-label">Nov. Cancelación</span></div>
+      <div class="nav-item" data-view="com-planta"><i class="fa-solid fa-people-group"></i><span class="nav-label">Planta</span></div>
     </div>
 
     <div class="nav-foot">
@@ -371,6 +372,17 @@
         <div class="card" id="com-nc-detalle-card" style="display:none"><div class="card-h"><div><h3>Detalle Nov. Cancelación</h3><div class="sub" id="com-nc-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="com-nc-table"></table></div></div></div>
       </section>
 
+      <!-- ----- PLANTA (hoja "planta": plantilla fija + colaborativa) ----- -->
+      <section class="view" id="com-planta">
+        <div class="kpi-grid" id="com-pl-kpi"></div>
+        <div class="grid-2">
+          <div class="card"><div class="card-h"><div><h3>Personal por ciudad</h3><div class="sub">Fija + colaborativa, solo puntos activos</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-pl-ciudad"></canvas></div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Planta fija vs. colaborativa</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-pl-tipo"></canvas></div></div></div>
+        </div>
+        <div class="card"><div class="card-h"><div><h3>Top puntos por personal</h3></div></div><div class="card-body"><div class="chart-wrap tall"><canvas id="com-pl-chart"></canvas></div></div></div>
+        <div class="card"><div class="card-h"><div><h3>Detalle de planta</h3><div class="sub" id="com-pl-count">0 registros</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="com-pl-table"></table></div></div></div>
+      </section>
+
     </div>
   </div>
 </div>
@@ -393,7 +405,8 @@ const PAGES={
   'com-tiempos':['Comercial · Tiempos','Tiempo total promedio — creación a cierre'],
   'com-percapita':['Comercial · Per Cápita','Costo operativo por entrega'],
   'com-ventas':['Comercial · Ventas','Ventas por mes, día y ciudad'],
-  'com-novcancel':['Comercial · Nov. Cancelación','Cancelaciones por razón, mes y ciudad']
+  'com-novcancel':['Comercial · Nov. Cancelación','Cancelaciones por razón, mes y ciudad'],
+  'com-planta':['Comercial · Planta','Plantilla fija y colaborativa por punto y ciudad']
 };
 function switchView(v){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===v));
@@ -430,6 +443,6 @@ document.getElementById('refreshBtn').addEventListener('click',()=>location.relo
 <script src="assets/institucional.js?v=11"></script>
 <script>if(window.ensureInst)ensureInst();</script>
 <!-- Motor de datos Comercial (carga al abrir el proyecto Comercial) -->
-<script src="assets/comercial.js?v=3"></script>
+<script src="assets/comercial.js?v=4"></script>
 </body>
 </html>

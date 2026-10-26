@@ -15,9 +15,13 @@ const COM_CFG={
   ventas(){return this.base+'?gid=41915920&single=true&output=csv';},
   novcancel(){return this.base+'?gid=1615312577&single=true&output=csv';}
 };
+/* "planta" es una hoja nueva del mismo spreadsheet — se lee por NOMBRE (gviz)
+   en vez de por gid publicado, igual que institucional.js lee PLANTA. */
+const COM_SHEET_ID='10NHhOSTKtNvVSfFpyuQm4dHeYV0HPpy2pkdz0UUtqE8';
+function fetchComSheet(name){return new Promise((res,rej)=>{Papa.parse(`https://docs.google.com/spreadsheets/d/${COM_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`,{download:true,header:false,skipEmptyLines:true,complete:r=>res(r.data),error:rej});});}
 
 /* ---------- Estado ---------- */
-let COM_CANT=[],COM_NOV=[],COM_TIEMPOS=[],COM_BASE=[],COM_PERCAP=[],COM_VENTAS=[],COM_NOVCANCEL=[];
+let COM_CANT=[],COM_NOV=[],COM_TIEMPOS=[],COM_BASE=[],COM_PERCAP=[],COM_VENTAS=[],COM_NOVCANCEL=[],COM_PL_FIJA=[],COM_PL_COLAB=[];
 let comCharts={},comLoaded=false,comLoading=false;
 
 /* ---------- Utilidades (copia local — comercial.js es independiente de institucional.js) ---------- */
@@ -119,6 +123,17 @@ function parseComNovCancel(raw){
   });
   return out;
 }
+/* Hoja "planta": dos bloques lado a lado — Fija (A-D) y Colaborativa (F-J), sin header limpio */
+function parseComPlanta(rows){
+  const fija=[],colab=[];
+  for(let i=1;i<rows.length;i++){const r=rows[i];if(!r)continue;
+    const fCiudad=String(r[0]||'').trim(),fPunto=String(r[1]||'').trim();
+    if(fCiudad||fPunto)fija.push({ciudad:tcase(fCiudad),punto:tcase(fPunto),cant:num(r[2]),estado:String(r[3]||'').trim().toUpperCase()});
+    const cCiudad=String(r[5]||'').trim(),cPunto=String(r[6]||'').trim();
+    if(cCiudad||cPunto)colab.push({ciudad:tcase(cCiudad),punto:tcase(cPunto),cant:num(r[7]),inicio:String(r[8]||'').trim(),estado:String(r[9]||'').trim().toUpperCase()});
+  }
+  return {fija,colab};
+}
 
 /* ---------- Render: Cantidad (hoja "cantidad", filtro propio Mes/Ciudad) ---------- */
 function renderComCantidad(){
@@ -217,6 +232,31 @@ function renderComResumen(){
   renderTable('com-res-table',['DROGUERÍA','CIUDAD','COORDINADOR','TIPO MENSAJERO','MENSAJEROS','OPERACIÓN'],
     [...COM_BASE].sort((a,b)=>b.mensajeros-a.mensajeros).map(r=>[r.drogueria,r.ciudad,r.coordinador,r.tipoMensajero,r.mensajeros,r.operacion]));
   const cEl=document.getElementById('com-res-count');if(cEl)cEl.textContent=COM_BASE.length+' droguerías';
+}
+
+/* ---------- Render: Planta (hoja "planta" — Planta Fija + Planta Colaborativa, sin filtros) ---------- */
+function renderComPlanta(){
+  if(!COM_PL_FIJA.length&&!COM_PL_COLAB.length){const k=document.getElementById('com-pl-kpi');if(k)k.innerHTML='<div class="ind-loading">Sin datos — verifica la hoja "planta".</div>';return;}
+  const fijaAct=COM_PL_FIJA.filter(r=>r.estado==='ACTIVO');
+  const colabAct=COM_PL_COLAB.filter(r=>r.estado==='ACTIVO');
+  const totFija=fijaAct.reduce((a,r)=>a+r.cant,0),totColab=colabAct.reduce((a,r)=>a+r.cant,0);
+  const ciudades=uniq([...COM_PL_FIJA,...COM_PL_COLAB].map(r=>r.ciudad));
+  const inactivos=COM_PL_FIJA.filter(r=>r.estado==='INACTIVO').length+COM_PL_COLAB.filter(r=>r.estado==='INACTIVO').length;
+  kpiCards('com-pl-kpi',[
+    {l:'Personal activo total',v:totFija+totColab,ic:'fa-people-group',c:'blue'},
+    {l:'Planta fija',v:totFija,ic:'fa-building',c:'green'},
+    {l:'Planta colaborativa',v:totColab,ic:'fa-handshake',c:'purple'},
+    {l:'Ciudades',v:ciudades.length,ic:'fa-city',c:'yellow'},
+    {l:'Puntos inactivos',v:inactivos,ic:'fa-triangle-exclamation',c:'red'}
+  ]);
+  const byCiudad=sortObj(groupSum([...fijaAct,...colabAct],r=>r.ciudad,r=>r.cant));
+  mkChart('com-pl-ciudad',{type:'bar',data:{labels:Object.keys(byCiudad),datasets:[{data:Object.values(byCiudad),backgroundColor:palette(Object.keys(byCiudad).length),borderRadius:6}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:BC.grid}}});
+  mkChart('com-pl-tipo',{type:'doughnut',data:{labels:['Planta Fija','Planta Colaborativa'],datasets:[{data:[totFija,totColab],backgroundColor:[CO.blue,CO.purple],borderColor:'#0b1120',borderWidth:2}]},options:{...BC.base,plugins:{legend:legBase}}});
+  const puntos=[...fijaAct.map(r=>({...r,tipo:'Fija'})),...colabAct.map(r=>({...r,tipo:'Colaborativa'}))].sort((a,b)=>b.cant-a.cant).slice(0,20);
+  mkChart('com-pl-chart',{type:'bar',data:{labels:puntos.map(r=>r.punto),datasets:[{data:puntos.map(r=>r.cant),backgroundColor:puntos.map(r=>r.tipo==='Fija'?CO.blue:CO.purple),borderRadius:6}]},options:{...BC.base,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.parsed.x+' personas — '+puntos[c.dataIndex].ciudad+' ('+puntos[c.dataIndex].tipo+')'}}},scales:{x:BC.grid,y:{...BC.grid,ticks:{color:'#94A3B8',font:{size:11},autoSkip:false}}}}});
+  const allRows=[...COM_PL_FIJA.map(r=>['Fija',r.ciudad,r.punto,r.cant,'—',r.estado]),...COM_PL_COLAB.map(r=>['Colaborativa',r.ciudad,r.punto,r.cant,r.inicio||'—',r.estado])].sort((a,b)=>b[3]-a[3]);
+  renderTable('com-pl-table',['TIPO','CIUDAD','PUNTO','CANT','INICIO MODELO','ESTADO'],allRows);
+  const cEl2=document.getElementById('com-pl-count');if(cEl2)cEl2.textContent=allRows.length+' registros';
 }
 
 /* ---------- Per Cápita (comparte Mes/Ciudad del filtro superior + Punto propio) ---------- */
@@ -331,14 +371,15 @@ async function ensureCom(){
   const loadMsg='<div class="ind-loading">Cargando datos de Comercial — son más de 65.000 registros en 7 hojas, puede tardar unos segundos…</div>';
   ['com-res-kpi','com-kpi'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=loadMsg;});
   try{
-    const [roster,cant,nov,tiempos,percap,ventas,novcancel]=await Promise.all([
+    const [roster,cant,nov,tiempos,percap,ventas,novcancel,planta]=await Promise.all([
       fetchCom(COM_CFG.roster()),
       fetchCom(COM_CFG.cantidad()),
       fetchCom(COM_CFG.novedades()),
       fetchCom(COM_CFG.tiempos()),
       fetchCom(COM_CFG.percapita()),
       fetchCom(COM_CFG.ventas()),
-      fetchCom(COM_CFG.novcancel())
+      fetchCom(COM_CFG.novcancel()),
+      fetchComSheet('planta').catch(()=>[])
     ]);
     COM_BASE=parseComRoster(roster);
     COM_CANT=parseComCantidad(cant);
@@ -347,6 +388,7 @@ async function ensureCom(){
     COM_PERCAP=parseComPercap(percap);
     COM_VENTAS=parseComVentas(ventas);
     COM_NOVCANCEL=parseComNovCancel(novcancel);
+    const plp=parseComPlanta(planta);COM_PL_FIJA=plp.fija;COM_PL_COLAB=plp.colab;
     comLoaded=true;
     renderComAll();
     setTimeout(()=>{if(window.resizeAllCharts)resizeAllCharts();},160);
@@ -354,7 +396,7 @@ async function ensureCom(){
   comLoading=false;
 }
 function renderComAll(){
-  renderComResumen();renderComCantidad();renderComNovedades();renderComTiempos();renderComPercap();renderComVentas();renderComNovCancel();
+  renderComResumen();renderComCantidad();renderComNovedades();renderComTiempos();renderComPercap();renderComVentas();renderComNovCancel();renderComPlanta();
 }
 
 /* ---------- Wiring ---------- */
