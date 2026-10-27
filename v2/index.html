@@ -42,7 +42,6 @@
 
     <div class="nav-group" data-project="comercial" hidden>
       <div class="nav-section">Cafam Comercial</div>
-      <div class="nav-item" data-view="com-resumen"><i class="fa-solid fa-chart-pie"></i><span class="nav-label">Resumen</span></div>
       <div class="nav-item" data-view="com-cantidad"><i class="fa-solid fa-box"></i><span class="nav-label">Cantidad</span></div>
       <div class="nav-item" data-view="com-novedades"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label">Novedades</span></div>
       <div class="nav-item" data-view="com-tiempos"><i class="fa-solid fa-clock"></i><span class="nav-label">Tiempos</span></div>
@@ -256,16 +255,6 @@
 
       <!-- ===== COMERCIAL — cada pestaña es una página propia en la barra lateral (mismo patrón que Institucional) ===== -->
 
-      <!-- ----- RESUMEN (hoja "base": roster de droguerías) ----- -->
-      <section class="view" id="com-resumen">
-        <div class="kpi-grid" id="com-res-kpi"></div>
-        <div class="grid-2">
-          <div class="card"><div class="card-h"><div><h3>Mensajeros por ciudad</h3></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-res-ciudad"></canvas></div></div></div>
-          <div class="card"><div class="card-h"><div><h3>Droguerías por tipo de mensajero</h3><div class="sub">Planta fija vs. colaborativo</div></div></div><div class="card-body"><div class="chart-wrap lg"><canvas id="com-res-tipo"></canvas></div></div></div>
-        </div>
-        <div class="card"><div class="card-h"><div><h3>Droguerías</h3><div class="sub" id="com-res-count">0 droguerías</div></div></div><div class="card-body"><div class="ins-table-wrap"><table class="ins-table" id="com-res-table"></table></div></div></div>
-      </section>
-
       <!-- ----- CANTIDAD ----- -->
       <section class="view" id="com-cantidad">
         <div class="view-filters" id="com-filters">
@@ -399,7 +388,6 @@ const PAGES={
   'inst-percapita':['Per Cápita Institucional','Costo operativo por entrega — por punto, ciudad y mes'],
   'inst-planta':['Planta','Plantilla fija por ciudad y punto — historial de cambios'],
   'inst-celta':['Celta-Floresta','Gestión de entrega y novedades — punto Celta-Floresta'],
-  'com-resumen':['Comercial · Resumen','Droguerías, mensajeros y cobertura por ciudad'],
   'com-cantidad':['Comercial · Cantidad','Entregas, novedades y cumplimiento'],
   'com-novedades':['Comercial · Novedades','Incidencias operativas por tipo y mes'],
   'com-tiempos':['Comercial · Tiempos','Tiempo total promedio — creación a cierre'],
@@ -443,6 +431,6 @@ document.getElementById('refreshBtn').addEventListener('click',()=>location.relo
 <script src="assets/institucional.js?v=11"></script>
 <script>if(window.ensureInst)ensureInst();</script>
 <!-- Motor de datos Comercial (carga al abrir el proyecto Comercial) -->
-<script src="assets/comercial.js?v=4"></script>
+<script src="assets/comercial.js?v=5"></script>
 </body>
 </html>
