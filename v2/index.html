@@ -52,6 +52,7 @@
     </div>
 
     <div class="nav-foot">
+      <button class="ind-open-btn" id="indOpenBtn" title="Indicadores Mensuales"><i class="fa-solid fa-chart-column"></i></button>
       <div class="av"><img src="https://i.ibb.co/KjmjjvNZ/Captura-de-pantalla-2025-09-15-161315.jpg" alt=""></div>
       <div><b style="font-size:13px">Maryuri López</b><small>Administrador</small></div>
     </div>
@@ -376,6 +377,28 @@
   </div>
 </div>
 
+<!-- ===== INDICADORES MENSUALES (modal, se abre desde el botón junto a "Maryuri") ===== -->
+<div class="ind-modal" id="indModal">
+  <div class="ind-modal-box">
+    <div class="ind-modal-head">
+      <div class="ind-modal-tabs">
+        <button class="ind-seg-tab active" data-seg="comercial"><i class="fa-solid fa-store"></i> Cafam Comercial</button>
+        <button class="ind-seg-tab" data-seg="institucional"><i class="fa-solid fa-building-columns"></i> Cafam Institucional</button>
+        <button class="ind-seg-tab" data-seg="biologicos"><i class="fa-solid fa-flask-vial"></i> Cafam Biológicos</button>
+        <button class="ind-seg-tab" data-seg="admin"><i class="fa-solid fa-sitemap"></i> Área Administrativa</button>
+      </div>
+      <button class="ind-modal-pdf" id="indPdfBtn"><i class="fa-solid fa-file-pdf"></i> Informe PDF</button>
+      <button class="ind-modal-close" id="indModalClose"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="ind-modal-body">
+      <section class="ind-view active" id="ind-comercial"><div class="ind-wrap" id="indc-body"><div class="ind-loading">Cargando indicadores…</div></div></section>
+      <section class="ind-view" id="ind-institucional"><div class="ind-wrap" id="indi-body"><div class="ind-loading">Cargando indicadores…</div></div></section>
+      <section class="ind-view" id="ind-biologicos"><div class="ind-wrap" id="indb-body"><div class="ind-loading">Cargando indicadores…</div></div></section>
+      <section class="ind-view" id="ind-admin"><div class="ind-wrap" id="inda-body"><div class="ind-loading">Cargando…</div></div></section>
+    </div>
+  </div>
+</div>
+
 <!-- Chart.js + PapaParse (único proveedor de datos de esta vista: Google Sheets) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -432,5 +455,10 @@ document.getElementById('refreshBtn').addEventListener('click',()=>location.relo
 <script>if(window.ensureInst)ensureInst();</script>
 <!-- Motor de datos Comercial (carga al abrir el proyecto Comercial) -->
 <script src="assets/comercial.js?v=5"></script>
+<!-- pdfMake: generador de informes PDF para Indicadores Mensuales -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<!-- Motor de Indicadores Mensuales (modal, se abre desde el botón junto al perfil) -->
+<script src="assets/indicadores.js?v=1"></script>
 </body>
 </html>
