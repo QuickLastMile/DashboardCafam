@@ -357,7 +357,12 @@ function renderNacional(){
   document.querySelectorAll('#nac-cityseg .seg-btn').forEach(b=>b.classList.toggle('active',(b.dataset.city||'')===nacCity));
   const ciuRow=document.getElementById('nac-ciudad-row');if(ciuRow)ciuRow.style.display=city.length?'none':'';
   const D=NAC.filter(r=>(!city.length||city.includes(r.city))&&(!mes.length||mes.includes(r.mes)));
-  const ef=D.reduce((a,r)=>a+r.efectivo,0),nv=D.reduce((a,r)=>a+r.novedad,0),tot=D.reduce((a,r)=>a+r.total,0);
+  const ef=D.reduce((a,r)=>a+r.efectivo,0),tot=D.reduce((a,r)=>a+r.total,0);
+  /* "Novedades" se ancla a la hoja NOVEDADES NACIONAL (detalle real por tipo),
+     no al conteo diario de CANT NACIONAL — ese conteo puede quedar
+     desactualizado/inflado frente al detalle real (ver octubre). */
+  const novAnchor=NOVNAC.filter(r=>(!city.length||city.includes(r.city))&&(!mes.length||mes.includes(r.mes)));
+  const nv=novAnchor.reduce((a,r)=>a+r.count,0);
   const cumpl=tot?ef/tot*100:0;
   const porFecha=groupSum(D,r=>r.fecha,r=>r.efectivo);
   const pico=Object.entries(porFecha).sort((a,b)=>b[1]-a[1])[0]||['—',0];
@@ -375,10 +380,11 @@ function renderNacional(){
   const meses=sortMes(uniq(NAC.filter(r=>cities.includes(r.city)).map(r=>r.mes)));
   const sumCM=(c,m,f)=>NAC.filter(r=>r.city===c&&r.mes===m).reduce((a,r)=>a+r[f],0);
   mkChart('nac-efmes',{type:'bar',data:{labels:meses,datasets:cities.map(c=>({label:c,data:meses.map(m=>sumCM(c,m,'efectivo')),backgroundColor:CITY_COLOR[c]||CO.gray,borderRadius:6,maxBarThickness:44}))},options:{...BC.base,plugins:{legend:legBase},scales:{x:BC.grid,y:BC.grid}}});
-  mkChart('nac-nvmes',{type:'bar',data:{labels:meses,datasets:cities.map(c=>({label:c,data:meses.map(m=>sumCM(c,m,'novedad')),backgroundColor:CITY_COLOR[c]||CO.gray,borderRadius:6,maxBarThickness:44}))},options:{...BC.base,plugins:{legend:legBase},scales:{x:BC.grid,y:BC.grid}}});
+  const sumNovCM=(c,m)=>NOVNAC.filter(r=>r.city===c&&r.mes===m).reduce((a,r)=>a+r.count,0);
+  mkChart('nac-nvmes',{type:'bar',data:{labels:meses,datasets:cities.map(c=>({label:c,data:meses.map(m=>sumNovCM(c,m)),backgroundColor:CITY_COLOR[c]||CO.gray,borderRadius:6,maxBarThickness:44}))},options:{...BC.base,plugins:{legend:legBase},scales:{x:BC.grid,y:BC.grid}}});
   mkChart('nac-ciudad',{type:'bar',data:{labels:cities,datasets:[
     {label:'Efectivo',data:cities.map(c=>D.filter(r=>r.city===c).reduce((a,r)=>a+r.efectivo,0)),backgroundColor:CO.green,borderRadius:6,maxBarThickness:54},
-    {label:'Novedades',data:cities.map(c=>D.filter(r=>r.city===c).reduce((a,r)=>a+r.novedad,0)),backgroundColor:CO.red,borderRadius:6,maxBarThickness:54}
+    {label:'Novedades',data:cities.map(c=>novAnchor.filter(r=>r.city===c).reduce((a,r)=>a+r.count,0)),backgroundColor:CO.red,borderRadius:6,maxBarThickness:54}
   ]},options:{...BC.base,plugins:{legend:legBase},scales:{x:BC.grid,y:BC.grid}}});
   mkChart('nac-cumpl',{type:'bar',data:{labels:cities,datasets:[{data:cities.map(c=>{const cd=D.filter(r=>r.city===c);const t=cd.reduce((a,r)=>a+r.total,0),e=cd.reduce((a,r)=>a+r.efectivo,0);return t?+(e/t*100).toFixed(1):0;}),backgroundColor:cities.map(c=>CITY_COLOR[c]||CO.gray),borderRadius:8,maxBarThickness:70}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:BC.grid,y:{...BC.grid,suggestedMax:100}}}});
   const diaCity=pick(ms('nac-dia-city'),city),diaMes=pick(ms('nac-dia-mes'),mes);
