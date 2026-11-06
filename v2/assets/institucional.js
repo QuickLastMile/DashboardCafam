@@ -100,13 +100,31 @@ function parseNacional(rows){
 }
 function parseNovNac(rows){
   const cities=['Bucaramanga','Cúcuta','Santa Marta'];
-  const months=['MAR','ABR','MAY','JUN'];
-  const out=[];let ci=-1;
+  const out=[];let ci=-1,months=null;
   rows.forEach(r=>{
     if(!r||!r.length)return;
     const first=String(r[0]||'').trim();
-    if(first.toUpperCase()==='NOVEDAD'){ci++;return;}
-    if(ci<0||ci>=cities.length||!first)return;
+    if(first.toUpperCase()==='NOVEDAD'){
+      ci++;
+      /* La fila de encabezado solo trae los meses reales en el primer bloque
+         (Bucaramanga) — ahí van ENE..OCT (o los que haya). Los bloques
+         siguientes repiten "NOVEDAD" con las columnas de mes en blanco,
+         así que se reutiliza la lista ya detectada. Nunca hardcodear los
+         meses: la hoja crece cada mes y antes se asumían solo 4 fijos. */
+      if(!months){
+        const hdr=[];
+        for(let j=1;j<r.length;j++){
+          const cell=String(r[j]||'').trim().toUpperCase();
+          if(!cell)break;
+          const tok=cell.split(/\s+/).pop();
+          if(MES_ORDER.indexOf(tok)<0)break;
+          hdr.push(tok);
+        }
+        if(hdr.length)months=hdr;
+      }
+      return;
+    }
+    if(ci<0||ci>=cities.length||!first||!months)return;
     months.forEach((m,j)=>{const val=num(r[1+j]);if(val)out.push({city:cities[ci],novedad:first,mes:m,count:val});});
   });
   return out;
