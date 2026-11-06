@@ -138,7 +138,13 @@ function renderComCantidad(){
   MultiSelect.setOptions('com-fCiudad',allCiudades,{placeholder:'Todas',onChange:renderComCantidad});
   const mes=ms('com-fMes'),ciudad=ms('com-fCiudad');
   const D=COM_CANT.filter(r=>(!mes.length||mes.includes(r.mes))&&(!ciudad.length||ciudad.includes(r.ciudad)));
-  const ent=D.reduce((a,r)=>a+r.entregado,0),nv=D.reduce((a,r)=>a+r.novedad,0),tot=D.reduce((a,r)=>a+r.total,0);
+  const ent=D.reduce((a,r)=>a+r.entregado,0),tot=D.reduce((a,r)=>a+r.total,0);
+  /* "Novedades" se ancla a la hoja "novcancel" (detalle real por razón),
+     no a las columnas CANCELACION/CONGELADO/REPROGRAMADO de la hoja
+     "cantidad" — esas quedaron en blanco para octubre, aunque el detalle
+     real de cancelaciones de ese mes sí existe en "novcancel". */
+  const novAnchor=COM_NOVCANCEL.filter(r=>(!mes.length||mes.includes(r.mes))&&(!ciudad.length||ciudad.includes(r.ciudad)));
+  const nv=novAnchor.reduce((a,r)=>a+r.count,0);
   const cumpl=tot?ent/tot*100:0;
   const porFecha=groupSum(D,r=>r.fecha,r=>r.entregado);
   const pico=Object.entries(porFecha).sort((a,b)=>b[1]-a[1])[0]||['—',0];
@@ -155,9 +161,11 @@ function renderComCantidad(){
   const baseCity=ciudad.length?COM_CANT.filter(r=>ciudad.includes(r.ciudad)):COM_CANT;
   const mesesAll=sortMes(uniq(baseCity.map(r=>r.mes)));
   const sumM=(m,f)=>baseCity.filter(r=>r.mes===m).reduce((a,r)=>a+r[f],0);
+  const novBaseCity=ciudad.length?COM_NOVCANCEL.filter(r=>ciudad.includes(r.ciudad)):COM_NOVCANCEL;
+  const sumNovM=m=>novBaseCity.filter(r=>r.mes===m).reduce((a,r)=>a+r.count,0);
   mkChart('com-mes',{type:'bar',data:{labels:mesesAll,datasets:[
     {label:'Entregado',data:mesesAll.map(m=>sumM(m,'entregado')),backgroundColor:CO.green,borderRadius:6,maxBarThickness:36},
-    {label:'Novedad',data:mesesAll.map(m=>sumM(m,'novedad')),backgroundColor:CO.red,borderRadius:6,maxBarThickness:36}
+    {label:'Novedad',data:mesesAll.map(m=>sumNovM(m)),backgroundColor:CO.red,borderRadius:6,maxBarThickness:36}
   ]},options:{...BC.base,plugins:{legend:legBase},scales:{x:BC.grid,y:BC.grid}}});
   const fechas=uniq(D.map(r=>r.fecha)).sort((a,b)=>(parseD(a)||0)-(parseD(b)||0));
   mkChart('com-dia',{type:'line',data:{labels:fechas,datasets:[{label:'Entregado',data:fechas.map(f=>porFecha[f]),borderColor:CO.blue,backgroundColor:gradFill('#2563EB'),fill:true,tension:.25,borderWidth:1.6,pointRadius:0}]},options:{...BC.base,plugins:{legend:{display:false}},scales:{x:{...BC.grid,ticks:{...(BC.grid.ticks||{}),maxTicksLimit:12}},y:BC.grid}}});
